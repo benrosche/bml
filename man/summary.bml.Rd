@@ -20,5 +20,5 @@ summary(m1)
 
 }
 \author{
-Benjamin Rosche <benjamin.rosche@gmail.com>
+Benjamin Rosche <benrosche@nyu.edu>
 }

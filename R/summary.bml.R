@@ -10,7 +10,7 @@
 #' summary(m1)
 #'
 #' @exportS3Method summary bml
-#' @author Benjamin Rosche <benjamin.rosche@@gmail.com>
+#' @author Benjamin Rosche <benrosche@@nyu.edu>
 
 summary.bml <- function(bml, r=3) {
   

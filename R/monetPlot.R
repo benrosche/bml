@@ -5,20 +5,18 @@
 #' 
 #' @param bml A bml object. bml has to be run with monitor=T
 #' @param parameter A string with the parameter name. The internal name has to be used, which are the rownames in the bml reg.table output.
-#' @param centrality A string specifying one of the following options: "median", "mean", "MAP", or "mode".
-#' @param lab String to describe the parameter on the graph's x-axis. Optional. If not specified, the internal parameter name is used.
+#' @param label String to describe the parameter on the graph's x-axis. Optional. If not specified, the internal parameter name is used.
 #' @param r Specify number of decimal places. Default equals 3.
-#' @param sav TRUE or FALSE (default). If \code{TRUE}, the graph is saved to the current working directory as .png
-#'
+#' @param yaxis Logical. If FALSE, the y-axis title is omitted.
 #' @return Returns a plot. The solid vertical is at 0 and the dashed vertical line is the mode of the posterior distributions.
 #'
 #' @examples data(coalgov)
-#' m1 <- bml(Surv(govdur, earlyterm) ~ 1 + mm(id(pid, gid), mmc(fdep), mmw(w ~ 1/n, constraint=1)) + majority + hm(id=cid, name=cname, type=RE, showFE=F),
+#' m1 <- bml(Surv(govdur, earlyterm) ~ 1 + majority + mm(id(pid, gid), mmc(fdep), mmw(w ~ 1/n, constraint=T)) + hm(id=cid, name=cname, type=RE, showFE=F),
 #'           family="Weibull", monitor=T, data=coalgov)
 #' monetPlot(m1, parameter="b.l1")
 #'
 #' @export monetPlot
-#' @author Benjamin Rosche <benjamin.rosche@@gmail.com>
+#' @author Benjamin Rosche <benrosche@@nyu.edu>
 
 monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
   
