@@ -38,7 +38,7 @@
 #' }
 #'
 #' \strong{Important:} The formula parser does not support \code{I()} inside \code{bml()}.
-#' Create transformations and interactions in your data before modeling.
+#' Create transformations and interactions in your data object before modeling.
 #'
 #' @section Multiple Membership Object \code{mm()}:
 #' \preformatted{
@@ -235,43 +235,44 @@
 
 
 bml <- function(formula, family="Gaussian", priors=NULL, inits=NULL, n.iter = 1000, n.burnin = 500, n.thin = max(1, floor((n.iter - n.burnin) / 1000)), chains=3, seed=NULL, run=T, parallel=F, monitor=T, modelfile=F, data=NULL) {
-  
+
   # formula = sim.y ~ 1 + majority + mm(id(pid, gid), mmc(ipd), mmw(w ~ 1/n^exp(-(b0 + b1*rile.gov_SD)), c=T)); family = "Gaussian";  priors=c("b.w~dunif(0,1)", "b.l1~dnorm(0,1)", "tau.l2~dscaled.gamma(50,2)"); inits=NULL; n.iter=100; n.burnin=10; n.thin = max(1, floor((n.iter - n.burnin) / 1000)); chains = 3; seed = 123; run = T; parallel = F; monitor = T; modelfile = F; data = coalgov %>% rename(rile.gov_SD=hetero)
-  # source("./R/dissectFormula.R"); source("./R/createData.R"); source("./R/editModelstring.R"); source("./R/createJagsVars.R"); source("./R/formatJags.R"); 
-  
+  # source("./R/dissectFormula.R"); source("./R/createData.R"); source("./R/editModelstring.R"); source("./R/createJagsVars.R"); source("./R/formatJags.R");
+
   # ---------------------------------------------------------------------------------------------- #
   # 0. Checks
   # ---------------------------------------------------------------------------------------------- #
-  
+
   if(is.null(data)) stop("No data supplied.")
 
   # ---------------------------------------------------------------------------------------------- #
-  # 1. Dissect formula 
+  # 1. Dissect formula
   # ---------------------------------------------------------------------------------------------- #
-  
+
   DIR <- system.file(package = "bml")
-  
+
   c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data) # updated (Jan 2025)
-  
+
   # ---------------------------------------------------------------------------------------------- #
   # 2. Disentangle vars and data into l1 to l3
   # ---------------------------------------------------------------------------------------------- #
-  
+
   c(data, level1, level2, level3, weight) %<-% createData(data, ids, vars, l1, l3) # updated (Feb 2025)
-  
+
   # Remove varlist
   rm(vars)
 
   # ---------------------------------------------------------------------------------------------- #
-  # 3. Create/edit jags modelstring 
+  # 3. Create/edit jags modelstring
   # ---------------------------------------------------------------------------------------------- #
-  
+
   modelstring <- editModelstring(family, priors, l1, l3, level1, level2, level3, weight, DIR, monitor, modelfile) # updated (Feb 2025)
-  
+
   # Save or read modelstring
   if(isTRUE(modelfile)) {
-    readr::write_file(modelstring, "modelstring.txt") # save model to file
-    message(paste0("modelfile.txt was saved in ", getwd()))
+    modelfile_path <- file.path(getwd(), "modelstring.txt")
+    readr::write_file(modelstring, modelfile_path) # save model to file
+    message("JAGS model saved to: ", modelfile_path)
   } else if(!isFALSE(modelfile) & length(modelfile)>0) {
     tryCatch({
       modelstring <- readr::read_file(modelfile) # read model from file
@@ -283,74 +284,74 @@ bml <- function(formula, family="Gaussian", priors=NULL, inits=NULL, n.iter = 10
   # ---------------------------------------------------------------------------------------------- #
   # 4. Transform data into JAGS format
   # ---------------------------------------------------------------------------------------------- #
-  
+
   c(ids, Ns, Xs, Ys, jags.params, jags.inits, jags.data) %<-% createJagsVars(data, family, level1, level2, level3, weight, ids, l1, l3, monitor, modelfile, chains, inits) # updated (Feb 2025)
-  
+
   list2env(c(ids, Ns, Xs, Ys), envir=environment())
-  
+
   # ---------------------------------------------------------------------------------------------- #
-  # 5. Run JAGS 
+  # 5. Run JAGS
   # ---------------------------------------------------------------------------------------------- #
-  
+
   if(run==T) {
-    
+
     # Get seed
-    if(is.null(seed)) seed <- round(runif(1, 0, 1000)) 
-    
+    if(is.null(seed)) seed <- round(runif(1, 0, 1000))
+
     if(parallel) {
-      
+
       # Run parallel ----------------------------------------------------------------------------- #
-      
+
       parallelfile <- tempfile(fileext = ".jags") # crate temp modelfile for parallel execution
       on.exit(unlink(parallelfile), add = TRUE) # ensure it will be deleted again after function call
       writeLines(modelstring, parallelfile) # save modelstring to parallelfile
       jags.out <- do.call(jags.parallel, list(data=jags.data, inits = jags.inits[1], n.chains = chains, parameters.to.save = jags.params, n.iter = n.iter, n.burnin = n.burnin, n.thin = n.thin, jags.seed = seed, model.file = parallelfile))
-      
+
       # Three peculiarities about jags.parallel:
       # - It cannot read the model from textConnection(modelstring)
-      # - It cannot read variables from the global environment - do.call needs to be used 
+      # - It cannot read variables from the global environment - do.call needs to be used
       # - There seems to be a bug in that it wants just one list element of inits instead of n.chains number of list elements
-      
+
     } else {
-      
+
       # Run sequentially ------------------------------------------------------------------------- #
-      
-      set.seed(seed) 
-      jags.out <- jags(data=jags.data, inits = jags.inits, n.chains = chains, parameters.to.save = jags.params, n.iter = n.iter, n.burnin = n.burnin, n.thin = n.thin, model.file = textConnection(modelstring)) 
-      
-    } 
-   
+
+      set.seed(seed)
+      jags.out <- jags(data=jags.data, inits = jags.inits, n.chains = chains, parameters.to.save = jags.params, n.iter = n.iter, n.burnin = n.burnin, n.thin = n.thin, model.file = textConnection(modelstring))
+
+    }
+
     # Format JAGS output ------------------------------------------------------------------------- #
-    
-    c(reg.table, w, re.l1, re.l3, pred) %<-% formatJags(jags.out, monitor, Ns, l1, l3, level1, level2, level3, weight) 
-    
+
+    c(reg.table, w, re.l1, re.l3, pred) %<-% formatJags(jags.out, monitor, Ns, l1, l3, level1, level2, level3, weight)
+
     # Prepare additional information ------------------------------------------------------------- #
-    
+
     # Save info on input
-    input <- 
+    input <-
       c(
         list(
-          "family"=family, "priors"=priors, "inits"=inits, 
+          "family"=family, "priors"=priors, "inits"=inits,
           "n.iter"=n.iter, "n.burnin"=n.burnin, "n.thin"=n.thin, "chains"=chains, "parallel"=parallel, "seed"=seed,
-          "monitor"=monitor, "modelfile"=modelfile, "run"=run, 
-          "lhs" = level2$lhs, "l1vars"=level1$vars, "l2vars"=level2$vars, "l3vars"=level3$vars, 
+          "monitor"=monitor, "modelfile"=modelfile, "run"=run,
+          "lhs" = level2$lhs, "l1vars"=level1$vars, "l2vars"=level2$vars, "l3vars"=level3$vars,
           "n.ul1"=Ns$n.ul1, "n.l1"=Ns$n.l1, "n.l2"=Ns$n.l2, "n.l3"=Ns$n.l3
-        ), 
+        ),
         c(l1, l3)
       )
-    
+
     # Create return ------------------------------------------------------------------------------ #
-    
+
     out <- list("reg.table"=reg.table, "w"=w, "re.l1"=re.l1, "re.l3"=re.l3, "pred"=pred, "input"=input, "jags.out"=if(isTRUE(monitor)) jags.out else c())
-    
+
     class(out) <- "bml"
-    
+
     return(out)
-    
+
   } else {
-    
+
     message("Data and model have been created without any errors.")
-    
+
   }
-  
+
 }

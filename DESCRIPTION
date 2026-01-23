@@ -8,23 +8,21 @@ Description: The bml package provides an interface for fitting Bayesian multiple
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-Depends: 
+Depends: R (>= 4.1.0)
+Imports:
     dplyr,
     readr,
     tidyr,
     stringr,
     rjags,
     R2jags,
-    HDInterval,
-    MCMCvis,
-    zeallot,
-    R (>= 3.5)
+    zeallot
 URL: https://benrosche.github.io/bml
 BugReports: https://github.com/benrosche/bml/issues
 RoxygenNote: 7.3.3
-Authors@R: person("Benjamin", "Rosche", role=c("aut", "cre"), 
+Authors@R: person("Benjamin", "Rosche", role=c("aut", "cre"),
     email="benrosche@nyu.edu", comment=c(ORCID="0000-0001-5196-625X"))
-Suggests: 
+Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0)
