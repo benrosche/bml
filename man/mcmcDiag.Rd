@@ -10,9 +10,8 @@ mcmcDiag(bml.out, parameters)
 \item{bml.out}{A model fit object containing JAGS output, typically as returned
 by \code{R2jags::jags()}, with component \code{$jags.out$BUGSoutput}.}
 
-\item{parameters}{Character vector of parameter names (or patterns) to extract,
-passed to \code{\link{crMCMC}}. Depending on your \code{crMCMC()} implementation,
-these may be exact names or patterns (e.g., a prefix like \code{"b"} that
+\item{parameters}{Character vector of parameter names (or patterns) to extract.
+These may be exact names or patterns (e.g., a prefix like \code{"b"} that
 matches \code{"b[1]"}, \code{"b[2]"}, …).}
 }
 \value{
@@ -30,7 +29,7 @@ stationarity p-values, and autocorrelation at lag 50.
 }
 \details{
 Internally, the function converts the BUGS/JAGS output to a
-\code{coda::mcmc.list} via \code{\link{crMCMC}}, then computes per-chain
+\code{coda::mcmc.list}, then computes per-chain
 diagnostics and averages them across chains for each parameter:
 \itemize{
   \item \strong{Gelman–Rubin} (\eqn{\hat{R}}): \code{coda::gelman.diag()}.
@@ -48,12 +47,36 @@ so that \emph{rows are diagnostics} and \emph{columns are parameters}.
 }
 \examples{
 \dontrun{
-mcmcdiag(fit, parameters = c("beta", "sigma"))
+data(coalgov)
+
+# Fit model
+m1 <- bml(
+  Surv(govdur, earlyterm) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+  family = "Weibull",
+  monitor = TRUE,
+  data = coalgov
+)
+
+# Check convergence for main parameters
+mcmcDiag(m1, parameters = "b")  # All b coefficients
+
+# Check specific parameters
+mcmcDiag(m1, parameters = c("b[1]", "b[2]", "shape"))
+
+# Check mm block parameters
+mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm"))
+
+# Interpreting results:
+# - Gelman-Rubin < 1.1: Good convergence
+# - |Geweke z| < 2: No evidence against convergence
+# - Heidelberger p > 0.05: Chain appears stationary
+# - Low autocorrelation at lag 50: Good mixing
 }
 
 }
 \seealso{
-\code{\link{crMCMC}}, \code{\link[coda]{gelman.diag}},
+\code{\link[coda]{gelman.diag}},
   \code{\link[coda]{geweke.diag}}, \code{\link[coda]{heidel.diag}},
   \code{\link[coda]{autocorr}}
 }

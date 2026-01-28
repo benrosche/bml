@@ -2,36 +2,97 @@
 % Please edit documentation in R/monetPlot.R
 \name{monetPlot}
 \alias{monetPlot}
-\title{Create monetPlots for your bml results.}
+\title{Visualize posterior distributions with density and trace plots}
 \usage{
 monetPlot(bml, parameter, label = NULL, r = 2, yaxis = T)
 }
 \arguments{
-\item{bml}{A bml object. bml has to be run with monitor=T}
+\item{bml}{A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.
+Must be fitted with \code{monitor = TRUE} to store MCMC chains.}
 
-\item{parameter}{A string with the parameter name. The internal name has to be used, which are the rownames in the bml reg.table output.}
+\item{parameter}{Character string specifying the parameter to plot. Must use the
+internal parameter name (i.e., row names from \code{bml$reg.table}). Examples:
+\code{"b[1]"} (intercept), \code{"b[2]"} (first covariate), \code{"b.mm.1"}
+(first mm block coefficient), \code{"sigma.mm"} (mm random effect SD).}
 
-\item{label}{String to describe the parameter on the graph's x-axis. Optional. If not specified, the internal parameter name is used.}
+\item{label}{Optional character string for the parameter label displayed on the
+plot. If \code{NULL} (default), uses the internal parameter name.}
 
-\item{r}{Specify number of decimal places. Default equals 3.}
+\item{r}{Number of decimal places for displayed quantiles and statistics.
+Default: 2.}
 
-\item{yaxis}{Logical. If FALSE, the y-axis title is omitted.}
+\item{yaxis}{Logical; if \code{TRUE} (default), display axis titles ("Density"
+and "Scans"). If \code{FALSE}, omit axis titles for cleaner appearance when
+combining multiple plots.}
 }
 \value{
-Returns a plot. The solid vertical is at 0 and the dashed vertical line is the mode of the posterior distributions.
+A \code{ggplot} object (using \code{patchwork}) combining two panels:
+  \itemize{
+    \item \strong{Top panel}: Posterior density with shaded 90\% HPD interval.
+      Solid vertical line at zero, dashed line at posterior median.
+    \item \strong{Bottom panel}: Trace plot showing MCMC iterations across chains.
+      Same reference lines as top panel. Helps diagnose convergence and mixing.
+  }
 }
 \description{
-The function \strong{monetPlot} creates a density plot of the posterior 
-distribution of your model parameters and the traceplot that led to this density.
+Creates a combined diagnostic plot showing both the posterior density and MCMC
+trace plot for a specified parameter. Helps assess convergence and visualize
+posterior uncertainty. The plot displays the median and 90\% highest posterior
+density (HPD) interval.
+}
+\details{
+\strong{Interpreting the Plot:}
+\itemize{
+  \item \strong{Density panel}: Shows the posterior distribution. The dashed line
+    marks the median (central estimate). Shading indicates the 90\% credible region.
+  \item \strong{Trace panel}: Shows parameter values across MCMC iterations for
+    each chain. Good mixing looks like "fuzzy caterpillars" with chains overlapping.
+    Poor mixing shows trends, stickiness, or separation between chains.
+}
+
+\strong{Convergence Checks:}
+\itemize{
+  \item Chains should overlap and explore the same space
+  \item No sustained trends or drift
+  \item Rapid mixing (no long autocorrelation)
+}
+
+Use \code{\link{mcmcDiag}} for formal convergence statistics (Gelman-Rubin,
+Geweke, etc.).
 }
 \examples{
+\dontrun{
 data(coalgov)
-m1 <- bml(Surv(govdur, earlyterm) ~ 1 + majority +
-  mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = TRUE), RE = TRUE) +
-  hm(id = id(cid), name = cname, type = "RE"),
-  family = "Weibull", monitor = TRUE, data = coalgov)
-monetPlot(m1, parameter="b.mm")
 
+# Fit model with monitoring enabled
+m1 <- bml(
+  Surv(govdur, earlyterm) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+    hm(id = id(cid), type = "RE"),
+  family = "Weibull",
+  monitor = TRUE,  # Required for monetPlot
+  data = coalgov
+)
+
+# Plot intercept
+monetPlot(m1, parameter = "b[1]", label = "Intercept")
+
+# Plot majority coefficient with custom label
+monetPlot(m1, parameter = "b[2]", label = "Majority Government Effect")
+
+# Plot mm coefficient
+monetPlot(m1, parameter = "b.mm.1", label = "Party Fragmentation")
+
+# Plot random effect SD
+monetPlot(m1, parameter = "sigma.mm")
+
+# List available parameters
+rownames(m1$reg.table)
+}
+
+}
+\seealso{
+\code{\link{bml}}, \code{\link{mcmcDiag}}, \code{\link{summary.bml}}
 }
 \author{
 Benjamin Rosche <benrosche@nyu.edu>

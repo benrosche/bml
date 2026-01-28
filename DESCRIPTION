@@ -1,6 +1,6 @@
 Package: bml
 Type: Package
-Title: Bayesian multiple-membership multilevel models with parameterizable weight functions.
+Title: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions
 Version: 0.2.0
 Author: Benjamin Rosche
 Maintainer: Benjamin Rosche <benrosche@nyu.edu>
@@ -16,7 +16,13 @@ Imports:
     stringr,
     rjags,
     R2jags,
-    zeallot
+    zeallot,
+    ggplot2,
+    ggmcmc,
+    coda,
+    patchwork,
+    tibble,
+    purrr
 URL: https://benrosche.github.io/bml
 BugReports: https://github.com/benrosche/bml/issues
 RoxygenNote: 7.3.3

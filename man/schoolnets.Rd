@@ -3,30 +3,89 @@
 \docType{data}
 \name{nodedat}
 \alias{nodedat}
-\title{CILS4EU}
+\alias{edgedat}
+\title{School networks data from CILS4EU study}
 \format{
-...
+Two data objects are provided:
+
+\strong{nodedat}: Node-level (student) attributes
 \describe{
-  \item{Col1}{description of Col1}
-...
+  \item{youthid}{Integer. Student identifier (unique across all schools)}
+  \item{schoolid}{Integer. School identifier}
+  \item{classid}{Integer. Classroom identifier}
+  \item{sex}{Factor. Student gender}
+  \item{etn}{Factor. Ethnicity or immigrant background}
+  \item{parent_edu}{Numeric. Parental education level}
+  \item{parent_inc}{Numeric. Parental income}
+  \item{test_lang}{Numeric. Language test score}
+  \item{test_cogn}{Numeric. Cognitive test score}
 }
+
+\strong{edgedat}: Edge-level (friendship) data
+\describe{
+  \item{youthid_from}{Integer. Nominator (student reporting friendship)}
+  \item{youthid_to}{Integer. Nominee (student nominated as friend)}
+  \item{rank}{Integer. Ranking of friendship nomination}
+}
+
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 18314 rows and 3 columns.
+}
+\source{
+CILS4EU - Children of Immigrants Longitudinal Survey in Four European Countries.
+A cross-national longitudinal survey of children of immigrants and native-born
+children in England, Germany, the Netherlands, and Sweden.
 }
 \usage{
-data(schoolnets)
+nodedat
+
+edgedat
 }
 \description{
-...
-schoolid school identifier
-classid classroom identifier
-youthid student identifier 
-sex 
-etn
-parent_edu
-parent_inc
-test_lang
-test_cogn
+Network and survey data from the Children of Immigrants Longitudinal Survey in
+Four European Countries (CILS4EU). The data include friendship networks among
+students nested within classrooms and schools, along with individual-level
+characteristics and outcomes. Structured for hierarchical and multiple-membership
+network models.
+}
+\details{
+This dataset is designed for social network analysis with multilevel structure:
+\itemize{
+  \item \strong{Level 1:} Students (nodes)
+  \item \strong{Level 2:} Classrooms
+  \item \strong{Level 3:} Schools
+}
+
+Students can form friendships both within and across classrooms (though primarily
+within classrooms). This creates opportunities for modeling peer effects, social
+influence, and network formation processes using multiple-membership or hierarchical
+specifications.
+
+\strong{Potential Applications:}
+\itemize{
+  \item Peer influence on academic performance
+  \item Homophily in friendship formation
+  \item Cross-level interactions (school/classroom effects on peer networks)
+  \item Multiple-membership models where students are influenced by multiple peers
+}
 }
 \examples{
 data(schoolnets)
+
+# Explore node data
+head(nodedat)
+table(nodedat$schoolid)  # Students per school
+
+# Explore network structure
+head(edgedat)
+nrow(edgedat)  # Total friendships
+
+\dontrun{
+# Example: Model test scores as function of peer characteristics
+# This would require preparing data with peer-level aggregation
+}
+
+}
+\seealso{
+\code{\link{bml}} for modeling approaches
 }
 \keyword{datasets}

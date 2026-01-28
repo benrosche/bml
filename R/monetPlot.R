@@ -1,32 +1,94 @@
-#' @title Create monetPlots for your bml results.
+#' Visualize posterior distributions with density and trace plots
 #'
-#' @description The function \strong{monetPlot} creates a density plot of the posterior 
-#' distribution of your model parameters and the traceplot that led to this density.
-#' 
-#' @param bml A bml object. bml has to be run with monitor=T
-#' @param parameter A string with the parameter name. The internal name has to be used, which are the rownames in the bml reg.table output.
-#' @param label String to describe the parameter on the graph's x-axis. Optional. If not specified, the internal parameter name is used.
-#' @param r Specify number of decimal places. Default equals 3.
-#' @param yaxis Logical. If FALSE, the y-axis title is omitted.
-#' @return Returns a plot. The solid vertical is at 0 and the dashed vertical line is the mode of the posterior distributions.
+#' @description
+#' Creates a combined diagnostic plot showing both the posterior density and MCMC
+#' trace plot for a specified parameter. Helps assess convergence and visualize
+#' posterior uncertainty. The plot displays the median and 90\% highest posterior
+#' density (HPD) interval.
 #'
-#' @examples data(coalgov)
-#' m1 <- bml(Surv(govdur, earlyterm) ~ 1 + majority +
-#'   mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = TRUE), RE = TRUE) +
-#'   hm(id = id(cid), name = cname, type = "RE"),
-#'   family = "Weibull", monitor = TRUE, data = coalgov)
-#' monetPlot(m1, parameter="b.mm")
+#' @param bml A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.
+#'   Must be fitted with \code{monitor = TRUE} to store MCMC chains.
+#'
+#' @param parameter Character string specifying the parameter to plot. Must use the
+#'   internal parameter name (i.e., row names from \code{bml$reg.table}). Examples:
+#'   \code{"b[1]"} (intercept), \code{"b[2]"} (first covariate), \code{"b.mm.1"}
+#'   (first mm block coefficient), \code{"sigma.mm"} (mm random effect SD).
+#'
+#' @param label Optional character string for the parameter label displayed on the
+#'   plot. If \code{NULL} (default), uses the internal parameter name.
+#'
+#' @param r Number of decimal places for displayed quantiles and statistics.
+#'   Default: 2.
+#'
+#' @param yaxis Logical; if \code{TRUE} (default), display axis titles ("Density"
+#'   and "Scans"). If \code{FALSE}, omit axis titles for cleaner appearance when
+#'   combining multiple plots.
+#'
+#' @return A \code{ggplot} object (using \code{patchwork}) combining two panels:
+#'   \itemize{
+#'     \item \strong{Top panel}: Posterior density with shaded 90\% HPD interval.
+#'       Solid vertical line at zero, dashed line at posterior median.
+#'     \item \strong{Bottom panel}: Trace plot showing MCMC iterations across chains.
+#'       Same reference lines as top panel. Helps diagnose convergence and mixing.
+#'   }
+#'
+#' @details
+#' \strong{Interpreting the Plot:}
+#' \itemize{
+#'   \item \strong{Density panel}: Shows the posterior distribution. The dashed line
+#'     marks the median (central estimate). Shading indicates the 90\% credible region.
+#'   \item \strong{Trace panel}: Shows parameter values across MCMC iterations for
+#'     each chain. Good mixing looks like "fuzzy caterpillars" with chains overlapping.
+#'     Poor mixing shows trends, stickiness, or separation between chains.
+#' }
+#'
+#' \strong{Convergence Checks:}
+#' \itemize{
+#'   \item Chains should overlap and explore the same space
+#'   \item No sustained trends or drift
+#'   \item Rapid mixing (no long autocorrelation)
+#' }
+#'
+#' Use \code{\link{mcmcDiag}} for formal convergence statistics (Gelman-Rubin,
+#' Geweke, etc.).
+#'
+#' @seealso \code{\link{bml}}, \code{\link{mcmcDiag}}, \code{\link{summary.bml}}
+#'
+#' @examples
+#' \dontrun{
+#' data(coalgov)
+#'
+#' # Fit model with monitoring enabled
+#' m1 <- bml(
+#'   Surv(govdur, earlyterm) ~ 1 + majority +
+#'     mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+#'     hm(id = id(cid), type = "RE"),
+#'   family = "Weibull",
+#'   monitor = TRUE,  # Required for monetPlot
+#'   data = coalgov
+#' )
+#'
+#' # Plot intercept
+#' monetPlot(m1, parameter = "b[1]", label = "Intercept")
+#'
+#' # Plot majority coefficient with custom label
+#' monetPlot(m1, parameter = "b[2]", label = "Majority Government Effect")
+#'
+#' # Plot mm coefficient
+#' monetPlot(m1, parameter = "b.mm.1", label = "Party Fragmentation")
+#'
+#' # Plot random effect SD
+#' monetPlot(m1, parameter = "sigma.mm")
+#'
+#' # List available parameters
+#' rownames(m1$reg.table)
+#' }
 #'
 #' @export monetPlot
 #' @author Benjamin Rosche <benrosche@@nyu.edu>
 
 monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
-  
-  library(ggplot2)
-  library(ggmcmc)
-  library(coda)
-  library(patchwork)
-  
+
   escape_regex <- function(x) gsub("([][{}()+*^$|.?\\\\])", "\\\\\\1", x)
   
   # Checks --------------------------------------------------------------------------------------- #
@@ -45,14 +107,14 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
       par_labels = data.frame(Parameter = parameter, Label = label)
     )
   
-  p.quantiles <- mcmc.ggs %>% pull(value) %>% quantile(., c(.05, .5, .95)) %>% round(., r)
-  p.mad <- mcmc.ggs %>% pull(value) %>% mad() %>% round(., r)
-  
+  p.quantiles <- round(quantile(dplyr::pull(mcmc.ggs, value), c(.05, .5, .95)), r)
+  p.mad <- round(mad(dplyr::pull(mcmc.ggs, value)), r)
+
   # Create plots --------------------------------------------------------------------------------- #
-  
+
   if(isTRUE(yaxis)) {
     yaxis <-  "Density"
-    xaxis <- paste0("Scans (", mcmc.ggs %>% pull(Chain) %>% max(), " chains)") 
+    xaxis <- paste0("Scans (", max(dplyr::pull(mcmc.ggs, Chain)), " chains)") 
   } else {
     yaxis <- ""
     xaxis <- ""
@@ -60,32 +122,32 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
   
   # Density plot
   p1 <-
-    ggs_density(mcmc.ggs, hpd = TRUE) +
-    geom_vline(xintercept = 0) +
-    geom_vline(xintercept = p.quantiles[2], linetype = "dashed") +
-    labs(x="", y=yaxis, title = paste0("Parameter: ", label)) +
-    theme_minimal() +
-    theme(
-      plot.margin = unit(c(0, 0, 0, 0), "cm"),
+    ggmcmc::ggs_density(mcmc.ggs, hpd = TRUE) +
+    ggplot2::geom_vline(xintercept = 0) +
+    ggplot2::geom_vline(xintercept = p.quantiles[2], linetype = "dashed") +
+    ggplot2::labs(x="", y=yaxis, title = paste0("Parameter: ", label)) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      plot.margin = ggplot2::unit(c(0, 0, 0, 0), "cm"),
       legend.position = "none",
-      panel.grid = element_blank(),
-      axis.ticks = element_blank(),
-      axis.title.x = element_blank(),
-      axis.text = element_blank(),
-      strip.text = element_blank(),
-      strip.background = element_blank(),
-      plot.title   = element_text(face = "bold", hjust = 0.5, size = 14),
-      axis.title.y = element_text(face = "bold", size = 14)
+      panel.grid = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      axis.title.x = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      strip.text = ggplot2::element_blank(),
+      strip.background = ggplot2::element_blank(),
+      plot.title   = ggplot2::element_text(face = "bold", hjust = 0.5, size = 14),
+      axis.title.y = ggplot2::element_text(face = "bold", size = 14)
     )
   
   # Traceplot
   p2 <-
-    ggs_traceplot(mcmc.ggs, original_burnin = FALSE) +
-    geom_hline(yintercept = 0) +
-    geom_hline(yintercept = p.quantiles[2], linetype = "dashed") +
-    coord_flip() +
-    scale_y_continuous(
-      breaks = c(p.quantiles, 0) %>% as.numeric() %>% sort(),
+    ggmcmc::ggs_traceplot(mcmc.ggs, original_burnin = FALSE) +
+    ggplot2::geom_hline(yintercept = 0) +
+    ggplot2::geom_hline(yintercept = p.quantiles[2], linetype = "dashed") +
+    ggplot2::coord_flip() +
+    ggplot2::scale_y_continuous(
+      breaks = sort(as.numeric(c(p.quantiles, 0))),
       labels = function(x) {
         labs <- c(
           setNames(
@@ -97,25 +159,25 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
         labs[as.character(x)]
       }
     ) +
-    labs(
+    ggplot2::labs(
       x = xaxis,
       y = ""
     ) +
-    theme_minimal() +
-    theme(
-      plot.margin = unit(c(-0.6, 0, 0, 0), "cm"),
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      plot.margin = ggplot2::unit(c(-0.6, 0, 0, 0), "cm"),
       legend.position = "none",
-      panel.grid = element_blank(),
-      axis.text.y = element_blank(),
-      strip.text = element_blank(),
-      axis.title.y = element_text(face = "bold", size = 14),
-      axis.text.x  = element_text(color = "black", size = 12)  
+      panel.grid = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      strip.text = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_text(face = "bold", size = 14),
+      axis.text.x  = ggplot2::element_text(color = "black", size = 12)
     )
-  
+
   return(
     (p1 / p2) +
-      plot_layout(heights = c(1, 1)) +  
-      plot_annotation(theme = theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))) 
+      patchwork::plot_layout(heights = c(1, 1)) +
+      patchwork::plot_annotation(theme = ggplot2::theme(plot.margin = ggplot2::unit(c(0, 0, 0, 0), "cm")))
   )
   
 }

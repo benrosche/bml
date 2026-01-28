@@ -1,11 +1,12 @@
 data("coalgov")
+data <- coalgov
 
 test_that("dissectFormula() works with all model families and with and without intercept", {
   
   # Gaussian
   expect_no_error(
     dissectFormula(
-      formula(sim.y ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id(pid, gid), mmc(ipd), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(sim.y ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n, c = TRUE))),
       family="Gaussian",
       data
     ),
@@ -14,7 +15,7 @@ test_that("dissectFormula() works with all model families and with and without i
   
   expect_error(
     dissectFormula(
-      formula(Surv(sim.st, sim.e) ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id(pid, gid), mmc(ipd), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(Surv(sim.st, sim.e) ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n, c = TRUE))),
       family="Gaussian",
       data
     ),
@@ -25,7 +26,7 @@ test_that("dissectFormula() works with all model families and with and without i
   # Binomial 
   expect_no_error(
     dissectFormula(
-      formula(sim.y ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id(pid, gid), mmc(ipd), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(sim.y ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n, c = TRUE))),
       family="Binomial",
       data
     ),
@@ -34,7 +35,7 @@ test_that("dissectFormula() works with all model families and with and without i
   
   expect_error(
     dissectFormula(
-      formula(Surv(sim.st, sim.e) ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id(pid, gid), mmc(ipd), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(Surv(sim.st, sim.e) ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n, c = TRUE))),
       family="Binomial",
       data
     ),
@@ -44,7 +45,7 @@ test_that("dissectFormula() works with all model families and with and without i
   # Weibull
   expect_no_error(
     dissectFormula(
-      formula(Surv(sim.st, sim.e) ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id(pid, gid), mmc(ipd), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(Surv(sim.st, sim.e) ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n, c = TRUE))),
       family="Weibull",
       data
     ),
@@ -53,7 +54,7 @@ test_that("dissectFormula() works with all model families and with and without i
   
   expect_error(
     dissectFormula(
-      formula(sim.y ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id(pid, gid), mmc(ipd), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(sim.y ~ 1 + majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n, c = TRUE))),
       family="Weibull",
       data
     ),
@@ -62,7 +63,7 @@ test_that("dissectFormula() works with all model families and with and without i
   
   expect_no_error(
     dissectFormula(
-      formula(sim.y ~ majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id(pid, gid), mmc(ipd), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(sim.y ~ majority + mwc + hm(id = cid, name = cname, type = RE, showFE = F) + mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n, c = TRUE))),
       family="Gaussian",
       data
     ),
@@ -79,7 +80,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
 
   expect_error(
     dissectFormula(
-      formula(Surv(govdur, earlyterm) ~ 1 + mm(mmc(ipd), mmw(w ~ 1/exp(ipd), c = 2))),
+      formula(Surv(govdur, earlyterm) ~ 1 + mm(vars = vars(ipd), fn = fn(w ~ 1/exp(ipd), c = FALSE))),
       family="Weibull",
       data
     ),
@@ -88,56 +89,56 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
   
   expect_error(
     dissectFormula(
-      formula(Surv(govdur, earlyterm) ~ 1 + mm(id(pid, gid), mmw(w ~ 1/exp(ipd), c = 2))),
+      formula(Surv(govdur, earlyterm) ~ 1 + mm(id = id(pid, gid), fn = fn(w ~ 1/exp(ipd), c = FALSE))),
       family="Weibull",
       data
     ),
-    label="mm() -> mmc() missing"
+    label="mm() -> vars missing"
   )
-  
+
   expect_error(
     dissectFormula(
-      formula(Surv(govdur, earlyterm) ~ 1 + mm(id(pid, gid), mmc(ipd))),
+      formula(Surv(govdur, earlyterm) ~ 1 + mm(id = id(pid, gid), vars = vars(ipd))),
       family="Weibull",
       data
     ),
-    label="mm() -> mmw() missing"
+    label="mm() -> fn() missing"
   )
-  
+
   expect_no_error(
     dissectFormula(
-      formula(Surv(govdur, earlyterm) ~ 1 + mm(id(pid, gid), mmc(), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(Surv(govdur, earlyterm) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE), RE = TRUE)),
       family="Weibull",
       data
     ),
-    message="mm() -> no mmc() variables should be possible"
+    message="mm() -> no vars (NULL) should be possible"
   )
   
   expect_equal(
     {dissectFormula(
-      formula(Surv(govdur, earlyterm) ~ 1 + mm(id(pid, gid), mmc(), mmw(w ~ 1/offset(n), constraint = 1))),
+      formula(Surv(govdur, earlyterm) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE), RE = TRUE)),
       family="Weibull",
-      data)}[["l1"]][["mmwconstraint"]], 
-    1, 
-    label="mm() -> constraint = 1 should return 1"
+      data)}[["l1"]][["mmwconstraint"]],
+    1,
+    label="mm() -> c = TRUE (constrained) should return 1"
   )
-  
+
   expect_equal(
     {dissectFormula(
-      formula(Surv(govdur, earlyterm) ~ 1 + mm(id(pid, gid), mmc(), mmw(w ~ 1/offset(n), c = 2))),
+      formula(Surv(govdur, earlyterm) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = FALSE), RE = TRUE)),
       family="Weibull",
-      data)}[["l1"]][["mmwconstraint"]], 
-    2, 
-    label="mm() -> c = 2 should return 2"
+      data)}[["l1"]][["mmwconstraint"]],
+    2,
+    label="mm() -> c = FALSE (unconstrained) should return 2"
   )
-  
+
   expect_equal(
     {dissectFormula(
-      formula(Surv(govdur, earlyterm) ~ 1 + mm(id(pid, gid), mmc(), mmw(w ~ 1/offset(n)))),
+      formula(Surv(govdur, earlyterm) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)),
       family="Weibull",
-      data)}[["l1"]][["mmwconstraint"]], 
-    1, 
-    label="mm() -> no constraint should return 1"
+      data)}[["l1"]][["mmwconstraint"]],
+    1,
+    label="mm() -> default c (TRUE) should return 1"
   )
   
 })

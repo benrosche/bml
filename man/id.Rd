@@ -2,16 +2,38 @@
 % Please edit documentation in R/helpers.R
 \name{id}
 \alias{id}
-\title{Specify ID variables}
+\title{Specify identifier variables for multiple-membership and hierarchical structures}
 \usage{
 id(...)
 }
 \arguments{
-\item{...}{Unquoted variable names (e.g., id(mmid, mainid) for mm(), id(hmid) for hm())}
+\item{...}{Unquoted variable names from your data:
+\itemize{
+  \item For \code{mm()}: Two identifiers \code{id(mmid, mainid)} where
+    \code{mmid} identifies member-level units and \code{mainid} identifies
+    group-level units
+  \item For \code{hm()}: One identifier \code{id(hmid)} where \code{hmid}
+    identifies nesting-level units
+}}
 }
 \value{
-A bml_id object containing the variable names as characters
+A \code{bml_id} object containing the variable names as character strings.
 }
 \description{
-Helper function to specify level identifiers in mm() and hm() objects.
+Helper function used within \code{\link{mm}} and \code{\link{hm}} to specify
+the identifier variables that define memberships and nesting structures. In
+multiple-membership models, \code{id()} links member-level units (e.g., party
+IDs) to group-level units (e.g., government IDs). In hierarchical models,
+\code{id()} specifies the nesting-level identifier (e.g., country ID).
+}
+\examples{
+# Multiple-membership: parties (pid) within governments (gid)
+id(pid, gid)
+
+# Hierarchical: governments within countries
+id(cid)
+
+}
+\seealso{
+\code{\link{mm}}, \code{\link{hm}}, \code{\link{bml}}
 }

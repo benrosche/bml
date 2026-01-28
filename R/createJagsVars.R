@@ -2,7 +2,7 @@
 # Function createJagsVars
 # ================================================================================================ #
 
-createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, monitor, modelfile, chains, inits) {
+createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, monitor, modelfile, chains, inits, cox_intervals = NULL) {
 
   # Unpack main ------------------------------------------------------------------------------ #
 
@@ -59,13 +59,16 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   # Create X matrices for mm() blocks
   # ========================================================================================== #
 
-  X.mm      <- list()
-  X.mm.fix  <- list()
-  fix.mm    <- list()
-  X.w       <- list()
-  n.Xmm     <- list()
-  n.Xmm.fix <- list()
-  n.Xw      <- list()
+  X.mm       <- list()
+  X.mm.fix   <- list()
+  fix.mm     <- list()
+  offset.mm  <- list()
+  X.w        <- list()
+  w.precomp  <- list()  # Phase 2: Pre-computed weights
+  w.is.precomp <- list()  # Phase 2: Flag for whether weights are pre-computed
+  n.Xmm      <- list()
+  n.Xmm.fix  <- list()
+  n.Xw       <- list()
 
   if (has_mm) {
     for (i in seq_along(mm_blocks)) {
@@ -86,10 +89,14 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
         X.mm.fix[[i]] <- block$dat_fixed %>% dplyr::select(all_of(var_names)) %>% as.matrix()
         fix.mm[[i]] <- block$fix_values
         n.Xmm.fix[[i]] <- length(fix.mm[[i]])
+
+        # Phase 1 Optimization: Pre-compute fixed coefficient contributions
+        offset.mm[[i]] <- as.vector(X.mm.fix[[i]] %*% fix.mm[[i]])
       } else {
         X.mm.fix[[i]] <- NULL
         fix.mm[[i]] <- NULL
         n.Xmm.fix[[i]] <- 0
+        offset.mm[[i]] <- NULL
       }
 
       # Weight matrix for this block
@@ -100,6 +107,38 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
       } else {
         X.w[[i]] <- NULL
         n.Xw[[i]] <- 0
+      }
+
+      # Phase 2 Optimization: Pre-compute weights if weight function has no parameters
+      if (length(block$fn$params) == 0) {
+        # Weight function is deterministic - pre-compute in R
+        fn_string <- block$fn$string
+
+        # Replace variables with actual values from X.w
+        uw <- rep(NA, n.mm)
+        for (j in 1:n.mm) {
+          fn_eval <- fn_string
+          for (v in seq_along(wvars)) {
+            fn_eval <- gsub(paste0("\\b", wvars[v], "\\b"), X.w[[i]][j, v], fn_eval)
+          }
+          uw[j] <- eval(parse(text = fn_eval))
+        }
+
+        # Normalize if constrained
+        if (block$fn$constraint) {
+          w.precomp[[i]] <- rep(NA, n.mm)
+          for (j in 1:n.mm) {
+            sum_uw <- sum(uw[mmi1.mm[j]:mmi2.mm[j]])
+            w.precomp[[i]][j] <- uw[j] / sum_uw
+          }
+        } else {
+          w.precomp[[i]] <- uw
+        }
+
+        w.is.precomp[[i]] <- TRUE
+      } else {
+        w.precomp[[i]] <- NULL
+        w.is.precomp[[i]] <- FALSE
       }
     }
   }
@@ -126,16 +165,21 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     X.main.fix <- main$dat_fixed %>% dplyr::select(all_of(var_names_data)) %>% as.matrix()
     fix.main <- main$fix_values
     n.Xmain.fix <- length(fix.main)
+
+    # Phase 1 Optimization: Pre-compute fixed coefficient contributions
+    offset.main <- as.vector(X.main.fix %*% fix.main)
   } else {
     X.main.fix <- NULL
     fix.main <- NULL
     n.Xmain.fix <- 0
+    offset.main <- NULL
   }
 
   # HM level
   X.hm      <- list()
   X.hm.fix  <- list()
   fix.hm    <- list()
+  offset.hm <- list()
   n.Xhm     <- list()
   n.Xhm.fix <- list()
 
@@ -158,10 +202,14 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
         X.hm.fix[[i]] <- block$dat_fixed %>% dplyr::select(all_of(var_names)) %>% as.matrix()
         fix.hm[[i]] <- block$fix_values
         n.Xhm.fix[[i]] <- length(fix.hm[[i]])
+
+        # Phase 1 Optimization: Pre-compute fixed coefficient contributions
+        offset.hm[[i]] <- as.vector(X.hm.fix[[i]] %*% fix.hm[[i]])
       } else {
         X.hm.fix[[i]] <- NULL
         fix.hm[[i]] <- NULL
         n.Xhm.fix[[i]] <- 0
+        offset.hm[[i]] <- NULL
       }
     }
   }
@@ -323,22 +371,93 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   } else if (family == "Cox") {
 
     t <- maindat %>% dplyr::rename(t = all_of(lhs[1]), ev = all_of(lhs[2])) %>% dplyr::pull(t)
-    t.unique <- c(sort(unique(t)), max(t) + 1)
-    n.tu <- length(t.unique) - 1
     event <- maindat %>% dplyr::rename(ev = all_of(lhs[2])) %>% dplyr::pull(ev)
 
-    Y <- matrix(data = NA, nrow = n.main, ncol = n.tu)
-    dN <- matrix(data = NA, nrow = n.main, ncol = n.tu)
-    for (j in 1:n.main) {
-      for (k in 1:n.tu) {
-        Y[j, k] <- as.numeric(t[j] - t.unique[k] + 1e-05 >= 0)
-        dN[j, k] <- Y[j, k] * event[j] * as.numeric(t.unique[k + 1] - t[j] >= 1e-05)
-      }
-    }
+    # Check if piecewise constant baseline hazard is requested
+    if (!is.null(cox_intervals) && is.numeric(cox_intervals) && cox_intervals > 0) {
 
-    jags.data <- c(jags.data, "Y", "dN", "t.unique", "n.tu", "c", "d")
-    jags.inits <- list(dL0 = rep(1.0, n.tu))
-    Ys <- list(Y = Y, dN = dN, t = t, t.unique = t.unique, event = event, c = 0.001, d = 0.1, n.tu = n.tu)
+      # Piecewise constant baseline hazard approach
+      n.intervals <- as.integer(cox_intervals)
+
+      # Create interval breaks based on quantiles of event times
+      event_times <- t[event == 1]
+      if (length(event_times) == 0) {
+        stop("No events observed in the data. Cox model cannot be estimated.")
+      }
+
+      # Use quantiles to create intervals
+      time_breaks <- quantile(event_times, probs = seq(0, 1, length.out = n.intervals + 1))
+      time_breaks[1] <- 0  # Start from 0
+      time_breaks[length(time_breaks)] <- max(t) + 1  # Extend beyond max time
+
+      # For each individual, compute time at risk and events in each interval
+      Y_interval <- matrix(data = 0, nrow = n.main, ncol = n.intervals)
+      dN_interval <- matrix(data = 0, nrow = n.main, ncol = n.intervals)
+
+      for (j in 1:n.main) {
+        t_j <- t[j]
+        event_j <- event[j]
+
+        for (k in 1:n.intervals) {
+          interval_start <- time_breaks[k]
+          interval_end <- time_breaks[k + 1]
+
+          # Time at risk in this interval
+          # Individual contributes risk time from when they enter until they leave/event/censor
+          if (t_j <= interval_start) {
+            # Event/censor happened at or before this interval started
+            Y_interval[j, k] <- 0
+          } else if (t_j > interval_end) {
+            # Individual was at risk for the entire interval (event/censor happens later)
+            Y_interval[j, k] <- interval_end - interval_start
+          } else {
+            # Individual was at risk for part of the interval (event/censor at t_j)
+            Y_interval[j, k] <- t_j - interval_start
+          }
+
+          # Event in this interval: use (start, end] to match time-at-risk logic
+          # This ensures dN=1 only when Y>0 (individual had time at risk in this interval)
+          if (event_j == 1) {
+            if (t_j > interval_start && t_j <= interval_end) {
+              dN_interval[j, k] <- 1
+            }
+          }
+        }
+      }
+
+      jags.data <- c(jags.data, "Y_interval", "dN_interval", "n.intervals", "c", "d")
+      jags.inits <- list(lambda0 = rep(0.01, n.intervals))
+      Ys <- list(
+        Y_interval = Y_interval,
+        dN_interval = dN_interval,
+        t = t,
+        time_breaks = time_breaks,
+        event = event,
+        c = 0.001,
+        d = 0.1,
+        n.intervals = n.intervals
+      )
+
+    } else {
+
+      # Original implementation: all unique event times
+      t.unique <- c(sort(unique(t)), max(t) + 1)
+      n.tu <- length(t.unique) - 1
+
+      Y <- matrix(data = NA, nrow = n.main, ncol = n.tu)
+      dN <- matrix(data = NA, nrow = n.main, ncol = n.tu)
+      for (j in 1:n.main) {
+        for (k in 1:n.tu) {
+          Y[j, k] <- as.numeric(t[j] - t.unique[k] + 1e-05 >= 0)
+          dN[j, k] <- Y[j, k] * event[j] * as.numeric(t.unique[k + 1] - t[j] >= 1e-05)
+        }
+      }
+
+      jags.data <- c(jags.data, "Y", "dN", "t.unique", "n.tu", "c", "d")
+      jags.inits <- list(dL0 = rep(1.0, n.tu))
+      Ys <- list(Y = Y, dN = dN, t = t, t.unique = t.unique, event = event, c = 0.001, d = 0.1, n.tu = n.tu)
+
+    }
 
   }
 
@@ -366,12 +485,22 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     jags.data.list$ct.lb <- Ys$ct.lb
     jags.data.list$censored <- Ys$censored
   } else if (family == "Cox") {
-    jags.data.list$Y <- Ys$Y
-    jags.data.list$dN <- Ys$dN
-    jags.data.list$t.unique <- Ys$t.unique
-    jags.data.list$n.tu <- Ys$n.tu
-    jags.data.list$c <- Ys$c
-    jags.data.list$d <- Ys$d
+    if (!is.null(cox_intervals) && is.numeric(cox_intervals) && cox_intervals > 0) {
+      # Piecewise constant baseline hazard
+      jags.data.list$Y_interval <- Ys$Y_interval
+      jags.data.list$dN_interval <- Ys$dN_interval
+      jags.data.list$n.intervals <- Ys$n.intervals
+      jags.data.list$c <- Ys$c
+      jags.data.list$d <- Ys$d
+    } else {
+      # Original: all unique event times
+      jags.data.list$Y <- Ys$Y
+      jags.data.list$dN <- Ys$dN
+      jags.data.list$t.unique <- Ys$t.unique
+      jags.data.list$n.tu <- Ys$n.tu
+      jags.data.list$c <- Ys$c
+      jags.data.list$d <- Ys$d
+    }
   }
 
   # Main-level data
@@ -382,8 +511,8 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
 
   # Main-level fixed data
   if (n.Xmain.fix > 0) {
-    jags.data.list$X.fix.main <- X.main.fix
-    jags.data.list$fix.main <- fix.main
+    # Phase 1 Optimization: Pass pre-computed offset instead of X.fix and fix separately
+    jags.data.list$offset.main <- offset.main
   }
 
   # MM-level data
@@ -411,18 +540,29 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
 
       # Fixed variables
       if (n.Xmm.fix[[i]] > 0) {
-        jags.data.list[[paste0("X.fix.mm.", i)]] <- X.mm.fix[[i]]
-        jags.data.list[[paste0("fix.mm.", i)]] <- fix.mm[[i]]
+        # Phase 1 Optimization: Pass pre-computed offset instead of X.fix and fix separately
+        jags.data.list[[paste0("offset.mm.", i)]] <- offset.mm[[i]]
       }
 
       # Weight variables
-      if (n.Xw[[i]] > 0) {
+      if (w.is.precomp[[i]]) {
+        # Phase 2 Optimization: Pass pre-computed weights as data
+        jags.data.list[[paste0("w.", i)]] <- w.precomp[[i]]
+      } else if (n.Xw[[i]] > 0) {
+        # Weights have parameters - pass X.w for computation in JAGS
         jags.data.list[[paste0("X.w.", i)]] <- X.w[[i]]
       }
     }
 
-    # Constraint indices
-    if (any(sapply(mm_blocks, function(b) b$fn$constraint))) {
+    # Constraint indices (only needed when weights are computed in JAGS)
+    needs_constraint_indices <- FALSE
+    for (i in seq_along(mm_blocks)) {
+      if (mm_blocks[[i]]$fn$constraint && !w.is.precomp[[i]]) {
+        needs_constraint_indices <- TRUE
+        break
+      }
+    }
+    if (needs_constraint_indices) {
       jags.data.list$mmi1.mm <- mmi1.mm
       jags.data.list$mmi2.mm <- mmi2.mm
     }
@@ -448,8 +588,8 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
 
       # Fixed variables
       if (n.Xhm.fix[[i]] > 0) {
-        jags.data.list[[paste0("X.fix.hm.", i)]] <- X.hm.fix[[i]]
-        jags.data.list[[paste0("fix.hm.", i)]] <- fix.hm[[i]]
+        # Phase 1 Optimization: Pass pre-computed offset instead of X.fix and fix separately
+        jags.data.list[[paste0("offset.hm.", i)]] <- offset.hm[[i]]
       }
     }
 
@@ -483,7 +623,8 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
       Xs = list(
         X.mm = X.mm, X.main = X.main, X.hm = X.hm, X.w = X.w,
         X.mm.fix = X.mm.fix, X.main.fix = X.main.fix, X.hm.fix = X.hm.fix,
-        fix.mm = fix.mm, fix.main = fix.main, fix.hm = fix.hm
+        fix.mm = fix.mm, fix.main = fix.main, fix.hm = fix.hm,
+        w.is.precomp = w.is.precomp  # Phase 2: Flags for pre-computed weights
       ),
       Ys = Ys,
       jags.params = jags.params,

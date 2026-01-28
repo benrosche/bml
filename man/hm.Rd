@@ -2,26 +2,102 @@
 % Please edit documentation in R/helpers.R
 \name{hm}
 \alias{hm}
-\title{Hierarchical membership specification}
+\title{Define a hierarchical nesting structure}
 \usage{
 hm(id, vars = NULL, name = NULL, type = "RE", showFE = FALSE, ar = FALSE)
 }
 \arguments{
-\item{id}{An id() object specifying the nesting-level identifier: id(hmid)}
+\item{id}{An \code{\link{id}} object specifying the nesting-level identifier:
+\code{id(hmid)} where \code{hmid} identifies the higher-level units (e.g.,
+countries, regions).}
 
-\item{vars}{A vars() object specifying nesting-level variables, or NULL}
+\item{vars}{A \code{\link{vars}} object specifying nesting-level covariates,
+or \code{NULL} for intercept-only effects.}
 
-\item{name}{Unquoted variable name for nesting-level labels (optional)}
+\item{name}{Unquoted variable name for nesting-level labels (optional). If
+provided, these labels will be displayed in model output for fixed effects.}
 
-\item{type}{Character; "RE" for random effects (default) or "FE" for fixed effects}
+\item{type}{Character; either \code{"RE"} for random effects (default) or
+\code{"FE"} for fixed effects at the nesting level.}
 
-\item{showFE}{Logical; if TRUE and type = "FE", report the fixed effects (default: FALSE)}
+\item{showFE}{Logical; if \code{TRUE} and \code{type = "FE"}, fixed effect
+estimates for each nesting-level unit are included in output. Default: \code{FALSE}.}
 
-\item{ar}{Logical; if TRUE, random effects evolve autoregressively across participations (default: FALSE)}
+\item{ar}{Logical; if \code{TRUE}, random effects evolve autoregressively across
+participations at the nesting level. Requires sequential participation
+indicators in the data. Default: \code{FALSE}.}
 }
 \value{
-A bml_hm object containing the hierarchical membership specification
+A \code{bml_hm} object containing the hierarchical specification.
 }
 \description{
-Specifies a hierarchical (nesting-level) structure including variables and effect type.
+Specifies a hierarchical (nesting) level in the model where group-level units
+are nested within higher-level entities. Unlike multiple-membership structures,
+each group belongs to exactly one nesting-level unit. Can model either random
+effects or fixed effects at the nesting level.
+}
+\details{
+\strong{Hierarchical vs. Multiple-Membership:}
+
+Hierarchical structures (\code{hm}) model strict nesting: each group belongs to
+exactly one higher-level unit. Use \code{\link{mm}} when groups can have
+memberships in multiple units.
+
+\strong{Random vs. Fixed Effects:}
+\itemize{
+  \item \strong{Random effects} (\code{type = "RE"}): Nesting-level units are
+    treated as a random sample from a population. Best when you have many units
+    and want to generalize.
+  \item \strong{Fixed effects} (\code{type = "FE"}): Each unit gets its own
+    parameter. Best when you have few units or want to estimate unit-specific effects.
+}
+
+\strong{Cross-Classification:}
+
+Multiple \code{hm()} blocks create cross-classified models where groups are
+simultaneously nested within multiple non-nested hierarchies (e.g., schools
+within both neighborhoods and districts).
+}
+\examples{
+# Random effects with covariates
+hm(
+  id = id(cid),
+  vars = vars(gdp + democracy),
+  name = cname,
+  type = "RE"
+)
+
+# Random intercepts only
+hm(
+  id = id(cid),
+  vars = NULL,
+  type = "RE"
+)
+
+# Fixed effects
+hm(
+  id = id(cid),
+  vars = NULL,
+  name = cname,
+  type = "FE",
+  showFE = TRUE  # Show estimates for each country
+)
+
+# Autoregressive random effects
+hm(
+  id = id(cid),
+  vars = NULL,
+  type = "RE",
+  ar = TRUE  # Effects evolve over time
+)
+
+}
+\references{
+Goldstein, H. (2011). \emph{Multilevel Statistical Models} (4th ed.). Wiley.
+
+Rabe-Hesketh, S., & Skrondal, A. (2012). \emph{Multilevel and Longitudinal
+Modeling Using Stata} (3rd ed.). Stata Press.
+}
+\seealso{
+\code{\link{bml}}, \code{\link{mm}}, \code{\link{id}}, \code{\link{vars}}
 }

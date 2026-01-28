@@ -2,7 +2,7 @@
 # Function formatJags
 # ================================================================================================ #
 
-formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm) {
+formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm, family, cox_intervals = NULL) {
 
  # ========================================================================================== #
   # Flags and setup
@@ -21,6 +21,7 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
   n.mmblocks <- Ns$n.mmblocks
 
   mainvars <- main$vars
+  lhs      <- main$lhs
 
   # Check if any mm block uses AR
   any_ar <- has_mm && any(sapply(mm_blocks, function(b) b$ar))
@@ -443,6 +444,17 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
   # ========================================================================================== #
   # Finalize reg.table
   # ========================================================================================== #
+  #
+  # Final structure of reg.table:
+  #   - Rownames: Original JAGS parameter names (e.g., "b[1]", "sigma.mm")
+  #   - Columns:
+  #       * Parameter: Cleaned/labeled parameter names (accessible via $Parameter)
+  #       * mean: Posterior means (accessible via $mean)
+  #       * sd: Posterior standard deviations (accessible via $sd)
+  #       * lb: Lower 95% credible interval bound (accessible via $lb)
+  #       * ub: Upper 95% credible interval bound (accessible via $ub)
+  #
+  # ========================================================================================== #
 
   reg.table <- reg.table %>%
     dplyr::mutate(Parameter = newnames) %>%
@@ -454,6 +466,35 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
   attr(reg.table, "estimate_type") <- "Posterior mean (MCMC)"
   attr(reg.table, "credible_interval") <- "95% equal-tailed credible intervals [2.5%, 97.5%]"
   attr(reg.table, "DIC") <- as.numeric(jags.out$BUGSoutput$DIC)
+
+  # Add outcome family and link information
+  outcome_desc <- switch(family,
+    "Gaussian" = "Gaussian (identity link)",
+    "Binomial" = "Binomial (logit link)",
+    "Weibull"  = {
+      if (length(lhs) >= 2) {
+        paste0("Weibull survival (duration: ", lhs[1], ", event: ", lhs[2], ")")
+      } else {
+        "Weibull survival (log link)"
+      }
+    },
+    "Cox" = {
+      base_desc <- if (length(lhs) >= 2) {
+        paste0("Cox proportional hazards (duration: ", lhs[1], ", event: ", lhs[2])
+      } else {
+        "Cox proportional hazards (log link"
+      }
+
+      # Add interval information if using piecewise constant baseline hazard
+      if (!is.null(cox_intervals) && is.numeric(cox_intervals) && cox_intervals > 0) {
+        paste0(base_desc, ", ", cox_intervals, " baseline hazard intervals)")
+      } else {
+        paste0(base_desc, ")")
+      }
+    },
+    paste0(family, " (unknown link)")  # fallback
+  )
+  attr(reg.table, "outcome_family") <- outcome_desc
 
   # Build level specification
   level_spec_lines <- c()

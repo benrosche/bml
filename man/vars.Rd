@@ -2,17 +2,50 @@
 % Please edit documentation in R/helpers.R
 \name{vars}
 \alias{vars}
-\title{Specify variables}
+\title{Specify covariates for multiple-membership or hierarchical models}
 \usage{
 vars(...)
 }
 \arguments{
-\item{...}{Unquoted variable names, can use + syntax (e.g., vars(x1 + x2) or vars(x1, x2))
-Can also include fix() calls for fixed coefficients (e.g., vars(fix(x1, 1.0) + x2))}
+\item{...}{Unquoted variable names from your data. Variables can be separated
+by \code{+} or commas. To fix a coefficient, wrap the variable in
+\code{\link{fix}}.}
 }
 \value{
-A bml_vars object containing free and fixed variable specifications, or NULL if empty
+A \code{bml_vars} object containing:
+  \itemize{
+    \item \code{free}: Character vector of variables with coefficients to estimate
+    \item \code{fixed}: List of variables with fixed coefficients (if any)
+  }
+  Returns \code{NULL} if no variables are specified.
 }
 \description{
-Helper function to specify variables in mm() and hm() objects.
+Helper function used within \code{\link{mm}} and \code{\link{hm}} to specify
+which variables should be included at each level of the model. Supports both
+free variables (with coefficients to be estimated) and fixed variables (with
+coefficients held constant using \code{\link{fix}}).
+}
+\examples{
+# Simple variable specification
+vars(income + education)
+
+# Equivalent using comma separation
+vars(income, education)
+
+# Mix free and fixed variables
+vars(fix(exposure, 1.0) + income + education)
+
+# Use in mm() specification
+\dontrun{
+mm(
+  id = id(pid, gid),
+  vars = vars(rile + ipd),
+  fn = fn(w ~ 1/n),
+  RE = FALSE
+)
+}
+
+}
+\seealso{
+\code{\link{fix}}, \code{\link{mm}}, \code{\link{hm}}
 }

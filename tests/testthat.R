@@ -10,26 +10,3 @@ library(testthat)
 library(bml)
 
 test_check("bml")
-
-# devtools::document()
-devtools::load_all()
-library(tidyverse)
-data(coalgov)
-
-bml(
-  sim.y ~
-    1 +
-    majority +
-    hm(id = id(cid), type = "RE", ar = F) +
-    mm(
-      id = id(pid, gid),
-      vars = vars(fdep),
-      fn = fn(w ~ 1 / n),
-      RE = T,
-      ar = F
-    ),
-  family = "Gaussian",
-  monitor = F,
-  data = coalgov
-) |>
-  summary()

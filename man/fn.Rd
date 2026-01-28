@@ -2,18 +2,68 @@
 % Please edit documentation in R/helpers.R
 \name{fn}
 \alias{fn}
-\title{Specify weight function}
+\title{Specify a weight function for multiple-membership models}
 \usage{
 fn(w = w ~ 1/n, c = TRUE)
 }
 \arguments{
-\item{w}{A formula specifying the weight function (default: w ~ 1/n)}
+\item{w}{A two-sided formula specifying the weight function. The left-hand side
+must be \code{w}; the right-hand side defines the weighting scheme:
+\itemize{
+  \item Simple: \code{w ~ 1/n} (equal weights based on group size)
+  \item Parameterized: \code{w ~ b0 + b1 * tenure} (weights depend on
+    member characteristics and estimated parameters)
+}
+Parameters must be named \code{b0}, \code{b1}, \code{b2}, etc.}
 
-\item{c}{Logical; if TRUE (default), weights are constrained to sum to 1}
+\item{c}{Logical; if \code{TRUE} (default), weights are normalized to sum to 1
+within each group. Set to \code{FALSE} for unnormalized weights.}
 }
 \value{
-A bml_fn object containing the weight function specification
+A \code{bml_fn} object containing the parsed weight function specification.
 }
 \description{
-Helper function to specify the weight function in mm() objects.
+Defines how member-level contributions are weighted when aggregating to the
+group level (the "micro-macro link"). The weight function can be a simple
+formula (e.g., \code{1/n} for equal weights) or can include parameters to be
+estimated from the data.
+}
+\details{
+\strong{Weight Function Components:}
+\itemize{
+  \item \strong{Variables} (e.g., \code{n}, \code{tenure}): Data from your dataset
+  \item \strong{Parameters} (e.g., \code{b0}, \code{b1}): Estimated from the data
+  \item \strong{Operations}: Standard R arithmetic (\code{+}, \code{-}, \code{*},
+    \code{/}, \code{^}, etc.)
+}
+
+\strong{Common Weight Functions:}
+\itemize{
+  \item Equal weights: \code{w ~ 1/n}
+  \item Duration-based: \code{w ~ duration}
+  \item Flexible parameterized: \code{w ~ b0 + b1 * seniority}
+}
+
+When \code{c = TRUE}, the weights are constrained: \eqn{\sum_{k \in group} w_k = 1}.
+}
+\examples{
+# Equal weights (standard multiple-membership)
+fn(w ~ 1/n, c = TRUE)
+
+# Tenure-based weights (proportional to time served)
+fn(w ~ tenure, c = TRUE)
+
+# Flexible parameterized weights
+fn(w ~ b0 + b1 * seniority, c = TRUE)
+
+# Unconstrained weights
+fn(w ~ importance, c = FALSE)
+
+}
+\references{
+Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
+multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
+}
+\seealso{
+\code{\link{mm}}, \code{\link{bml}}
 }

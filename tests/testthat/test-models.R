@@ -1,0 +1,402 @@
+data("coalgov")
+
+# ================================================================================================ #
+# Tests for different model families
+# ================================================================================================ #
+
+test_that("Gaussian model setup works", {
+  expect_no_error({
+    m <- bml(
+      sim.y ~ 1 + majority,
+      family = "Gaussian",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("Binomial model setup works", {
+  expect_no_error({
+    m <- bml(
+      earlyterm ~ 1 + majority,
+      family = "Binomial",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("Weibull model setup works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority,
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("Cox model setup works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority,
+      family = "Cox",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("Cox model with intervals works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority,
+      family = "Cox",
+      cox_intervals = 10,
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Tests for mm() blocks
+# ================================================================================================ #
+
+test_that("mm() with variables and equal weights works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("mm() with variables and RE works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("mm() with RE only (no variables) works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("mm() with multiple variables works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep + ipd), fn = fn(w ~ 1/n), RE = FALSE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("mm() with parameterized weight function works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel), RE = FALSE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("mm() with unconstrained weights works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = FALSE), RE = FALSE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("Multiple mm() blocks work", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
+        mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n), RE = TRUE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Tests for hm() blocks
+# ================================================================================================ #
+
+test_that("hm() with random effects works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        hm(id = id(cid), type = "RE"),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("hm() with fixed effects works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        hm(id = id(cid), type = "FE", showFE = TRUE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("hm() with variables works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        hm(id = id(cid), vars = vars(investiture + pmpower), type = "RE"),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("hm() with name specification works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        hm(id = id(cid), name = cname, type = "FE", showFE = TRUE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("Multiple hm() blocks work", {
+  expect_no_error({
+    m <- bml(
+      sim.y ~ 1 + majority +
+        hm(id = id(cid), type = "RE") +
+        hm(id = id(gid), type = "RE"),
+      family = "Gaussian",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Tests for combined mm() and hm() blocks
+# ================================================================================================ #
+
+test_that("mm() and hm() blocks work together", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+        hm(id = id(cid), type = "RE"),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("Complex model with multiple blocks works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority + mwc +
+        mm(id = id(pid, gid), vars = vars(fdep + ipd), fn = fn(w ~ 1/n), RE = TRUE) +
+        hm(id = id(cid), vars = vars(investiture), type = "RE"),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Tests for fix() functionality
+# ================================================================================================ #
+
+test_that("fix() with main-level variables works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + fix(majority, 1.0),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("fix() within mm() works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fix(fdep, 1.0) + ipd), fn = fn(w ~ 1/n), RE = FALSE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("fix() within hm() works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        hm(id = id(cid), vars = vars(fix(investiture, 0.5) + pmpower), type = "RE"),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Tests for AR specifications
+# ================================================================================================ #
+
+test_that("AR in mm() works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE, ar = TRUE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("AR in hm() works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        hm(id = id(cid), type = "RE", ar = TRUE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Tests for model without intercept
+# ================================================================================================ #
+
+test_that("Model without intercept works", {
+  expect_no_error({
+    m <- bml(
+      sim.y ~ 0 + majority,
+      family = "Gaussian",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Tests for intercept-only model
+# ================================================================================================ #
+
+test_that("Intercept-only model works", {
+  expect_no_error({
+    m <- bml(
+      sim.y ~ 1,
+      family = "Gaussian",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Error handling tests
+# ================================================================================================ #
+
+test_that("Invalid family throws error", {
+  expect_error(
+    bml(
+      sim.y ~ 1 + majority,
+      family = "InvalidFamily",
+      data = coalgov,
+      run = FALSE
+    )
+  )
+})
+
+test_that("Surv() with non-survival family throws error", {
+  expect_error(
+    bml(
+      Surv(govdur, earlyterm) ~ 1 + majority,
+      family = "Gaussian",
+      data = coalgov,
+      run = FALSE
+    )
+  )
+})
+
+test_that("Non-Surv() with survival family throws error", {
+  expect_error(
+    bml(
+      govdur ~ 1 + majority,
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  )
+})
+
+test_that("Missing ID variables throw error", {
+  expect_error(
+    bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(nonexistent1, nonexistent2), vars = vars(fdep), fn = fn(w ~ 1/n)),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  )
+})
+
+test_that("Missing covariate variables throw error", {
+  expect_error(
+    bml(
+      Surv(govdur, earlyterm) ~ 1 + nonexistent_var,
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  )
+})

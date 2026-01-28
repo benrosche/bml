@@ -2,24 +2,110 @@
 % Please edit documentation in R/helpers.R
 \name{mm}
 \alias{mm}
-\title{Multiple membership specification}
+\title{Define a multiple-membership structure}
 \usage{
 mm(id, vars = NULL, fn = fn(), RE = NULL, ar = FALSE)
 }
 \arguments{
-\item{id}{An id() object specifying member-level and group-level identifiers: id(mmid, mainid)}
+\item{id}{An \code{\link{id}} object specifying the member-level and group-level
+identifiers: \code{id(mmid, mainid)} where \code{mmid} identifies members
+and \code{mainid} identifies groups.}
 
-\item{vars}{A vars() object specifying member-level variables to aggregate, or NULL for RE-only}
+\item{vars}{A \code{\link{vars}} object specifying member-level covariates to
+aggregate, or \code{NULL} for random effects only. Variables are weighted
+according to the function specified in \code{fn}.}
 
-\item{fn}{A fn() object specifying the weight function (default: fn(w ~ 1/n, c = TRUE))}
+\item{fn}{A \code{\link{fn}} object specifying the weight function (default:
+\code{fn(w ~ 1/n, c = TRUE)} for equal weights). See \code{\link{fn}} for
+details on weight function specification.}
 
-\item{RE}{Logical; if TRUE, include random effects. Automatically TRUE if vars is NULL.}
+\item{RE}{Logical; if \code{TRUE}, include random effects for member-level units.
+Automatically set to \code{TRUE} if \code{vars = NULL} (random effects only).}
 
-\item{ar}{Logical; if TRUE, random effects evolve autoregressively across participations (default: FALSE)}
+\item{ar}{Logical; if \code{TRUE}, random effects evolve autoregressively across
+participations. Requires members to have sequential participation indicators
+in the data. Default: \code{FALSE}.}
 }
 \value{
-A bml_mm object containing the multiple membership specification
+A \code{bml_mm} object containing the multiple-membership specification.
 }
 \description{
-Specifies a multiple membership structure including variables, weight function, and random effects.
+Specifies a multiple-membership level in the model where group-level units
+(e.g., governments) are composed of multiple member-level units (e.g., political
+parties). Unlike pure hierarchical nesting, members can belong to multiple groups,
+and their contributions are aggregated using a user-specified weight function.
+}
+\details{
+\strong{Multiple-Membership Models:}
+
+In standard hierarchical models, each observation belongs to exactly one group.
+Multiple-membership models relax this assumption, allowing groups to be composed
+of multiple members, with flexible weighting of member contributions.
+
+\strong{Model Structure:}
+
+The contribution from mm block \eqn{k} to group \eqn{j} is:
+
+\deqn{\text{mm}_{kj} = \sum_{i \in group_j} w_{ki} (\mathbf{x}_{ki}'\boldsymbol{\beta}_k + \alpha_{ki})}
+
+where:
+\itemize{
+  \item \eqn{w_{ki}}: Weight for member \eqn{i} in group \eqn{j} (from \code{fn})
+  \item \eqn{\mathbf{x}_{ki}}: Member-level covariates (from \code{vars})
+  \item \eqn{\boldsymbol{\beta}_k}: Regression coefficients (estimated)
+  \item \eqn{\alpha_{ki}}: Member-level random effect (if \code{RE = TRUE})
+}
+
+\strong{Multiple mm() Blocks:}
+
+You can specify multiple \code{mm()} blocks with different weight functions,
+variables, or random effect specifications. This allows modeling different
+aggregation mechanisms simultaneously.
+}
+\examples{
+# Equal weights with variables
+mm(
+  id = id(pid, gid),
+  vars = vars(rile + ipd),
+  fn = fn(w ~ 1/n, c = TRUE),
+  RE = FALSE
+)
+
+# Random effects only (no variables)
+mm(
+  id = id(pid, gid),
+  vars = NULL,
+  fn = fn(w ~ 1/n, c = TRUE),
+  RE = TRUE  # Automatically TRUE when vars = NULL
+)
+
+# Flexible weights with parameter
+mm(
+  id = id(pid, gid),
+  vars = vars(party_strength),
+  fn = fn(w ~ b0 + b1 * tenure, c = TRUE),
+  RE = TRUE
+)
+
+# Autoregressive random effects
+mm(
+  id = id(pid, gid),
+  vars = NULL,
+  fn = fn(w ~ 1/n, c = TRUE),
+  RE = TRUE,
+  ar = TRUE  # Random effects evolve over participations
+)
+
+}
+\references{
+Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
+multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
+
+Fielding, A., & Goldstein, H. (2006). \emph{Cross-classified and multiple
+membership structures in multilevel models: An introduction and review}.
+Research Report RR791, Department for Education and Skills.
+}
+\seealso{
+\code{\link{bml}}, \code{\link{id}}, \code{\link{vars}}, \code{\link{fn}},
+  \code{\link{hm}}
 }

@@ -2,22 +2,79 @@
 % Please edit documentation in R/summary.bml.R
 \name{summary.bml}
 \alias{summary.bml}
-\title{summary() method for an bml object}
+\title{Summarize a fitted bml model}
 \usage{
-\method{summary}{bml}(bml, r = 3)
+\method{summary}{bml}(object, r = 3, ...)
+}
+\arguments{
+\item{object}{A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.}
+
+\item{r}{Number of decimal places for rounding numeric output. Default: 3.}
+
+\item{...}{Additional arguments (currently unused).}
 }
 \value{
-Returns a table with regression results.
+A data frame of class \code{"bml_summary"} containing rounded parameter
+  estimates with the following columns:
+  \itemize{
+    \item \code{Parameter}: Labeled parameter names
+    \item \code{mean}: Posterior mean
+    \item \code{sd}: Posterior standard deviation
+    \item \code{lb}: Lower bound of 95\% credible interval
+    \item \code{ub}: Upper bound of 95\% credible interval
+  }
+
+  The object includes metadata attributes printed above the table:
+  \itemize{
+    \item Outcome family and link function
+    \item Estimate type (posterior mean from MCMC)
+    \item Credible interval specification (95\% equal-tailed)
+    \item Level specification (mm and hm block details)
+    \item DIC (Deviance Information Criterion) for model comparison
+  }
 }
 \description{
-summary() method for an bml object
+S3 method for summarizing \code{bml} model objects. Returns a formatted table
+of parameter estimates with posterior means, standard deviations, and credible
+intervals, along with model information and convergence statistics.
+}
+\details{
+The summary method rounds all numeric values for readability while preserving
+the underlying structure and metadata from the fitted model. All columns remain
+accessible via standard data frame indexing (e.g., \code{$Parameter}, \code{$mean}).
+
+For Cox models with piecewise baseline hazards (when \code{cox_intervals} is
+specified), the outcome description includes the number of intervals used.
 }
 \examples{
+\dontrun{
 data(coalgov)
-m1 <- bml(Surv(govdur, earlyterm, govmaxdur) ~ 1 + mm(id(pid, gid), mmc(fdep), mmw(w ~ 1/n, constraint=1)) + majority + hm(id=cid, name=cname, type=RE, showFE=F),
-          family="Weibull", monitor=T, data=coalgov)
+
+# Fit model
+m1 <- bml(
+  Surv(govdur, earlyterm) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+    hm(id = id(cid), type = "RE"),
+  family = "Weibull",
+  data = coalgov
+)
+
+# View summary
 summary(m1)
 
+# Summary with more decimal places
+summary(m1, r = 4)
+
+# Access specific columns
+s <- summary(m1)
+s$Parameter  # Parameter names
+s$mean       # Posterior means
+s$lb         # Lower credible bounds
+}
+
+}
+\seealso{
+\code{\link{bml}}, \code{\link{monetPlot}}, \code{\link{mcmcDiag}}
 }
 \author{
 Benjamin Rosche <benrosche@nyu.edu>

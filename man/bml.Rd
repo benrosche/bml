@@ -18,40 +18,96 @@ bml(
   parallel = FALSE,
   monitor = TRUE,
   modelfile = FALSE,
+  cox_intervals = NULL,
   data = NULL
 )
 }
 \arguments{
-\item{formula}{A symbolic model formula.}
+\item{formula}{A symbolic model formula. See 'Formula Components' section for details.
+The general structure is: \code{outcome ~ 1 + predictors + mm(...) + hm(...)}.
+For survival models, use \code{Surv(time, event)} on the left-hand side.}
 
-\item{family}{A character string specifying the model family.}
+\item{family}{Character string specifying the outcome distribution and link function.
+Options:
+\itemize{
+  \item \code{"Gaussian"}: Normal distribution with identity link (continuous outcomes)
+  \item \code{"Binomial"}: Binomial distribution with logit link (binary outcomes)
+  \item \code{"Weibull"}: Weibull survival model (requires \code{Surv(time, event)} outcome)
+  \item \code{"Cox"}: Cox proportional hazards model (requires \code{Surv(time, event)} outcome)
+}}
 
-\item{priors}{A named list or character vector mapping parameter groups to JAGS priors.}
+\item{priors}{Named list or character vector of JAGS prior specifications. Parameter
+names follow the pattern: \code{b.mm.k} (mm block k coefficients), \code{b.w.k}
+(weight function parameters), \code{tau.mm} (mm random effect precision), etc.
+Example: \code{list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm ~ dgamma(2, 0.1)")}.
+Default priors are weakly informative.}
 
-\item{inits}{A list of initial values used for all chains.}
+\item{inits}{List of initial values for MCMC chains. Applied to all chains. If
+\code{NULL}, JAGS generates initial values automatically.}
 
-\item{n.iter}{Total number of MCMC iterations.}
+\item{n.iter}{Total number of MCMC iterations per chain. Default: 1000.
+Increase for better convergence (e.g., 10000-50000 for production models).}
 
-\item{n.burnin}{Number of burn-in iterations to discard.}
+\item{n.burnin}{Number of burn-in iterations to discard at the start of each
+chain. Default: 500. Should be sufficient for chains to reach stationarity.}
 
-\item{n.thin}{Thinning rate for MCMC sampling.}
+\item{n.thin}{Thinning rate: save every k-th iteration to reduce autocorrelation.
+Default: \code{max(1, floor((n.iter - n.burnin) / 1000))} (targets ~1000 samples).
+Increase if posterior samples show high autocorrelation.}
 
-\item{chains}{Number of MCMC chains to run.}
+\item{chains}{Number of MCMC chains. Default: 3. Use 3-4 chains to assess
+convergence via Gelman-Rubin diagnostics.}
 
-\item{seed}{Random seed for reproducibility.}
+\item{seed}{Integer random seed for reproducibility. If \code{NULL}, results
+will vary across runs.}
 
-\item{run}{Logical; if \code{TRUE} (default), JAGS is executed.}
+\item{run}{Logical; if \code{TRUE} (default), JAGS is executed and the model
+is fitted. If \code{FALSE}, returns the model specification without fitting
+(useful for inspecting generated JAGS code or data structures).}
 
-\item{parallel}{Logical; if \code{TRUE}, run chains in parallel.}
+\item{parallel}{Logical; if \code{TRUE}, run MCMC chains in parallel using
+multiple cores. Requires parallel backend setup. Default: \code{FALSE}.}
 
-\item{monitor}{Logical; if \code{TRUE}, store additional outputs.}
+\item{monitor}{Logical; if \code{TRUE}, store full MCMC chains and additional
+outputs for diagnostic plots. Required for \code{\link{monetPlot}} and
+\code{\link{mcmcDiag}}. Default: \code{TRUE}.}
 
-\item{modelfile}{Character or logical for saving/loading JAGS model.}
+\item{modelfile}{Logical or character path:
+\itemize{
+  \item \code{FALSE} (default): JAGS code generated internally
+  \item \code{TRUE}: Save generated JAGS code to \code{modelstring.txt} in working directory
+  \item Character path: Read JAGS code from specified file instead of generating
+}}
 
-\item{data}{A data frame where each row represents a member-level observation.}
+\item{cox_intervals}{For Cox models only: controls baseline hazard flexibility
+and computational efficiency.
+\itemize{
+  \item \code{NULL} (default): Non-parametric baseline hazard using all unique
+    event times (maximum flexibility, slower for large datasets)
+  \item Integer k: Piecewise constant baseline hazard with k intervals
+    (faster, suitable for datasets with many unique event times). Recommended:
+    k = 10-20 for most applications.
+}}
+
+\item{data}{Data frame in member-level (long) format where each row represents
+a member-level observation. Must contain all variables referenced in the
+formula, including identifiers specified in \code{id()}.}
 }
 \value{
-A list of class "bml" containing model outputs.
+A list of class \code{"bml"} containing:
+  \itemize{
+    \item \code{reg.table}: Data frame of posterior summaries (means, SDs,
+      credible intervals) for main parameters. Access columns via
+      \code{$Parameter}, \code{$mean}, \code{$sd}, \code{$lb}, \code{$ub}.
+    \item \code{jags.out}: Full JAGS output object (if \code{monitor = TRUE})
+    \item \code{modelstring}: Generated JAGS model code
+    \item \code{jags.data}: Data passed to JAGS
+    \item \code{jags.inits}: Initial values used
+    \item \code{formula}: Original formula
+    \item \code{family}: Model family
+    \item Additional components for random effects, weights, predictions
+      (when applicable)
+  }
 }
 \description{
 The \strong{bml} package provides a user-friendly interface for fitting Bayesian multiple-membership
@@ -168,7 +224,8 @@ priors = list(
 \dontrun{
 data(coalgov)
 
-# Single mm() block
+# Basic multiple-membership model
+# Parties (pid) within governments (gid), nested in countries (cid)
 m1 <- bml(
   Surv(govdur, earlyterm) ~ 1 + majority +
     mm(
@@ -179,20 +236,95 @@ m1 <- bml(
     ) +
     hm(id = id(cid), type = "RE"),
   family  = "Weibull",
+  n.iter  = 10000,
+  n.burnin = 5000,
   data    = coalgov
 )
+
+# View results
+summary(m1)
+monetPlot(m1, "b[2]")  # Plot for majority coefficient
 
 # Multiple mm() blocks with different weight functions
 m2 <- bml(
-  Y ~ 1 + majority +
+  Surv(govdur, earlyterm) ~ 1 + majority +
     mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
-    mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE) +
-    hm(id = id(cid), type = "RE"),
-  family  = "Gaussian",
+    mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE),
+  family  = "Weibull",
   data    = coalgov
+)
+
+# Cox model with piecewise baseline hazard (faster for large datasets)
+m3 <- bml(
+  Surv(govdur, earlyterm) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+  family  = "Cox",
+  cox_intervals = 10,  # Use 10 intervals instead of all unique times
+  data    = coalgov
+)
+
+# Parameterized weight function
+m4 <- bml(
+  Surv(govdur, earlyterm) ~ 1 + majority +
+    mm(
+      id   = id(pid, gid),
+      vars = vars(fdep),
+      fn   = fn(w ~ b0 + b1 * govmaxdur, c = TRUE),  # Weights depend on data
+      RE   = FALSE
+    ),
+  family = "Weibull",
+  data   = coalgov
+)
+
+# Fixed coefficients (offsets)
+m5 <- bml(
+  Surv(govdur, earlyterm) ~ 1 + majority +
+    mm(
+      id   = id(pid, gid),
+      vars = vars(fix(fdep, 1.0) + rile),  # Fix fdep coefficient to 1.0
+      fn   = fn(w ~ 1/n, c = TRUE),
+      RE   = FALSE
+    ),
+  family = "Weibull",
+  data   = coalgov
+)
+
+# Custom priors
+m6 <- bml(
+  Surv(govdur, earlyterm) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+  family = "Weibull",
+  priors = list(
+    "b[1] ~ dnorm(0, 0.01)",       # Intercept prior
+    "b.mm.1 ~ dnorm(0, 0.1)",      # MM coefficient prior
+    "tau.mm ~ dgamma(2, 0.5)"      # MM precision prior
+  ),
+  data   = coalgov
+)
+
+# Cross-classified model (multiple hm blocks)
+m7 <- bml(
+  Y ~ 1 + x1 +
+    hm(id = id(region), type = "RE") +
+    hm(id = id(year), type = "RE"),
+  family = "Gaussian",
+  data   = mydata
 )
 }
 
+}
+\references{
+Rosche, B. (2025). A Multilevel Model for Coalition Governments: Uncovering
+Party-Level Dependencies Within and Between Governments. \emph{Political Analysis}.
+
+Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
+multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
+}
+\seealso{
+\code{\link{summary.bml}} for model summaries,
+\code{\link{monetPlot}} for posterior visualization,
+\code{\link{mcmcDiag}} for convergence diagnostics,
+\code{\link{mm}}, \code{\link{hm}} for model specification helpers
 }
 \author{
 Benjamin Rosche <benrosche@nyu.edu>

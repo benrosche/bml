@@ -2,18 +2,33 @@
 % Please edit documentation in R/helpers.R
 \name{fix}
 \alias{fix}
-\title{Fix covariate coefficient}
+\title{Fix a coefficient to a known value}
 \usage{
 fix(var, value)
 }
 \arguments{
-\item{var}{Unquoted variable name}
+\item{var}{Unquoted variable name from your data}
 
-\item{value}{Numeric value for the fixed coefficient}
+\item{value}{Numeric value for the coefficient (e.g., \code{1.0} for a standard offset)}
 }
 \value{
-A bml_fix object
+A \code{bml_fix} object that can be used within \code{\link{vars}}.
 }
 \description{
-Specify a covariate with a fixed coefficient value (not estimated)
+Specify a covariate whose coefficient should be held constant at a fixed value
+rather than estimated from the data. This is useful for offset variables or
+when you want to impose theoretical constraints. Fixed coefficients are
+handled efficiently by pre-computing their contribution in R before passing
+data to JAGS.
+}
+\examples{
+# Fix a coefficient to 1.0 (standard offset)
+fix(exposure, 1.0)
+
+# Use within vars() for multiple-membership models
+vars(fix(population, 0.5) + income + education)
+
+}
+\seealso{
+\code{\link{vars}}, \code{\link{mm}}, \code{\link{hm}}
 }

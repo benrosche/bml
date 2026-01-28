@@ -1,8 +1,8 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^rmm\.Rcheck$
-^rmm.*\.tar\.gz$
-^rmm.*\.tgz$
+^bml\.Rcheck$
+^bml.*\.tar\.gz$
+^bml.*\.tgz$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
@@ -10,3 +10,6 @@
 ^README\.Rmd$
 ^doc$
 ^Meta$
+^\.claude$
+^create$
+^ext$
