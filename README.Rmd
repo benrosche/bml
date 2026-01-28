@@ -4,7 +4,7 @@ output: github_document
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# <img src="man/figures/bml-hexagon.png" align="right" />
+<img src="man/figures/bml-hexagon.png" align="right" />
 
 ### Bayesian multiple-membership multilevel models with parameterizable weight function.
 
@@ -21,53 +21,69 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/benrosche/bml/workflows/R-CMD-check/badge.svg)](https://github.com/benrosche/bml/actions)
 <!-- badges: end -->
 
-*I am currently working on getting the package ready for a submission to CRAN.*
+## bml: Bayesian multiple-membership multilevel models with endogenous weights
 
-The bml package provides an interface to fit Bayesian multiple membership multilevel models with endogenized weights using JAGS from within R for a variety of outcomes (linear, logit, conditional logit, Cox, Weibull).
+`bml` is an R package for fitting *Bayesian multiple-membership multilevel models with endogenous weights* ("extended MMMM") via JAGS. It supports a range of outcome types --- including linear, logit, conditional logit, and survival models (Cox and Weibull) --- and is designed for settings where researchers want to model how multiple units at a lower level jointly influence outcomes at a higher level.
 
-Most multilevel analyses examine how lower-level units (e.g. individuals) are affected by their embedding in contextual/aggregate units at a higher level (e.g. neighborhoods) (= macro-micro link). The bml package uses the multiple membership multilevel model to conceptually reverse this setup. It allows studying how the effect of units at lower levels propagates to a higher level (= micro-macro link).
+In most multilevel analyses, the primary focus is on how higher-level contextual units (e.g., neighborhoods, schools, countries) shape outcomes observed at lower levels (e.g., individuals, students, governments), reflecting a macro-to-micro perspective. bml turns this logic around. Through an extended multiple-membership multilevel model, it allows researchers to explicitly model how the combined influence of many lower-level units propagates "upwards" to a higher-level outcome, enabling the study of micro-to-macro relationships.
 
-Previous studies examining micro-macro links either aggregated or disaggregated the data. Both approaches obstruct the inherent aggregation problem, ignore dependencies among observations, which induces excessive Type-I and Type-II error, and cannot separate micro- from macro-level variance. The generalized multiple membership multilevel model (MMMM) is able to overcome these problems by explicitly modeling the aggregation from micro to macro level by including an aggregation function in the regression model. It is a theoretically and statistically sound solution to the study of micro-macro links with regression analysis.
+Traditional approaches to micro–macro questions either:
 
-### With the **bml** package, you can...
+- aggregate lower-level variables to the higher level (risking aggregation bias), or
+- disaggregate higher-level outcomes to the lower level (artifically inflating sample size).
 
-- explicitly model how the effect of lower level units propagate to a higher level
+Both strategies obscure the underlying aggregation process, ignore the statistical dependencies present in the data, and prevent the decomposition of variance across levels. In contrast, the extended MMMM implemented in bml explicitly models aggregation through a weight function that may itself depend on parameters and covariates. This approach provides a theoretically grounded and statistically principled framework for studying micro–macro relationships using regression models.
 
-- examine the fit of different aggregation functions, such as the min, max, mean, or sum
+### With the bml package, you can
 
-- uncover heterogeneity in the effect of lower-level units on higher-level entities
+- **Model how lower-level units jointly shape higher-level outcomes:** For example, how political parties shape coalition outcomes, how family members influence household decisions, and how subunits jointly shape organizational performance.
 
-- control dependencies that arise from a multiple membership (crisscrossing) data structure
+- **Compare and estimate aggregation functions:** Test whether higher-level outcomes depend on the mean, sum, minimum, maximum, or other functions of lower-level features, instead of imposing a predefined aggregation.
 
-- estimate the (residual) variance at the lower and the higher level
+- **Endogenize the weight matrix:** Rather than imposing a fixed spatial or network weight matrix, allow connection strengths to be endogenously determined as functions of covariates.
 
-This is the data structure that is being modeled:
+- **Account for complex dependence structures:** Simultaneously accommodate hierarchical, cross-classified, and multiple-membership structures, accounting for dependence patterns missed by conventional models and cluster-robust SEs.
 
-# <img src="man/figures/bml-datastructure.png" /> 
+- **Partition variance across levels:** Estimate residual variance at lower and higher levels to see how much heterogeneity is attributable to each level in your data.
 
-In this example of coalition governments in Israel, political parties are the level-1 units,
-governments are the level-2 units, and the relationship between parties and governments is the multiple membership structure.
+### Where can you use bml?
 
-This is just an example. Multiple membership structures are ubiquitous in the real world. Other applications include:
+Multiple-membership structures are common across the social sciences and beyond. The model was developed for coalition government data, but the same structure appears in many other settings, such as:
 
-- MMMM can be used to model **spatial structures**. Level-1 units, in this case, would be the neighborhoods in the 
-  influence sphere of the focal neighborhood, and level-2 units would be the focal neighborhoods. 
-  The benefit of using MMMM over other spatial regression models is that the weight matrix can be endogenized, 
-  which is not currently possible with other    methods
-- MMMM can be used to model **network structures**. While this possibility has been explored in other work (Tranmer et al. 2014),
-  the MMMM allows to endogenize the weight matrix, which is not currently possible with other multiple membership
-  multilevel software, such as brms or MLWiN.
-- more multiple membership structures in the wild: multi-party wars, treaties, international organizations
+- **International relations:** Multi-party conflicts, alliances and treaties, as well as international organizations with overlapping memberships.
 
-This is how the ```bml()``` function looks like:
+- **Multi-level systems:** Subnational units (e.g., regions, states, municipalities) that jointly shape national outcomes and may simultaneously participate in multiple higher-level arrangements.
 
-``` r 
-data(coalgov)
-bml(Y ~ 1 + X_l2 + 
-      X_l3 + hm(id=id_l3, type=RE) +
-      mm(id(id_l2, id_l1), mmc(X_l1), mmw(w ~ 1/n^exp(-(X_w)))), 
-    family="Gaussian", data=coalgov)
+- **Organization research:** Individuals who shape team- and firm-level outcomes and may simultaneously participate in multiple teams, as well as organizations engaged in joint ventures or other interorganizational collaborations.
+
+- **Spatial research:** Neighborhoods or regions whose outcomes depend on the combined influence of surrounding areas. Here, bml allows the spatial weight matrix to be endogenized rather than imposed ex ante.
+
+- **Network applications:** Actors whose outcomes depend on the combined influence of their network neighbors (e.g., social, collaboration, or communication ties). While similar ideas have been explored in earlier work (e.g., Tranmer et al. 2014), bml extends this by allowing the network weight matrix to be endogenized rather than imposed ex ante.
+
+In all these cases, bml provides tools to model dependence and interdependence: not just correcting standard errors for clustering, but explicitly representing how lower-level units combine to produce higher-level outcomes.
+
+The following command fits an MMMM to coalition government data, modeling each coalition's outcome as an equal-weighted combination of member parties' organizational structure and random effects.
+
+```{r bml-example, eval = FALSE}
+bml(
+  Y ~ 1 +
+    majority +
+    mm(
+      id = id(pid, gid),
+      vars = vars(org_structure),
+      fn = fn(w ~ 1 / n, c = TRUE),
+      RE = TRUE
+    ),
+  family = "Gaussian",
+  data = coalgov
+) |>
+  summary()
 ```
+
+Parties (`pid`) can appear in multiple governments (`gid`), and the party-level covariate `org_structure` enters the model through the multiple-membership term `mm()`. The weights are set to `w ~ 1 / n` (equal weights across the n parties in a coalition), and party-specific random effects are included via `RE = TRUE`.
+
+### Learn more
+Rosche, B. (2026). A Multilevel Model for Coalition Governments: Uncovering Party-Level Dependencies Within and Between Governments. *Political Analysis*, forthcoming. [Preprint](https://osf.io/preprints/socarxiv/4bafr)
 
 ### Developers
 
@@ -78,5 +94,3 @@ If you would like to log an issue or submit a feature request, please create a n
 
 ### Changelog
 See [NEWS.md](https://github.com/benrosche/bml/news/index.html) for the package changelog.
-
-More information can be found [here](http://benrosche.com/projects/bml/)

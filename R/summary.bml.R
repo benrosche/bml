@@ -13,9 +13,52 @@
 #' @author Benjamin Rosche <benrosche@@nyu.edu>
 
 summary.bml <- function(bml, r=3) {
-  
-  return( bml$reg.table %>% dplyr::mutate(across(where(is.numeric), ~round(.,r))) )
-  
+
+  rounded_table <- bml$reg.table %>% dplyr::mutate(across(where(is.numeric), ~round(.,r)))
+
+  # Preserve metadata
+  attr(rounded_table, "estimate_type") <- attr(bml$reg.table, "estimate_type")
+  attr(rounded_table, "credible_interval") <- attr(bml$reg.table, "credible_interval")
+  attr(rounded_table, "DIC") <- attr(bml$reg.table, "DIC")
+  attr(rounded_table, "level_spec") <- attr(bml$reg.table, "level_spec")
+
+  # Add class for custom printing
+  class(rounded_table) <- c("bml_summary", class(rounded_table))
+
+  return(rounded_table)
+
+}
+
+#' @exportS3Method print bml_summary
+print.bml_summary <- function(x, ...) {
+  # Print header with metadata
+  estimate_type <- attr(x, "estimate_type")
+  ci_info <- attr(x, "credible_interval")
+  dic_value <- attr(x, "DIC")
+  level_spec <- attr(x, "level_spec")
+
+  if (!is.null(estimate_type)) {
+    cat("Estimates:", estimate_type, "\n")
+  }
+  if (!is.null(ci_info)) {
+    cat("Uncertainty:", ci_info, "\n")
+  }
+  if (!is.null(level_spec)) {
+    cat("\nLevel specification:\n")
+    cat(level_spec, "\n")
+  }
+  if (!is.null(estimate_type) || !is.null(ci_info) || !is.null(level_spec)) {
+    cat("\n")
+  }
+
+  # Remove custom class and print as data frame
+  class(x) <- setdiff(class(x), "bml_summary")
+  print(x, ...)
+
+  # Print DIC at the bottom
+  if (!is.null(dic_value)) {
+    cat("\nModel fit: DIC =", dic_value, "\n")
+  }
 }
 
 

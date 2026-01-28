@@ -4,97 +4,69 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Examples • rmm</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
-<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="Examples">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]--><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-56931813-1"></script><script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-56931813-1');
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Examples • bml</title>
+<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="Examples">
 </head>
-<body data-spy="scroll" data-target="#toc">
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <div class="container template-article">
-      <header><div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">rmm</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
-      </span>
-    </div>
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fa fa-home"></span>
+    <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-  </a>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="../articles/bml.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="active nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
+    <li><a class="dropdown-item" href="../articles/installation.html">Installation</a></li>
+    <li><a class="dropdown-item" href="../articles/model.html">Model structure</a></li>
+    <li><a class="dropdown-item" href="../articles/examples.html">Examples</a></li>
+    <li><a class="dropdown-item" href="../articles/faq.html">faq</a></li>
+  </ul>
 </li>
-<li>
-  <a href="../articles/model.html">Model structure</a>
-</li>
-<li>
-  <a href="../articles/installation.html">Package installation</a>
-</li>
-<li>
-  <a href="../reference/index.html">Package functions</a>
-</li>
-<li>
-  <a href="../articles/examples.html">Examples</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="../news/index.html">news</a>
-</li>
-<li>
-  <a href="../articles/faq.html">faq</a>
-</li>
-<li>
-  <a href="https://github.com/benrosche/rmm/" class="external-link">
-    <span class="fab fa-github"></span>
-
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/benrosche/bml/" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
-<!--/.nav-collapse -->
+
+
   </div>
-<!--/.container -->
-</div>
-<!--/.navbar -->
+</nav><div class="container template-article">
 
 
 
-      </header><div class="row">
-  <div class="col-md-9 contents">
-    <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Examples</h1>
+
+<div class="row">
+  <main id="main" class="col-md-9"><div class="page-header">
+
+      <h1>Examples</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/benrosche/rmm/blob/HEAD/vignettes/examples.Rmd" class="external-link"><code>vignettes/examples.Rmd</code></a></small>
-      <div class="hidden name"><code>examples.Rmd</code></div>
-
+      <small class="dont-index">Source: <a href="https://github.com/benrosche/bml/blob/HEAD/vignettes/examples.Rmd" class="external-link"><code>vignettes/examples.Rmd</code></a></small>
+      <div class="d-none name"><code>examples.Rmd</code></div>
     </div>
 
     
@@ -116,7 +88,7 @@ regression)</li>
 <div class="section level3">
 <h3 id="e1">The effect of air quality on home values<a class="anchor" aria-label="anchor" href="#e1"></a>
 </h3>
-<p>The R file of this example can be found <a href="https://benrosche.github.io/rmm/articles/examples_files/rmm-examples.Rmd">here</a>.</p>
+<p>The R file of this example can be found <a href="https://benrosche.github.io/bml/articles/examples_files/bml-examples.Rmd">here</a>.</p>
 <p>This <strong>spatial analysis</strong> example is based on <a href="https://www.sciencedirect.com/science/article/abs/pii/0095069678900062" class="external-link">Harrison
 &amp; Rubenfield 1978</a>, who study the effect of air quality on home
 values, and a re-analysis by <a href="https://openjournals.wu.ac.at/region/paper_107/107.html" class="external-link">Bivand
@@ -137,15 +109,15 @@ paper for more information on data and operationalization.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/r-spatial/spatialreg/" class="external-link">spatialreg</a></span><span class="op">)</span> <span class="co"># spatial regression models</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://benrosche.com/projects/rmm/" class="external-link">rmm</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://benrosche.github.io/bml">bml</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load spatial data from Boston</span></span>
-<span><span class="va">boston</span> <span class="op">&lt;-</span> </span>
+<span><span class="va">boston</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">read_sf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"shapes/boston_tracts.gpkg"</span>, package <span class="op">=</span> <span class="st">"spData"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">CMEDV</span>, <span class="va">NOX</span>, <span class="va">CRIM</span>, <span class="va">RM</span>, <span class="va">DIS</span>, <span class="va">AGE</span>, <span class="va">LSTAT</span>, <span class="va">geom</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span>crs <span class="op">=</span> <span class="fl">5070</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># use Albers equal-area conic projection </span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>tid <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/row_number.html" class="external-link">row_number</a></span><span class="op">(</span><span class="op">)</span>, lnCMEDV<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">CMEDV</span><span class="op">)</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html" class="external-link">across</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">NOX</span>, <span class="va">CRIM</span>, <span class="va">RM</span>, <span class="va">DIS</span>, <span class="va">AGE</span>, <span class="va">LSTAT</span><span class="op">)</span>, <span class="va">scale</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">tid</span>, <span class="va">CMEDV</span>, <span class="va">lnCMEDV</span><span class="op">)</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">CMEDV</span>, <span class="va">NOX</span>, <span class="va">CRIM</span>, <span class="va">RM</span>, <span class="va">DIS</span>, <span class="va">AGE</span>, <span class="va">LSTAT</span>, <span class="va">geom</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span>crs <span class="op">=</span> <span class="fl">5070</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># use Albers equal-area conic projection</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>tid <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/row_number.html" class="external-link">row_number</a></span><span class="op">(</span><span class="op">)</span>, lnCMEDV<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">CMEDV</span><span class="op">)</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html" class="external-link">across</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">NOX</span>, <span class="va">CRIM</span>, <span class="va">RM</span>, <span class="va">DIS</span>, <span class="va">AGE</span>, <span class="va">LSTAT</span><span class="op">)</span>, <span class="va">scale</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">tid</span>, <span class="va">CMEDV</span>, <span class="va">lnCMEDV</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Dependent variable:</span></span>
 <span><span class="co"># lnCMEDV = ln(median home value in $1000)</span></span>
@@ -155,16 +127,14 @@ paper for more information on data and operationalization.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"Median home value"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_b</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="examples_files/figure-html/unnamed-chunk-2-1.png" width="700"></p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># Explanatory variables (standardized):</span></span>
-<span><span class="co"># NOX     = nitric oxides concentration </span></span>
+<span><span class="co"># NOX     = nitric oxides concentration</span></span>
 <span><span class="co"># CRIM    = per capita crime</span></span>
 <span><span class="co"># RM      = avg. number of rooms per dwelling</span></span>
 <span><span class="co"># DIS     = weighted distance to five Boston employment centers</span></span>
-<span><span class="co"># AGE     = proportion of units built prior 1940 </span></span>
+<span><span class="co"># AGE     = proportion of units built prior 1940</span></span>
 <span><span class="co"># LSTAT   = percentage working-class population</span></span></code></pre></div>
 <p>First, we examine three canonical spatial regression models:</p>
 <ol style="list-style-type: decimal">
@@ -225,136 +195,49 @@ weights for a given location
 equals 1.</p>
 <p>The R package <code>spatialreg</code> takes the weight matrix as
 list:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create row-standardized weight matrix</span></span>
 <span><span class="va">boston_nb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/spdep/reference/poly2nb.html" class="external-link">poly2nb</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/coerce-methods.html" class="external-link">as_Spatial</a></span><span class="op">(</span><span class="va">boston</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="va">boston</span><span class="op">$</span><span class="va">tid</span><span class="op">)</span> <span class="co"># from polygon list to neighbor list</span></span>
 <span></span>
 <span><span class="va">boston_wmat</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/spdep/reference/nb2mat.html" class="external-link">nb2mat</a></span><span class="op">(</span><span class="va">boston_nb</span>, zero.policy <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># weight matrix</span></span>
 <span><span class="va">boston_wlist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/spdep/reference/nb2listw.html" class="external-link">nb2listw</a></span><span class="op">(</span><span class="va">boston_nb</span>, style <span class="op">=</span> <span class="st">"W"</span><span class="op">)</span> <span class="co"># weight matrix as list</span></span></code></pre></div>
 <p>Now let us estimate the three models:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Residual spatial effect (spatial error model):</span></span>
-<span><span class="va">mod1</span> <span class="op">&lt;-</span> </span>
+<span><span class="va">mod1</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="https://r-spatial.github.io/spatialreg/reference/ML_models.html" class="external-link">errorsarlm</a></span><span class="op">(</span></span>
 <span>    <span class="va">lnCMEDV</span> <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">boston</span>,</span>
 <span>    listw <span class="op">=</span> <span class="va">boston_wlist</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="va">mod1</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; errorsarlm(formula = lnCMEDV ~ NOX + CRIM + RM + DIS + AGE, data = boston, </span></span>
-<span><span class="co">#&gt;     listw = boston_wlist)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residuals:</span></span>
-<span><span class="co">#&gt;        Min         1Q     Median         3Q        Max </span></span>
-<span><span class="co">#&gt; -0.8619402 -0.0727632  0.0019691  0.0727349  0.8610672 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Type: error </span></span>
-<span><span class="co">#&gt; Coefficients: (asymptotic standard errors) </span></span>
-<span><span class="co">#&gt;               Estimate Std. Error z value  Pr(&gt;|z|)</span></span>
-<span><span class="co">#&gt; (Intercept)  3.0114297  0.0424386 70.9596 &lt; 2.2e-16</span></span>
-<span><span class="co">#&gt; NOX         -0.1245513  0.0238428 -5.2238 1.752e-07</span></span>
-<span><span class="co">#&gt; CRIM        -0.0555031  0.0098813 -5.6170 1.943e-08</span></span>
-<span><span class="co">#&gt; RM           0.1644857  0.0093976 17.5029 &lt; 2.2e-16</span></span>
-<span><span class="co">#&gt; DIS         -0.0805092  0.0328909 -2.4478   0.01437</span></span>
-<span><span class="co">#&gt; AGE         -0.0851376  0.0153088 -5.5613 2.677e-08</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Lambda: 0.83765, LR test value: 385.28, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; Asymptotic standard error: 0.026879</span></span>
-<span><span class="co">#&gt;     z-value: 31.164, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; Wald statistic: 971.18, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Log likelihood: 177.6898 for error model</span></span>
-<span><span class="co">#&gt; ML residual variance (sigma squared): 0.023977, (sigma: 0.15484)</span></span>
-<span><span class="co">#&gt; Number of observations: 506 </span></span>
-<span><span class="co">#&gt; Number of parameters estimated: 8 </span></span>
-<span><span class="co">#&gt; AIC: -339.38, (AIC for lm: 43.904)</span></span>
 <span></span>
-<span><span class="co"># Exogenous spatial effect (spatial lag-x model):  </span></span>
-<span><span class="va">mod2</span> <span class="op">&lt;-</span> </span>
+<span><span class="co"># Exogenous spatial effect (spatial lag-x model):</span></span>
+<span><span class="va">mod2</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="https://r-spatial.github.io/spatialreg/reference/SLX.html" class="external-link">lmSLX</a></span><span class="op">(</span></span>
 <span>    <span class="va">lnCMEDV</span> <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">boston</span>,</span>
 <span>    listw <span class="op">=</span> <span class="va">boston_wlist</span>,</span>
 <span>    Durbin <span class="op">=</span>  <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span></span>
-<span>  <span class="op">)</span> </span>
+<span>  <span class="op">)</span></span>
 <span><span class="va">mod2</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; lm(formula = formula(paste("y ~ ", paste(colnames(x)[-1], collapse = "+"))), </span></span>
-<span><span class="co">#&gt;     data = as.data.frame(x), weights = weights)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Coefficients:</span></span>
-<span><span class="co">#&gt;              Estimate    Std. Error  t value     Pr(&gt;|t|)  </span></span>
-<span><span class="co">#&gt; (Intercept)   3.031e+00   1.043e-02   2.907e+02   0.000e+00</span></span>
-<span><span class="co">#&gt; NOX          -1.455e-01   4.017e-02  -3.622e+00   3.227e-04</span></span>
-<span><span class="co">#&gt; CRIM         -5.851e-02   1.503e-02  -3.893e+00   1.125e-04</span></span>
-<span><span class="co">#&gt; RM            1.538e-01   1.434e-02   1.072e+01   2.856e-24</span></span>
-<span><span class="co">#&gt; DIS          -6.597e-02   7.453e-02  -8.852e-01   3.765e-01</span></span>
-<span><span class="co">#&gt; AGE          -9.190e-02   2.369e-02  -3.879e+00   1.190e-04</span></span>
-<span><span class="co">#&gt; lag.NOX       8.907e-02   4.843e-02   1.839e+00   6.650e-02</span></span>
-<span><span class="co">#&gt; lag.CRIM     -1.742e-01   2.279e-02  -7.643e+00   1.112e-13</span></span>
-<span><span class="co">#&gt; lag.RM        8.074e-02   2.211e-02   3.652e+00   2.883e-04</span></span>
-<span><span class="co">#&gt; lag.DIS      -3.609e-02   7.987e-02  -4.519e-01   6.516e-01</span></span>
-<span><span class="co">#&gt; lag.AGE       9.673e-03   3.465e-02   2.792e-01   7.802e-01</span></span>
 <span></span>
 <span><span class="co"># Endogenous spatial effect (spatial autoregressive model):</span></span>
-<span><span class="va">mod3</span> <span class="op">&lt;-</span> </span>
+<span><span class="va">mod3</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="https://r-spatial.github.io/spatialreg/reference/ML_models.html" class="external-link">lagsarlm</a></span><span class="op">(</span></span>
 <span>    <span class="va">lnCMEDV</span> <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">boston</span>,</span>
 <span>    listw <span class="op">=</span> <span class="va">boston_wlist</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="va">mod3</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:lagsarlm(formula = lnCMEDV ~ NOX + CRIM + RM + DIS + AGE, data = boston, </span></span>
-<span><span class="co">#&gt;     listw = boston_wlist)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residuals:</span></span>
-<span><span class="co">#&gt;        Min         1Q     Median         3Q        Max </span></span>
-<span><span class="co">#&gt; -0.5905925 -0.0937669 -0.0081804  0.0784800  0.9956998 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Type: lag </span></span>
-<span><span class="co">#&gt; Coefficients: (asymptotic standard errors) </span></span>
-<span><span class="co">#&gt;               Estimate Std. Error z value  Pr(&gt;|z|)</span></span>
-<span><span class="co">#&gt; (Intercept)  0.9939659  0.0860809 11.5469 &lt; 2.2e-16</span></span>
-<span><span class="co">#&gt; NOX         -0.0286955  0.0134985 -2.1258 0.0335176</span></span>
-<span><span class="co">#&gt; CRIM        -0.0606110  0.0087944 -6.8920 5.501e-12</span></span>
-<span><span class="co">#&gt; RM           0.1343823  0.0088565 15.1732 &lt; 2.2e-16</span></span>
-<span><span class="co">#&gt; DIS         -0.0627520  0.0132732 -4.7277 2.271e-06</span></span>
-<span><span class="co">#&gt; AGE         -0.0458586  0.0124080 -3.6959 0.0002191</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Rho: 0.67045, LR test value: 347.92, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; Asymptotic standard error: 0.028312</span></span>
-<span><span class="co">#&gt;     z-value: 23.681, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; Wald statistic: 560.8, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Log likelihood: 159.0057 for lag model</span></span>
-<span><span class="co">#&gt; ML residual variance (sigma squared): 0.028135, (sigma: 0.16774)</span></span>
-<span><span class="co">#&gt; Number of observations: 506 </span></span>
-<span><span class="co">#&gt; Number of parameters estimated: 8 </span></span>
-<span><span class="co">#&gt; AIC: -302.01, (AIC for lm: 43.904)</span></span>
-<span><span class="co">#&gt; LM test for residual autocorrelation</span></span>
-<span><span class="co">#&gt; test value: 15.915, p-value: 6.6236e-05</span></span></code></pre></div>
+<span><span class="va">mod3</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Results</strong>:</p>
-<ol style="list-style-type: decimal">
-<li><p>The spatial error model estimates that after conditioning on
-those five covariates, the residual is still spatially correlated, as
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>=0.84.</p></li>
-<li><p>The spatial lag-x model estimates an exogenous spatial effect for
-each of the considered covariates. The effect of air quality of
-neighboring locations, for instance, is estimated to be
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>=0.09.
-That is, the home values of a given neighborhood increases if the air
-quality of surrounding neighborhoods decreases.</p></li>
-<li><p>The spatial autoregessive (SAR) model estimates a endogenous
-spatial effect of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math>=0.67.
-That is, the SAR summarizes the spatial dependency in one
-coefficient.</p></li>
-</ol>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># 1. The spatial error model estimates that after conditioning on those five covariates, the residual is still spatially correlated, as $\lambda$=`r round(mod1$lambda,2)`.</span></span>
+<span></span>
+<span><span class="co"># 2.  The spatial lag-x model estimates an exogenous spatial effect for each of the considered covariates. The effect of air quality of neighboring locations, for instance, is estimated to be $\beta$=`r round(mod2$coefficients['lag.NOX'],2)`. That is, the home values of a given neighborhood increases if the air quality of surrounding neighborhoods decreases.</span></span>
+<span></span>
+<span><span class="co"># 3.  The spatial autoregessive (SAR) model estimates a endogenous spatial effect of $\rho$=`r round(mod3$rho,2)`. That is, the SAR summarizes the spatial dependency in one coefficient.</span></span></code></pre></div>
 <div class="section level4">
 <h4 id="the-mmmm-for-spatial-analysis">The MMMM for spatial analysis<a class="anchor" aria-label="anchor" href="#the-mmmm-for-spatial-analysis"></a>
 </h4>
@@ -366,11 +249,11 @@ denote the outcome for location
 (i) the effects of the location’s own features,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>x</mi><mi>i</mi><mo>⊺</mo></msubsup><mi>β</mi><mo>+</mo><msub><mi>ϵ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_{i}^{\intercal} \beta + \epsilon_{i}</annotation></semantics></math><br>
 (ii) the effects of its neighbors’ features,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><mi>n</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msub><msub><mi>w</mi><mi>j</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>z</mi><mi>j</mi><mo>⊺</mo></msubsup><mi>γ</mi><mo>+</mo><msub><mi>u</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\sum_{j \in n(i)} w_{j} (z_{j}^{\intercal} \gamma + u_{j})</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><mi>n</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow></msub><msub><mi>w</mi><mi>j</mi></msub><mo stretchy="false" form="prefix">(</mo><msubsup><mi>z</mi><mi>j</mi><mo>⊺</mo></msubsup><mi>γ</mi><mo>+</mo><msub><mi>u</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\sum_{j \in n(i)} w_{j} (z_{j}^{\intercal} \gamma + u_{j})</annotation></semantics></math>,
 where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
 indexes the neighbors,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">n(i)</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">n(i)</annotation></semantics></math>
 is the set of neighbors of location
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>z</mi><mi>j</mi></msub><annotation encoding="application/x-tex">z_{j}</annotation></semantics></math>
@@ -399,33 +282,24 @@ included in the dataframe as individual rows:</p>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>      tid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">nb</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">nb</span>, <span class="va">length</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>      tid_nb <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">nb</span><span class="op">)</span></span>
-<span>    <span class="op">)</span> </span>
+<span>    <span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">boston_df</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu">nb2df</span><span class="op">(</span><span class="va">boston_nb</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">tid</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>n<span class="op">=</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">boston_df</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu">nb2df</span><span class="op">(</span><span class="va">boston_nb</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">tid</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>n<span class="op">=</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">inner_join</a></span><span class="op">(</span><span class="va">boston</span>, by<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tid"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># own features</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">inner_join</a></span><span class="op">(</span>                         <span class="co"># neighbor features</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">boston</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">CMEDV</span>,<span class="op">-</span><span class="va">lnCMEDV</span>, <span class="op">-</span><span class="va">geom</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename_with</a></span><span class="op">(</span><span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">.</span>,<span class="st">"_nb"</span><span class="op">)</span><span class="op">)</span>, </span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">boston</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">CMEDV</span>,<span class="op">-</span><span class="va">lnCMEDV</span>, <span class="op">-</span><span class="va">geom</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename_with</a></span><span class="op">(</span><span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">.</span>,<span class="st">"_nb"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    by<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tid_nb"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">boston_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">tid</span>, <span class="va">tid_nb</span>, <span class="va">NOX</span>, <span class="va">CRIM</span>, <span class="va">NOX_nb</span>, <span class="va">CRIM_nb</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
-<span><span class="co">#&gt;     tid tid_nb NOX[,1] CRIM[,1] NOX_nb[,1] CRIM_nb[,1]</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1      2    1.86    0.624      1.86       0.027<span style="text-decoration: underline;">5</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1      3    1.86    0.624      1.86       0.185 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1      6    1.86    0.624      1.86       0.026<span style="text-decoration: underline;">0</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     1      8    1.86    0.624      1.86       0.070<span style="text-decoration: underline;">8</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     1    311    1.86    0.624      0.434     -<span style="color: #BB0000;">0.272</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     1    313    1.86    0.624      0.434     -<span style="color: #BB0000;">0.207</span></span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">boston_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">tid</span>, <span class="va">tid_nb</span>, <span class="va">NOX</span>, <span class="va">CRIM</span>, <span class="va">NOX_nb</span>, <span class="va">CRIM_nb</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>For each tract <code>tid</code>, we have one row for each of its
 neighbors <code>tid_nb</code>. These rows contain the covariates of
 <code>tid</code>, which remain constant across its neighbors, as well as
@@ -435,84 +309,38 @@ the covariates of the neighbors themselves, such as <code>NOX_nb</code>,
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Spatial random effect:</span></span>
-<span><span class="va">mod.rmm1</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="../reference/rmm.html">rmm</a></span><span class="op">(</span></span>
+<span><span class="va">mod.bml1</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
 <span>    <span class="va">lnCMEDV</span> <span class="op">~</span></span>
 <span>      <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span> <span class="op">+</span></span>
-<span>      <span class="fu">mm</span><span class="op">(</span></span>
-<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/defunct.html" class="external-link">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,</span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,</span>
 <span>        <span class="fu">mmc</span><span class="op">(</span><span class="op">)</span>,</span>
-<span>        <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, constraint<span class="op">=</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    n.iter <span class="op">=</span> <span class="fl">1000</span>, n.burnin <span class="op">=</span> <span class="fl">100</span>, seed<span class="op">=</span><span class="fl">1</span>, monitor <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">boston_df</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; module glm loaded</span></span>
-<span><span class="co">#&gt; Compiling model graph</span></span>
-<span><span class="co">#&gt;    Resolving undeclared variables</span></span>
-<span><span class="co">#&gt;    Allocating nodes</span></span>
-<span><span class="co">#&gt; Graph information:</span></span>
-<span><span class="co">#&gt;    Observed stochastic nodes: 506</span></span>
-<span><span class="co">#&gt;    Unobserved stochastic nodes: 1020</span></span>
-<span><span class="co">#&gt;    Total graph size: 20798</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Initializing model</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mod.rmm1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "reg.table" "w"         "re.l1"     "re.l3"     "pred"      "input"    </span></span>
-<span><span class="co">#&gt; [7] "jags.out"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mod.bml1</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">mod.rmm1</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          variable coefficients    sd     lb     ub</span></span>
-<span><span class="co">#&gt; b.l2[1]        X0        3.035 0.020  2.997  3.075</span></span>
-<span><span class="co">#&gt; b.l2[2]       NOX       -0.118 0.022 -0.160 -0.075</span></span>
-<span><span class="co">#&gt; b.l2[3]      CRIM       -0.079 0.010 -0.100 -0.058</span></span>
-<span><span class="co">#&gt; b.l2[4]        RM        0.170 0.010  0.150  0.190</span></span>
-<span><span class="co">#&gt; b.l2[5]       DIS       -0.087 0.025 -0.138 -0.038</span></span>
-<span><span class="co">#&gt; b.l2[6]       AGE       -0.097 0.016 -0.128 -0.065</span></span>
-<span><span class="co">#&gt; sigma.l1 sigma.l1        0.416 0.023  0.373  0.464</span></span>
-<span><span class="co">#&gt; sigma.l2 sigma.l2        0.127 0.007  0.113  0.141</span></span>
-<span><span class="co">#&gt; DIC           DIC      326.073    NA     NA     NA</span></span>
+<span><span class="va">mod.bml1</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Spatial fixed effects + spatial random effect:</span></span>
-<span><span class="va">mod.rmm2</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="../reference/rmm.html">rmm</a></span><span class="op">(</span></span>
+<span><span class="va">mod.bml2</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
 <span>    <span class="va">lnCMEDV</span> <span class="op">~</span></span>
 <span>      <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span> <span class="op">+</span></span>
-<span>      <span class="fu">mm</span><span class="op">(</span></span>
-<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/defunct.html" class="external-link">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,</span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,</span>
 <span>        <span class="fu">mmc</span><span class="op">(</span><span class="va">NOX_nb</span> <span class="op">+</span> <span class="va">CRIM_nb</span> <span class="op">+</span> <span class="va">RM_nb</span> <span class="op">+</span> <span class="va">DIS_nb</span> <span class="op">+</span> <span class="va">AGE_nb</span><span class="op">)</span>,</span>
-<span>        <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, constraint<span class="op">=</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    n.iter <span class="op">=</span> <span class="fl">1000</span>, n.burnin <span class="op">=</span> <span class="fl">100</span>, seed<span class="op">=</span><span class="fl">1</span>, monitor <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">boston_df</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; Compiling model graph</span></span>
-<span><span class="co">#&gt;    Resolving undeclared variables</span></span>
-<span><span class="co">#&gt;    Allocating nodes</span></span>
-<span><span class="co">#&gt; Graph information:</span></span>
-<span><span class="co">#&gt;    Observed stochastic nodes: 506</span></span>
-<span><span class="co">#&gt;    Unobserved stochastic nodes: 1025</span></span>
-<span><span class="co">#&gt;    Total graph size: 39277</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Initializing model</span></span>
 <span></span>
-<span><span class="va">mod.rmm2</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          variable coefficients    sd     lb     ub</span></span>
-<span><span class="co">#&gt; b.l1[1]    NOX_nb        0.019 0.046 -0.076  0.109</span></span>
-<span><span class="co">#&gt; b.l1[2]   CRIM_nb       -0.132 0.026 -0.183 -0.079</span></span>
-<span><span class="co">#&gt; b.l1[3]     RM_nb        0.072 0.025  0.024  0.118</span></span>
-<span><span class="co">#&gt; b.l1[4]    DIS_nb       -0.013 0.066 -0.142  0.114</span></span>
-<span><span class="co">#&gt; b.l1[5]    AGE_nb        0.005 0.037 -0.067  0.079</span></span>
-<span><span class="co">#&gt; b.l2[1]        X0        3.033 0.019  2.996  3.071</span></span>
-<span><span class="co">#&gt; b.l2[2]       NOX       -0.105 0.029 -0.160 -0.048</span></span>
-<span><span class="co">#&gt; b.l2[3]      CRIM       -0.061 0.011 -0.081 -0.040</span></span>
-<span><span class="co">#&gt; b.l2[4]        RM        0.157 0.010  0.138  0.177</span></span>
-<span><span class="co">#&gt; b.l2[5]       DIS       -0.098 0.056 -0.206  0.012</span></span>
-<span><span class="co">#&gt; b.l2[6]       AGE       -0.095 0.017 -0.131 -0.061</span></span>
-<span><span class="co">#&gt; sigma.l1 sigma.l1        0.385 0.024  0.340  0.434</span></span>
-<span><span class="co">#&gt; sigma.l2 sigma.l2        0.128 0.007  0.115  0.142</span></span>
-<span><span class="co">#&gt; DIC           DIC      338.542    NA     NA     NA</span></span>
+<span><span class="va">mod.bml2</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Calculate spatial correlation in the residual</span></span>
 <span><span class="va">getLambda</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
@@ -521,19 +349,16 @@ the covariates of the neighbors themselves, such as <code>NOX_nb</code>,
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">s.l1</span><span class="op">^</span><span class="fl">2</span><span class="op">/</span><span class="op">(</span><span class="va">s.l1</span><span class="op">^</span><span class="fl">2</span><span class="op">+</span><span class="va">s.l2</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">mod.rmm1</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">getLambda</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.9153341</span></span>
-<span><span class="va">mod.rmm2</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">getLambda</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.9003032</span></span></code></pre></div>
-<p>Let’s take a closer look at the<code><a href="../reference/rmm.html">rmm()</a></code> function by typing
-<code><a href="../reference/rmm.html">?rmm</a></code>:</p>
-<p><img src="examples_files/rmm-help.jpg" style="width:70.0%"></p>
+<span><span class="va">mod.bml1</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">getLambda</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">mod.bml2</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">getLambda</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Let’s take a closer look at the<code><a href="../reference/bml.html">bml()</a></code> function by typing
+<code><a href="../reference/bml.html">?bml</a></code>.</p>
 <p><strong>The formula object</strong></p>
 <p>The most important component is the formula object, which in our case
 looks like this:
 <code>lnCMEDV ~ NOX + CRIM + RM + DIS + AGE + mm(id(tid_nb, tid), mmc(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb), mmw(w ~ 1/n, constraint=1))</code></p>
 <p>The only difference compared to a <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> formula is the
-inclusion of the <code>mm()</code> container. Within this container, we
+inclusion of the <code><a href="../reference/mm.html">mm()</a></code> container. Within this container, we
 define three sub-containers:<br>
 - <code>ids()</code> for the identifiers<br>
 - <code>mmc()</code> for the covariates being considered,<br>
@@ -544,66 +369,32 @@ be estimated within the spatial regression framework. Let’s estimate it
 and compare the results:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
-<span><span class="co"># Exogenous + residual spatial effect (combination of spatial lag model and spatial error model):  </span></span>
-<span><span class="va">mod2</span> <span class="op">&lt;-</span> </span>
+<span><span class="co"># Exogenous + residual spatial effect (combination of spatial lag model and spatial error model):</span></span>
+<span><span class="va">mod2</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="https://r-spatial.github.io/spatialreg/reference/ML_models.html" class="external-link">errorsarlm</a></span><span class="op">(</span></span>
 <span>    <span class="va">lnCMEDV</span> <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">boston</span>,</span>
 <span>    listw <span class="op">=</span> <span class="va">boston_wlist</span>,</span>
 <span>    Durbin <span class="op">=</span>  <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span></span>
-<span>  <span class="op">)</span> </span>
+<span>  <span class="op">)</span></span>
 <span><span class="va">mod2</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; errorsarlm(formula = lnCMEDV ~ NOX + CRIM + RM + DIS + AGE, data = boston, </span></span>
-<span><span class="co">#&gt;     listw = boston_wlist, Durbin = ~NOX + CRIM + RM + DIS + AGE)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residuals:</span></span>
-<span><span class="co">#&gt;        Min         1Q     Median         3Q        Max </span></span>
-<span><span class="co">#&gt; -0.8517313 -0.0713016 -0.0070739  0.0658620  0.8967408 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Type: error </span></span>
-<span><span class="co">#&gt; Coefficients: (asymptotic standard errors) </span></span>
-<span><span class="co">#&gt;               Estimate Std. Error z value  Pr(&gt;|z|)</span></span>
-<span><span class="co">#&gt; (Intercept)  3.0149075  0.0331295 91.0037 &lt; 2.2e-16</span></span>
-<span><span class="co">#&gt; NOX         -0.1120990  0.0244750 -4.5801 4.647e-06</span></span>
-<span><span class="co">#&gt; CRIM        -0.0667568  0.0100662 -6.6317 3.317e-11</span></span>
-<span><span class="co">#&gt; RM           0.1687197  0.0094507 17.8526 &lt; 2.2e-16</span></span>
-<span><span class="co">#&gt; DIS         -0.0863850  0.0423890 -2.0379 0.0415587</span></span>
-<span><span class="co">#&gt; AGE         -0.0876803  0.0154299 -5.6825 1.328e-08</span></span>
-<span><span class="co">#&gt; lag.NOX      0.0123545  0.0449974  0.2746 0.7836541</span></span>
-<span><span class="co">#&gt; lag.CRIM    -0.1031677  0.0269163 -3.8329 0.0001266</span></span>
-<span><span class="co">#&gt; lag.RM       0.0396613  0.0232693  1.7044 0.0882981</span></span>
-<span><span class="co">#&gt; lag.DIS     -0.0381250  0.0561561 -0.6789 0.4971937</span></span>
-<span><span class="co">#&gt; lag.AGE     -0.0196289  0.0380985 -0.5152 0.6064036</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Lambda: 0.79294, LR test value: 328.64, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; Asymptotic standard error: 0.031295</span></span>
-<span><span class="co">#&gt;     z-value: 25.337, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; Wald statistic: 641.98, p-value: &lt; 2.22e-16</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Log likelihood: 187.0501 for error model</span></span>
-<span><span class="co">#&gt; ML residual variance (sigma squared): 0.023764, (sigma: 0.15416)</span></span>
-<span><span class="co">#&gt; Number of observations: 506 </span></span>
-<span><span class="co">#&gt; Number of parameters estimated: 13 </span></span>
-<span><span class="co">#&gt; AIC: -348.1, (AIC for lm: -21.461)</span></span>
 <span></span>
 <span><span class="co"># Plot coefficients next to each other</span></span>
-<span><span class="va">coefs</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="va">mod.rmm2</span><span class="op">$</span><span class="va">reg.table</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">4</span>,<span class="fl">5</span><span class="op">)</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">"MMMM"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">coefs</span> <span class="op">&lt;-</span></span>
+<span>  <span class="va">mod.bml2</span><span class="op">$</span><span class="va">reg.table</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">4</span>,<span class="fl">5</span><span class="op">)</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">"MMMM"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/add_row.html" class="external-link">add_row</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">"SLM"</span>, coefficients<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mod2</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mod2</span>, level<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>lb<span class="op">=</span><span class="va">X2.5..</span>, ub<span class="op">=</span><span class="va">X97.5..</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>      <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/rownames.html" class="external-link">rownames_to_column</a></span><span class="op">(</span><span class="st">"variable"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">"SLM"</span>, coefficients<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mod2</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mod2</span>, level<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>lb<span class="op">=</span><span class="va">X2.5..</span>, ub<span class="op">=</span><span class="va">X97.5..</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>      <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/rownames.html" class="external-link">rownames_to_column</a></span><span class="op">(</span><span class="st">"variable"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>        variable<span class="op">=</span></span>
 <span>          <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">variable</span>, <span class="st">"lag."</span><span class="op">)</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"lag."</span>, <span class="st">""</span>, <span class="va">variable</span><span class="op">)</span>, <span class="st">"_nb"</span><span class="op">)</span>, </span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">variable</span>, <span class="st">"lag."</span><span class="op">)</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"lag."</span>, <span class="st">""</span>, <span class="va">variable</span><span class="op">)</span>, <span class="st">"_nb"</span><span class="op">)</span>,</span>
 <span>            <span class="va">variable</span><span class="op">==</span><span class="st">"(Intercept)"</span> <span class="op">~</span> <span class="st">"X0"</span>,</span>
 <span>            <span class="cn">TRUE</span> <span class="op">~</span> <span class="va">variable</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">variable</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X0"</span>, <span class="st">"sigma.l1"</span>, <span class="st">"sigma.l2"</span>, <span class="st">"DIC"</span><span class="op">)</span><span class="op">)</span> </span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">variable</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X0"</span>, <span class="st">"sigma.l1"</span>, <span class="st">"sigma.l2"</span>, <span class="st">"DIC"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">coefs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">variable</span>, y<span class="op">=</span><span class="va">coefficients</span>, color<span class="op">=</span><span class="va">model</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, color<span class="op">=</span><span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -612,7 +403,6 @@ and compare the results:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Coefficients"</span>, x <span class="op">=</span> <span class="st">"Variables"</span>, y<span class="op">=</span><span class="st">""</span>, color<span class="op">=</span><span class="st">"Model"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html" class="external-link">coord_flip</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="examples_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
 <p>The estimates are similar but not identical due to differences in the
 estimation algorithms (maximum likelihood vs. Bayesian MCMC) and slight
 differences in model specifications.</p>
@@ -635,8 +425,8 @@ considered covariates. This measure captures dissimilarity, so I label
 the variable <code>DIFF</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Difference between a focal location and its neighbors</span></span>
-<span><span class="va">boston_df2</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="va">boston_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span><span class="va">boston_df2</span> <span class="op">&lt;-</span></span>
+<span>  <span class="va">boston_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    DIFF<span class="op">=</span><span class="fl">1</span><span class="op">/</span><span class="fl">6</span><span class="op">*</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">NOX</span><span class="op">-</span><span class="va">NOX_nb</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">CRIM</span><span class="op">-</span><span class="va">CRIM_nb</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">RM</span><span class="op">-</span><span class="va">RM_nb</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">DIS</span><span class="op">-</span><span class="va">DIS_nb</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">AGE</span><span class="op">-</span><span class="va">AGE_nb</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">LSTAT</span><span class="op">-</span><span class="va">LSTAT_nb</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
@@ -646,7 +436,7 @@ Logical operators such as <em>==, &gt;, &lt;</em> can be used to define
 conditions that enable aggregation functions, such as <code>min</code>
 or <code>max</code>.</p>
 <p>Here, I use the following functional form:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>=</mo><mfrac><mn>1</mn><msup><mi>n</mi><mrow><mo>exp</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>−</mi><mi>X</mi><mi>β</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msup></mfrac></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>=</mo><mfrac><mn>1</mn><msup><mi>n</mi><mrow><mrow><mi mathvariant="normal">exp</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>−</mi><mi>X</mi><mi>β</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup></mfrac></mrow><annotation encoding="application/x-tex">
 w = \frac{1}{n^{\exp(-X\beta)}}
 </annotation></semantics></math></p>
 <p>where
@@ -668,7 +458,7 @@ which corresponds to the standard row-standardized weights.</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mn>506</mn></msubsup><msub><mo>∑</mo><mi>j</mi></msub><msub><mi>w</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mn>506</mn></msubsup><mn>1</mn><mo>=</mo><mn>506</mn></mrow><annotation encoding="application/x-tex">\sum_{i=1}^{506} \sum_{j} w_{ij} = \sum_{i=1}^{506} 1 = 506</annotation></semantics></math>.</p>
 <p>To ensure this overall sum remains unchanged, we need to carefully
 specify constraints. Recall that neighbor effects are aggregated as
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><mi>n</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msub><msub><mi>w</mi><mi>j</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>z</mi><mi>j</mi><mo>⊺</mo></msubsup><mi>γ</mi><mo>+</mo><msub><mi>u</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\sum_{j \in n(i)} w_{j} (z_{j}^{\intercal} \gamma + u_{j})</annotation></semantics></math>.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mrow><mi>j</mi><mo>∈</mo><mi>n</mi><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo stretchy="false" form="postfix">)</mo></mrow></msub><msub><mi>w</mi><mi>j</mi></msub><mo stretchy="false" form="prefix">(</mo><msubsup><mi>z</mi><mi>j</mi><mo>⊺</mo></msubsup><mi>γ</mi><mo>+</mo><msub><mi>u</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\sum_{j \in n(i)} w_{j} (z_{j}^{\intercal} \gamma + u_{j})</annotation></semantics></math>.</p>
 <p>If the total sum of weights changes, the regression coefficients
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>
 will be rescaled. To prevent this, we can apply one of two
@@ -689,61 +479,22 @@ interpretations. Here, we will use weights that sum to 1 for each focal
 location while allowing variation within locations (constraint=1):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Spatial fixed effects + spatial random effect with "endogenized" weights:</span></span>
-<span><span class="va">mod.rmm3</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="../reference/rmm.html">rmm</a></span><span class="op">(</span></span>
+<span><span class="va">mod.bml3</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
 <span>    <span class="va">lnCMEDV</span> <span class="op">~</span></span>
 <span>      <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span> <span class="op">+</span></span>
-<span>      <span class="fu">mm</span><span class="op">(</span></span>
-<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/defunct.html" class="external-link">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,</span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,</span>
 <span>        <span class="fu">mmc</span><span class="op">(</span><span class="va">NOX_nb</span> <span class="op">+</span> <span class="va">CRIM_nb</span> <span class="op">+</span> <span class="va">RM_nb</span> <span class="op">+</span> <span class="va">DIS_nb</span> <span class="op">+</span> <span class="va">AGE_nb</span><span class="op">)</span>,</span>
-<span>        <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b1</span><span class="op">*</span><span class="va">DIFF</span><span class="op">)</span><span class="op">)</span>, constraint<span class="op">=</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b1</span><span class="op">*</span><span class="va">DIFF</span><span class="op">)</span><span class="op">)</span>, c<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    priors<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.w~dnorm(0,1)"</span><span class="op">)</span>, n.iter <span class="op">=</span> <span class="fl">1000</span>, n.burnin <span class="op">=</span> <span class="fl">100</span>, seed<span class="op">=</span><span class="fl">1</span>, monitor <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">boston_df2</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; Compiling model graph</span></span>
-<span><span class="co">#&gt;    Resolving undeclared variables</span></span>
-<span><span class="co">#&gt;    Allocating nodes</span></span>
-<span><span class="co">#&gt; Graph information:</span></span>
-<span><span class="co">#&gt;    Observed stochastic nodes: 506</span></span>
-<span><span class="co">#&gt;    Unobserved stochastic nodes: 1026</span></span>
-<span><span class="co">#&gt;    Total graph size: 55325</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Initializing model</span></span>
 <span></span>
-<span><span class="va">mod.rmm3</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          variable coefficients    sd     lb     ub</span></span>
-<span><span class="co">#&gt; b.l1[1]    NOX_nb        0.001 0.050 -0.099  0.099</span></span>
-<span><span class="co">#&gt; b.l1[2]   CRIM_nb       -0.161 0.035 -0.228 -0.093</span></span>
-<span><span class="co">#&gt; b.l1[3]     RM_nb        0.053 0.027 -0.001  0.103</span></span>
-<span><span class="co">#&gt; b.l1[4]    DIS_nb       -0.064 0.065 -0.191  0.063</span></span>
-<span><span class="co">#&gt; b.l1[5]    AGE_nb       -0.011 0.037 -0.083  0.061</span></span>
-<span><span class="co">#&gt; b.l2[1]        X0        3.027 0.018  2.992  3.063</span></span>
-<span><span class="co">#&gt; b.l2[2]       NOX       -0.067 0.037 -0.141  0.002</span></span>
-<span><span class="co">#&gt; b.l2[3]      CRIM       -0.044 0.014 -0.071 -0.018</span></span>
-<span><span class="co">#&gt; b.l2[4]        RM        0.165 0.013  0.139  0.191</span></span>
-<span><span class="co">#&gt; b.l2[5]       DIS       -0.038 0.055 -0.146  0.064</span></span>
-<span><span class="co">#&gt; b.l2[6]       AGE       -0.090 0.017 -0.123 -0.058</span></span>
-<span><span class="co">#&gt; b.w           b.w       -0.969 0.087 -1.152 -0.807</span></span>
-<span><span class="co">#&gt; sigma.l1 sigma.l1        0.378 0.020  0.342  0.420</span></span>
-<span><span class="co">#&gt; sigma.l2 sigma.l2        0.099 0.006  0.088  0.111</span></span>
-<span><span class="co">#&gt; DIC           DIC      355.936    NA     NA     NA</span></span>
+<span><span class="va">mod.bml3</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/monetPlot.html">monetPlot</a></span><span class="op">(</span><span class="va">mod.rmm3</span>, parameter<span class="op">=</span><span class="st">"b.w"</span>, centrality<span class="op">=</span><span class="st">"median"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Registered S3 method overwritten by 'GGally':</span></span>
-<span><span class="co">#&gt;   method from   </span></span>
-<span><span class="co">#&gt;   +.gg   ggplot2</span></span>
-<span><span class="co">#&gt; Warning: package 'patchwork' was built under R version 4.4.2</span></span>
-<span><span class="co">#&gt; Warning: package 'bayestestR' was built under R version 4.4.2</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'bayestestR'</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:ggmcmc':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     ci</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:HDInterval':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     hdi</span></span></code></pre></div>
-<p><img src="examples_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<span><span class="fu"><a href="../reference/monetPlot.html">monetPlot</a></span><span class="op">(</span><span class="va">mod.bml3</span>, parameter<span class="op">=</span><span class="st">"b.w"</span><span class="op">)</span></span></code></pre></div>
 <p>We find that the degree of dissimilarity between a location and its
 neighbors significantly affects the aggregation weights, with more
 similar neighbors exerting greater influence than less similar ones.</p>
@@ -756,24 +507,9 @@ regression models!</p>
 estimates:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">mod.rmm3</span><span class="op">$</span><span class="va">w</span>, sum<span class="op">=</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">mod.rmm3</span><span class="op">$</span><span class="va">w</span>, na.rm <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                  W1        W2        W3        W4          W5          W6</span></span>
-<span><span class="co">#&gt; L2 unit 1 0.2135544 0.1831528 0.2588675 0.2059374 0.052230160 0.007778438</span></span>
-<span><span class="co">#&gt; L2 unit 2 0.1991590 0.2441160 0.2629923 0.2937327          NA          NA</span></span>
-<span><span class="co">#&gt; L2 unit 3 0.1461061 0.2311961 0.3015582 0.2240084 0.051045581 0.038987162</span></span>
-<span><span class="co">#&gt; L2 unit 4 0.2513831 0.2783931 0.2206919 0.2495319          NA          NA</span></span>
-<span><span class="co">#&gt; L2 unit 5 0.2486853 0.2352752 0.2313238 0.1427047 0.007597157 0.005197712</span></span>
-<span><span class="co">#&gt; L2 unit 6 0.1526319 0.2139220 0.1836577 0.1545417 0.117465724 0.177781097</span></span>
-<span><span class="co">#&gt;                    W7          W8         W9 W10 W11 W12 W13 W14 W15 sum</span></span>
-<span><span class="co">#&gt; L2 unit 1 0.003806059 0.074673262         NA  NA  NA  NA  NA  NA  NA   1</span></span>
-<span><span class="co">#&gt; L2 unit 2          NA          NA         NA  NA  NA  NA  NA  NA  NA   1</span></span>
-<span><span class="co">#&gt; L2 unit 3 0.004238395 0.002860046         NA  NA  NA  NA  NA  NA  NA   1</span></span>
-<span><span class="co">#&gt; L2 unit 4          NA          NA         NA  NA  NA  NA  NA  NA  NA   1</span></span>
-<span><span class="co">#&gt; L2 unit 5 0.084106073 0.029675257 0.01543486  NA  NA  NA  NA  NA  NA   1</span></span>
-<span><span class="co">#&gt; L2 unit 6          NA          NA         NA  NA  NA  NA  NA  NA  NA   1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">mod.bml3</span><span class="op">$</span><span class="va">w</span>, sum<span class="op">=</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">mod.bml3</span><span class="op">$</span><span class="va">w</span>, na.rm <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">mod.rmm3</span><span class="op">$</span><span class="va">w</span>, na.rm <span class="op">=</span> <span class="cn">T</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 506</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">mod.bml3</span><span class="op">$</span><span class="va">w</span>, na.rm <span class="op">=</span> <span class="cn">T</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>The weights sum to 1 for each focal location but vary across
 neighbors of each location.</p>
 <p>Ben 2do:</p>
@@ -798,18 +534,18 @@ empirically test which of these models better fits the data.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">schoolnets</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">SAS</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">nodedat</span>, <span class="va">vars</span><span class="op">=</span><span class="cn">NULL</span>, <span class="va">suffix</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  </span>
+<span></span>
 <span>  <span class="co"># Helper function to select node features as _from or _to</span></span>
-<span>  </span>
+<span></span>
 <span>  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">vars</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span> <span class="co"># Return all variables if no variable-list specified</span></span>
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span></span>
-<span>      <span class="va">nodedat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>      <span class="va">nodedat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename_with</a></span><span class="op">(</span><span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">suffix</span><span class="op">)</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
 <span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span></span>
-<span>      <span class="va">nodedat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="op">!</span><span class="va">vars</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>      <span class="va">nodedat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="op">!</span><span class="va">vars</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename_with</a></span><span class="op">(</span><span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">suffix</span><span class="op">)</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
@@ -818,102 +554,71 @@ empirically test which of these models better fits the data.</p>
 <span><span class="co"># Create school network data</span></span>
 <span></span>
 <span><span class="va">schoolnets</span> <span class="op">&lt;-</span></span>
-<span>  </span>
-<span>  <span class="va">nodedat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  </span>
+<span></span>
+<span>  <span class="va">nodedat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span></span>
 <span>  <span class="co"># add friend features</span></span>
-<span>  </span>
+<span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span></span>
-<span>    <span class="va">edgedat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>  </span>
-<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">youthid_from</span>, <span class="va">youthid_to</span>, <span class="va">rank</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="va">edgedat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">youthid_from</span>, <span class="va">youthid_to</span>, <span class="va">rank</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span></span>
 <span>        <span class="fu">SAS</span><span class="op">(</span><span class="va">nodedat</span>, vars<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"youthid"</span>, <span class="st">"parent_inc"</span><span class="op">)</span>, suffix<span class="op">=</span><span class="st">"_to"</span><span class="op">)</span>,</span>
 <span>        by<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"youthid_to"</span><span class="op">)</span></span>
-<span>      <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>      <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">youthid_from</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>        bestie <span class="op">=</span> <span class="va">rank</span><span class="op">==</span><span class="fl">1</span>,</span>
 <span>        parent_inc_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">parent_inc_to</span>, na.rm<span class="op">=</span><span class="cn">T</span><span class="op">)</span>,</span>
 <span>      <span class="op">)</span>,</span>
 <span>    by<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"youthid"</span><span class="op">=</span><span class="st">"youthid_from"</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  </span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span></span>
 <span>  <span class="co"># count number of friends</span></span>
-<span>  </span>
-<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/drop_na.html" class="external-link">drop_na</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">add_count</a></span><span class="op">(</span><span class="va">youthid</span>, name<span class="op">=</span><span class="st">"n_friends"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">n_friends</span><span class="op">&gt;=</span><span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  </span>
+<span></span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/drop_na.html" class="external-link">drop_na</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">add_count</a></span><span class="op">(</span><span class="va">youthid</span>, name<span class="op">=</span><span class="st">"n_friends"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">n_friends</span><span class="op">&gt;=</span><span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html" class="external-link">across</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span>, <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">.</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span></span>
 <span><span class="co"># Naive linear-in-means model</span></span>
-<span><span class="va">mod4</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">test_cogn</span> <span class="op">~</span> <span class="va">sex</span> <span class="op">+</span> <span class="va">etn</span> <span class="op">+</span> <span class="va">parent_edu</span> <span class="op">+</span> <span class="va">parent_inc</span> <span class="op">+</span> <span class="va">parent_inc_mean</span>, data<span class="op">=</span><span class="va">schoolnets</span><span class="op">)</span> </span>
+<span><span class="va">mod4</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">test_cogn</span> <span class="op">~</span> <span class="va">sex</span> <span class="op">+</span> <span class="va">etn</span> <span class="op">+</span> <span class="va">parent_edu</span> <span class="op">+</span> <span class="va">parent_inc</span> <span class="op">+</span> <span class="va">parent_inc_mean</span>, data<span class="op">=</span><span class="va">schoolnets</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># MMMM comparing mean to max aggregation</span></span>
-<span><span class="va">mod.rmm4</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="../reference/rmm.html">rmm</a></span><span class="op">(</span></span>
+<span><span class="va">mod.bml4</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
 <span>    <span class="va">test_cogn</span> <span class="op">~</span></span>
 <span>      <span class="va">sex</span> <span class="op">+</span> <span class="va">etn</span> <span class="op">+</span> <span class="va">parent_edu</span> <span class="op">+</span> <span class="va">parent_inc</span> <span class="op">+</span></span>
-<span>      <span class="fu">mm</span><span class="op">(</span></span>
-<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/defunct.html" class="external-link">id</a></span><span class="op">(</span><span class="va">youthid_to</span>, <span class="va">youthid</span><span class="op">)</span>,</span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">youthid_to</span>, <span class="va">youthid</span><span class="op">)</span>,</span>
 <span>        <span class="fu">mmc</span><span class="op">(</span><span class="va">parent_inc_to</span><span class="op">)</span>,</span>
-<span>        <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b1</span><span class="op">*</span><span class="fl">1</span><span class="op">/</span><span class="va">n_friends</span><span class="op">+</span><span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">b1</span><span class="op">)</span><span class="op">*</span><span class="va">bestie</span>, constraint<span class="op">=</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b1</span><span class="op">*</span><span class="fl">1</span><span class="op">/</span><span class="va">n_friends</span><span class="op">+</span><span class="op">(</span><span class="fl">1</span><span class="op">-</span><span class="va">b1</span><span class="op">)</span><span class="op">*</span><span class="va">bestie</span>, c<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    n.iter <span class="op">=</span> <span class="fl">1000</span>, n.burnin <span class="op">=</span> <span class="fl">100</span>, seed<span class="op">=</span><span class="fl">1</span>, monitor <span class="op">=</span> <span class="cn">T</span>, priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.w~dunif(0,1)"</span><span class="op">)</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">schoolnets</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; Compiling model graph</span></span>
-<span><span class="co">#&gt;    Resolving undeclared variables</span></span>
-<span><span class="co">#&gt;    Allocating nodes</span></span>
-<span><span class="co">#&gt; Graph information:</span></span>
-<span><span class="co">#&gt;    Observed stochastic nodes: 4814</span></span>
-<span><span class="co">#&gt;    Unobserved stochastic nodes: 9601</span></span>
-<span><span class="co">#&gt;    Total graph size: 204654</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Initializing model</span></span>
 <span></span>
-<span><span class="va">mod.rmm4</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;               variable coefficients    sd     lb     ub</span></span>
-<span><span class="co">#&gt; b.l1     parent_inc_to        0.385 0.049  0.289  0.481</span></span>
-<span><span class="co">#&gt; b.l2[1]             X0       16.543 0.346 15.878 17.257</span></span>
-<span><span class="co">#&gt; b.l2[2]            sex        0.166 0.131 -0.101  0.428</span></span>
-<span><span class="co">#&gt; b.l2[3]            etn       -0.792 0.117 -1.028 -0.569</span></span>
-<span><span class="co">#&gt; b.l2[4]     parent_edu        0.292 0.077  0.138  0.436</span></span>
-<span><span class="co">#&gt; b.l2[5]     parent_inc        0.113 0.024  0.067  0.158</span></span>
-<span><span class="co">#&gt; b.w                b.w        0.967 0.024  0.913  0.998</span></span>
-<span><span class="co">#&gt; sigma.l1      sigma.l1        3.880 0.132  3.624  4.139</span></span>
-<span><span class="co">#&gt; sigma.l2      sigma.l2        3.221 0.046  3.133  3.309</span></span>
-<span><span class="co">#&gt; DIC                DIC    29445.473    NA     NA     NA</span></span>
-<span><span class="fu"><a href="../reference/monetPlot.html">monetPlot</a></span><span class="op">(</span><span class="va">mod.rmm4</span>, parameter<span class="op">=</span><span class="st">"b.w"</span>, centrality<span class="op">=</span><span class="st">"median"</span><span class="op">)</span> <span class="co"># posterior distribution of the weight coefficient </span></span></code></pre></div>
-<p><img src="examples_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<span><span class="va">mod.bml4</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/monetPlot.html">monetPlot</a></span><span class="op">(</span><span class="va">mod.bml4</span>, parameter<span class="op">=</span><span class="st">"b.w"</span><span class="op">)</span> <span class="co"># posterior distribution of the weight coefficient</span></span>
+<span></span>
+<span><span class="va">mod.bml4</span><span class="op">$</span><span class="va">w</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># inspect estimated weight matrix</span></span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
-<span><span class="va">mod.rmm4</span><span class="op">$</span><span class="va">w</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># inspect estimated weight matrix</span></span>
-<span><span class="co">#&gt;                  W1        W2        W3        W4 W5</span></span>
-<span><span class="co">#&gt; L2 unit 1 0.3551273 0.3224363 0.3224363        NA NA</span></span>
-<span><span class="co">#&gt; L2 unit 2 0.3551273 0.3224363 0.3224363        NA NA</span></span>
-<span><span class="co">#&gt; L2 unit 3 0.5163455 0.4836545        NA        NA NA</span></span>
-<span><span class="co">#&gt; L2 unit 4 0.2745183 0.2418272 0.2418272 0.2418272 NA</span></span>
-<span><span class="co">#&gt; L2 unit 5 0.2745183 0.2418272 0.2418272 0.2418272 NA</span></span>
-<span><span class="co">#&gt; L2 unit 6 0.2418272 0.2418272 0.2418272 0.2745183 NA</span></span></code></pre></div>
-<p>The results suggest that the linear-in-means model is appropriate:
-the best friend does not appear to have a greater impact than the other
-nominated friends as b1=0.97. Since the estimated aggregation is close
-to linear-in-means, the effect size of <code>parent_inc_to</code> does
-not differ between models:</p>
+<span><span class="co"># The results suggest that the linear-in-means model is appropriate: the best friend does not appear to have a greater impact than the other nominated friends as b1=`r mod.bml4$reg.table %&gt;% filter(variable=="b.w") %&gt;% pull(coefficients) %&gt;% round(.,2)`. Since the estimated aggregation is close to linear-in-means, the effect size of `parent_inc_to` does not differ between models:</span></span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">coefs</span> <span class="op">&lt;-</span></span>
-<span>  <span class="va">mod.rmm4</span><span class="op">$</span><span class="va">reg.table</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">4</span>,<span class="fl">5</span><span class="op">)</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">variable</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X0"</span>, <span class="st">"sigma.l1"</span>, <span class="st">"sigma.l2"</span>, <span class="st">"DIC"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">"MMMM"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>  <span class="va">mod.bml4</span><span class="op">$</span><span class="va">reg.table</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">4</span>,<span class="fl">5</span><span class="op">)</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="va">variable</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X0"</span>, <span class="st">"sigma.l1"</span>, <span class="st">"sigma.l2"</span>, <span class="st">"DIC"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">"MMMM"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/add_row.html" class="external-link">add_row</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">"SLM"</span>, coefficients<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mod4</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mod4</span>, level<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>lb<span class="op">=</span><span class="va">X2.5..</span>, ub<span class="op">=</span><span class="va">X97.5..</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>      <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/rownames.html" class="external-link">rownames_to_column</a></span><span class="op">(</span><span class="st">"variable"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>model<span class="op">=</span><span class="st">"SLM"</span>, coefficients<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">mod4</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">mod4</span>, level<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>lb<span class="op">=</span><span class="va">X2.5..</span>, ub<span class="op">=</span><span class="va">X97.5..</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>      <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/rownames.html" class="external-link">rownames_to_column</a></span><span class="op">(</span><span class="st">"variable"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>variable<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">variable</span><span class="op">==</span><span class="st">"parent_inc_mean"</span>, <span class="st">"parent_inc_to"</span>, <span class="va">variable</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> </span>
+<span>  <span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">coefs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">coefs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">variable</span>, y<span class="op">=</span><span class="va">coefficients</span>, color<span class="op">=</span><span class="va">model</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -923,7 +628,6 @@ not differ between models:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Coefficients"</span>, x <span class="op">=</span> <span class="st">"Variables"</span>, y<span class="op">=</span><span class="st">""</span>, color<span class="op">=</span><span class="st">"Model"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html" class="external-link">coord_flip</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="examples_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="e3">The effect of political parties’ financial dependency on the
@@ -936,29 +640,22 @@ partners. <a href="https://osf.io/preprints/socarxiv/4bafr_v1" class="external-l
 (2025)</a>.</p>
 <p>Tbd</p>
 </div>
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-
-      </div>
-
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
 
-      <footer><div class="copyright">
-  <p></p>
-<p>Developed by Benjamin Rosche.</p>
+    <footer><div class="pkgdown-footer-left">
+  <p>Developed by Benjamin Rosche.</p>
 </div>
 
-<div class="pkgdown">
-  <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+<div class="pkgdown-footer-right">
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
-
 
 
 

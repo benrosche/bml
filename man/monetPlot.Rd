@@ -26,9 +26,11 @@ distribution of your model parameters and the traceplot that led to this density
 }
 \examples{
 data(coalgov)
-m1 <- bml(Surv(govdur, earlyterm) ~ 1 + majority + mm(id(pid, gid), mmc(fdep), mmw(w ~ 1/n, constraint=T)) + hm(id=cid, name=cname, type=RE, showFE=F),
-          family="Weibull", monitor=T, data=coalgov)
-monetPlot(m1, parameter="b.l1")
+m1 <- bml(Surv(govdur, earlyterm) ~ 1 + majority +
+  mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = TRUE), RE = TRUE) +
+  hm(id = id(cid), name = cname, type = "RE"),
+  family = "Weibull", monitor = TRUE, data = coalgov)
+monetPlot(m1, parameter="b.mm")
 
 }
 \author{

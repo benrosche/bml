@@ -12,8 +12,8 @@ by \code{R2jags::jags()}, with component \code{$jags.out$BUGSoutput}.}
 
 \item{parameters}{Character vector of parameter names (or patterns) to extract,
 passed to \code{\link{crMCMC}}. Depending on your \code{crMCMC()} implementation,
-these may be exact names or patterns (e.g., a prefix like \code{"b.l2"} that
-matches \code{"b.l2[1]"}, \code{"b.l2[2]"}, …).}
+these may be exact names or patterns (e.g., a prefix like \code{"b"} that
+matches \code{"b[1]"}, \code{"b[2]"}, …).}
 }
 \value{
 A \code{data.frame} with one row per diagnostic and one column per

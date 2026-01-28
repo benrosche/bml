@@ -112,10 +112,10 @@ crDat <- function(party=3, gov=c(1,3), country=3, weight=c(0,0,0), Sigma=matrix(
   # Add RE
   dat <- 
     dat %>%
-    dplyr::group_by(pid) %>% dplyr::mutate(l1id = cur_group_id()) %>% dplyr::ungroup() %>%  dplyr::mutate(re.party=re.party[l1id]) %>%
-    dplyr::group_by(gid) %>% dplyr::mutate(l2id = cur_group_id()) %>% dplyr::ungroup() %>%  dplyr::mutate(re.gov=re.gov[l2id]) %>% 
-    dplyr::group_by(cid) %>% dplyr::mutate(l3id = cur_group_id()) %>% dplyr::ungroup() %>%  dplyr::mutate(re.country=re.country[l3id]) %>% 
-    dplyr::select(-l1id, -l2id, -l3id)
+    dplyr::group_by(pid) %>% dplyr::mutate(mmid = cur_group_id()) %>% dplyr::ungroup() %>%  dplyr::mutate(re.party=re.party[mmid]) %>%
+    dplyr::group_by(gid) %>% dplyr::mutate(mainid = cur_group_id()) %>% dplyr::ungroup() %>%  dplyr::mutate(re.gov=re.gov[mainid]) %>%
+    dplyr::group_by(cid) %>% dplyr::mutate(hmid = cur_group_id()) %>% dplyr::ungroup() %>%  dplyr::mutate(re.country=re.country[hmid]) %>%
+    dplyr::select(-mmid, -mainid, -hmid)
   
   # Create Y ------------------------------------------------------------------------------------- #
   

@@ -1,6 +1,6 @@
 #' Coalition governments in comparative perspective (1944-2013)
 #'
-#' The unit of analysis for this dataset is level 1, which is the party level in this case.
+#' The unit of analysis for this dataset is the member level (mm), which is the party level in this case.
 #' pid indicates the party identity
 #' gid indicates the government identity
 #' ...
