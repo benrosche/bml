@@ -19,12 +19,25 @@ dissectFormula <- function(formula, family, data) {
   lhs <- formula[[2]] %>% all.vars()
   rhs_terms <- attr(terms(formula), "term.labels")
 
+
+  # Validate family
+  valid_families <- c("Gaussian", "Binomial", "Weibull", "Cox")
+  if (!family %in% valid_families) {
+    stop("Invalid family: '", family, "'. Must be one of: ", paste(valid_families, collapse = ", "))
+  }
+
   # Validate LHS based on family
-  if (family == "Gaussian" & length(lhs) > 1) {
+  if (family == "Gaussian" && length(lhs) > 1) {
     stop("family=\"Gaussian\" takes only one variable on the left-hand side of the formula.")
   }
-  if (family == "Weibull" & length(lhs) != 2) {
+  if (family == "Binomial" && length(lhs) > 1) {
+    stop("family=\"Binomial\" takes only one variable on the left-hand side of the formula.")
+  }
+  if (family == "Weibull" && length(lhs) != 2) {
     stop("family=\"Weibull\" takes two variables on the left-hand side: 'Surv(survtime, event)'")
+  }
+  if (family == "Cox" && length(lhs) != 2) {
+    stop("family=\"Cox\" takes two variables on the left-hand side: 'Surv(survtime, event)'")
   }
 
   # --------------------------------------------------------------------------------------------- #
@@ -58,6 +71,25 @@ dissectFormula <- function(formula, family, data) {
     if (attr(terms(formula), "intercept") == 1) "X0",
     regular_terms
   )
+
+  # Create a main-level formula for model.matrix() - supports interactions and I()
+  # This formula only includes regular terms (no mm(), hm(), fix())
+  has_intercept <- attr(terms(formula), "intercept") == 1
+  if (length(regular_terms) > 0) {
+    main_formula_str <- paste(regular_terms, collapse = " + ")
+    if (has_intercept) {
+      main_formula <- as.formula(paste("~", main_formula_str))
+    } else {
+      main_formula <- as.formula(paste("~ 0 +", main_formula_str))
+    }
+  } else {
+    # No regular terms, just intercept or nothing
+    if (has_intercept) {
+      main_formula <- as.formula("~ 1")
+    } else {
+      main_formula <- NULL
+    }
+  }
 
   # --------------------------------------------------------------------------------------------- #
   # Parse mm() blocks
@@ -102,13 +134,17 @@ dissectFormula <- function(formula, family, data) {
     }
 
     # Validate: mm vars exist in data
+    # Use all.vars() on formula to get base variable names (handles interactions, I())
     all_mm_vars <- unlist(lapply(mm_list, function(m) {
-      if (is.list(m$vars) && !is.null(m$vars$free)) {
-        # New structure: list with free and fixed
-        c(m$vars$free, sapply(m$vars$fixed, function(x) x$var))
+      if (is.null(m$vars)) return(NULL)
+      if (is.list(m$vars)) {
+        # New structure with formula
+        base_vars <- if (!is.null(m$vars$formula)) all.vars(m$vars$formula) else m$vars$free
+        fixed_vars <- if (!is.null(m$vars$fixed)) sapply(m$vars$fixed, function(x) x$var) else NULL
+        c(base_vars, fixed_vars)
       } else {
-        # Old structure: character vector
-        m$vars
+        # Legacy: character vector
+        as.character(m$vars)
       }
     }))
     if (length(all_mm_vars) > 0 && !all(all_mm_vars %in% names(data))) {
@@ -117,20 +153,41 @@ dissectFormula <- function(formula, family, data) {
     }
 
     # Validate: weight function variables exist in data (excluding w, n, X0, and parameters)
+    # Note: For aggregation functions like min(fdp), we need to check the base variable (fdp),
+    # not the derived column name (min_fdp) which will be created in createData()
     all_fn_vars <- unlist(lapply(mm_list, function(m) m$fn$vars))
     all_fn_vars <- setdiff(all_fn_vars, c("X0", "n"))
-    if (length(all_fn_vars) > 0 && !all(all_fn_vars %in% names(data))) {
-      missing_vars <- all_fn_vars[!all_fn_vars %in% names(data)]
+
+    # Get base variables needed for aggregation functions
+    all_agg_vars <- unlist(lapply(mm_list, function(m) m$fn$agg_vars))
+
+    # Get aggregated column names (these will be created, not checked against data)
+    all_agg_cols <- unlist(lapply(mm_list, function(m) {
+      if (!is.null(m$fn$agg_funcs)) sapply(m$fn$agg_funcs, function(a) a$col_name)
+      else NULL
+    }))
+
+    # Check regular weight function variables (excluding aggregated columns)
+    regular_fn_vars <- setdiff(all_fn_vars, all_agg_cols)
+    if (length(regular_fn_vars) > 0 && !all(regular_fn_vars %in% names(data))) {
+      missing_vars <- regular_fn_vars[!regular_fn_vars %in% names(data)]
       stop("Weight function variable(s) not found in data: ", paste(missing_vars, collapse = ", "))
+    }
+
+    # Check base variables used in aggregation functions
+    if (length(all_agg_vars) > 0 && !all(all_agg_vars %in% names(data))) {
+      missing_vars <- all_agg_vars[!all_agg_vars %in% names(data)]
+      stop("Variable(s) used in aggregation functions not found in data: ", paste(missing_vars, collapse = ", "))
     }
 
     # Check: at least one mm() block must have RE = TRUE or vars specified
     has_re <- any(sapply(mm_list, function(m) m$RE))
     has_vars <- any(sapply(mm_list, function(m) {
+      if (is.null(m$vars)) return(FALSE)
       if (is.list(m$vars)) {
-        !is.null(m$vars$free) || !is.null(m$vars$fixed)
+        !is.null(m$vars$formula) || !is.null(m$vars$free) || !is.null(m$vars$fixed)
       } else {
-        !is.null(m$vars)
+        length(m$vars) > 0
       }
     }))
     if (!has_re && !has_vars) {
@@ -177,13 +234,17 @@ dissectFormula <- function(formula, family, data) {
     }
 
     # Validate: hm vars exist in data
+    # Use all.vars() on formula to get base variable names (handles interactions, I())
     all_hm_vars <- unlist(lapply(hm_list, function(h) {
-      if (is.list(h$vars) && !is.null(h$vars$free)) {
-        # New structure: list with free and fixed
-        c(h$vars$free, sapply(h$vars$fixed, function(x) x$var))
+      if (is.null(h$vars)) return(NULL)
+      if (is.list(h$vars)) {
+        # New structure with formula
+        base_vars <- if (!is.null(h$vars$formula)) all.vars(h$vars$formula) else h$vars$free
+        fixed_vars <- if (!is.null(h$vars$fixed)) sapply(h$vars$fixed, function(x) x$var) else NULL
+        c(base_vars, fixed_vars)
       } else {
-        # Old structure: character vector
-        h$vars
+        # Legacy: character vector
+        as.character(h$vars)
       }
     }))
     if (length(all_hm_vars) > 0 && !all(all_hm_vars %in% names(data))) {
@@ -203,6 +264,8 @@ dissectFormula <- function(formula, family, data) {
     if (length(mainvars) > 1) {  # more than just intercept
       hmid <- hm_list[[1]]$id
       candidate_vars <- mainvars[mainvars != "X0"]
+      # Filter to only variables that exist in data (excludes interaction terms like a:b)
+      candidate_vars <- candidate_vars[candidate_vars %in% names(data)]
 
       if (length(candidate_vars) > 0) {
         hmvars_detected <- data %>%
@@ -230,9 +293,15 @@ dissectFormula <- function(formula, family, data) {
   # Validate mainvars exist in data
   # --------------------------------------------------------------------------------------------- #
 
-  mainvars_check <- mainvars[mainvars != "X0"]
-  if (length(mainvars_check) > 0 && !all(mainvars_check %in% names(data))) {
-    missing_vars <- mainvars_check[!mainvars_check %in% names(data)]
+  # Use all.vars() to extract base variable names - handles interactions (a:b, a*b) and I()
+  if (!is.null(main_formula)) {
+    mainvars_base <- all.vars(main_formula)
+  } else {
+    mainvars_base <- c()
+  }
+
+  if (length(mainvars_base) > 0 && !all(mainvars_base %in% names(data))) {
+    missing_vars <- mainvars_base[!mainvars_base %in% names(data)]
     stop("Main-level variable(s) not found in data: ", paste(missing_vars, collapse = ", "))
   }
 
@@ -256,6 +325,7 @@ dissectFormula <- function(formula, family, data) {
       lhs            = lhs,
       mainvars       = mainvars,
       mainvars_fixed = if (length(mainvars_fixed) > 0) mainvars_fixed else NULL,
+      main_formula   = main_formula,
       mm             = mm_list,
       hm             = hm_list
     )

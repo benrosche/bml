@@ -13,6 +13,8 @@ must be \code{w}; the right-hand side defines the weighting scheme:
   \item Simple: \code{w ~ 1/n} (equal weights based on group size)
   \item Parameterized: \code{w ~ b0 + b1 * tenure} (weights depend on
     member characteristics and estimated parameters)
+  \item With group aggregates: \code{w ~ b1 * min(x) + (1-b1) * mean(x)}
+    (weights based on group-level summaries; see Details)
 }
 Parameters must be named \code{b0}, \code{b1}, \code{b2}, etc.}
 
@@ -42,9 +44,49 @@ estimated from the data.
   \item Equal weights: \code{w ~ 1/n}
   \item Duration-based: \code{w ~ duration}
   \item Flexible parameterized: \code{w ~ b0 + b1 * seniority}
+  \item Group aggregates: \code{w ~ b1 * min(x) + (1-b1) * mean(x)}
 }
 
 When \code{c = TRUE}, the weights are constrained: \eqn{\sum_{k \in group} w_k = 1}.
+
+\strong{Group-Level Aggregation Functions:}
+
+The weight function supports aggregation functions that compute summaries
+within each group (mainid). These are pre-computed in R before passing to JAGS.
+Supported functions:
+\itemize{
+  \item \code{min(var)}, \code{max(var)}: Minimum/maximum value within the group
+  \item \code{mean(var)}, \code{sum(var)}: Mean/sum of values within the group
+  \item \code{median(var)}, \code{mode(var)}: Median/mode (most frequent) value within the group
+  \item \code{sd(var)}, \code{var(var)}, \code{range(var)}: Standard deviation/variance/range (max-min) within the group
+  \item \code{first(var)}, \code{last(var)}: First/last value (based on data order)
+  \item \code{quantile(var, prob)}: Quantile at probability \code{prob} (0 to 1).
+    For example, \code{quantile(x, 0.25)} computes the 25th percentile.
+}
+
+Example: \code{fn(w ~ b1 * min(tenure) + (1-b1) * max(tenure))} creates weights
+that blend the minimum and maximum tenure within each group, with the blend
+controlled by the estimated parameter \code{b1}.
+
+Example with quantile: \code{fn(w ~ quantile(tenure, 0.75) / max(tenure))} uses
+the 75th percentile relative to the maximum within each group.
+
+Note: Nested aggregation functions (e.g., \code{min(max(x))}) are not supported.
+
+\strong{JAGS Mathematical Functions:}
+
+The following mathematical functions are passed directly to JAGS and can be
+used in weight formulas:
+\itemize{
+  \item \code{exp}, \code{log}, \code{log10}, \code{sqrt}, \code{abs}, \code{pow}
+  \item \code{sin}, \code{cos}, \code{tan}, \code{asin}, \code{acos}, \code{atan}
+  \item \code{sinh}, \code{cosh}, \code{tanh}
+  \item \code{round}, \code{trunc}, \code{floor}, \code{ceiling}
+}
+
+Example: \code{fn(w ~ 1 / (1 + (n - 1) * exp(-(b1 * x))))} uses an exponential
+decay function where weights depend on member characteristics. See Rosche (2026)
+for more details on parameterized weight functions.
 }
 \examples{
 # Equal weights (standard multiple-membership)
@@ -58,6 +100,18 @@ fn(w ~ b0 + b1 * seniority, c = TRUE)
 
 # Unconstrained weights
 fn(w ~ importance, c = FALSE)
+
+# Weights based on group aggregates
+fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE)
+
+# Combining individual and aggregate measures
+fn(w ~ b0 + b1 * (tenure / max(tenure)), c = TRUE)
+
+# Using median for robust central tendency
+fn(w ~ tenure / median(tenure), c = TRUE)
+
+# Using quantiles for percentile-based weights
+fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE)
 
 }
 \references{

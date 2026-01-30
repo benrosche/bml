@@ -12,7 +12,7 @@ bml(
   n.iter = 1000,
   n.burnin = 500,
   n.thin = max(1, floor((n.iter - n.burnin)/1000)),
-  chains = 3,
+  n.chains = 3,
   seed = NULL,
   run = TRUE,
   parallel = FALSE,
@@ -55,7 +55,7 @@ chain. Default: 500. Should be sufficient for chains to reach stationarity.}
 Default: \code{max(1, floor((n.iter - n.burnin) / 1000))} (targets ~1000 samples).
 Increase if posterior samples show high autocorrelation.}
 
-\item{chains}{Number of MCMC chains. Default: 3. Use 3-4 chains to assess
+\item{n.chains}{Number of MCMC chains. Default: 3. Use 3-4 chains to assess
 convergence via Gelman-Rubin diagnostics.}
 
 \item{seed}{Integer random seed for reproducibility. If \code{NULL}, results
@@ -137,7 +137,12 @@ Dependencies Within and Between Governments}. \emph{Political Analysis}.
 
 \itemize{
   \item \strong{Outcome (Y):} The dependent variable. For survival models, use \code{Surv(time, event)}.
-  \item \strong{Intercept (1):} Includes an intercept term; use \code{0} to omit it.
+  \item \strong{Intercept:} Follows standard R formula conventions (like \code{lm()}):
+    \itemize{
+      \item \code{y ~ x}: Includes intercept by default
+      \item \code{y ~ 1 + x}: Explicitly includes intercept (same as default)
+      \item \code{y ~ 0 + x} or \code{y ~ -1 + x}: Excludes intercept
+    }
   \item \strong{Main-level predictors (X.main):} Variables defined at the main (group) level, separated by \code{+}.
   \item \strong{HM-level predictors (X.hm):} Variables defined at the nesting level, separated by \code{+}.
   \item \strong{Multiple membership object (\code{mm()}):} Defines how member-level units are
@@ -147,8 +152,28 @@ Dependencies Within and Between Governments}. \emph{Political Analysis}.
         higher-level entities. Cross-classified structures can be modeled by including multiple \code{hm()} objects.
 }
 
-\strong{Important:} The formula parser does not support \code{I()} inside \code{bml()}.
-Create transformations and interactions in your data object before modeling.
+\strong{Formula Features:} The main formula and \code{vars()} specifications support standard R formula syntax:
+\itemize{
+  \item \strong{Interactions:} Use \code{*} for main effects plus interaction, or \code{:} for interaction only.
+        Example: \code{y ~ a * b} expands to \code{y ~ a + b + a:b}.
+  \item \strong{Transformations:} Use \code{I()} for arithmetic operations.
+        Example: \code{y ~ I(x^2)} or \code{y ~ I(a + b)}.
+}
+
+These features work in:
+\itemize{
+  \item \strong{Main formula:} \code{y ~ 1 + a * b + I(x^2)}
+  \item \strong{mm() vars:} \code{vars(a * b)} or \code{vars(I(x^2))}
+  \item \strong{hm() vars:} \code{vars(a:b)} or \code{vars(I(log(x)))}
+}
+
+\strong{Note on weight functions:} The \code{fn()} weight function in \code{mm()} does NOT support
+interactions or \code{I()} transformations. Users must pre-create any needed transformed variables
+in their data before using them in weight functions. For example, instead of \code{fn(w ~ b1 * x^2)},
+first create \code{data$x_sq <- data$x^2} and use \code{fn(w ~ b1 * x_sq)}.
+
+\strong{Note on intercepts:} Intercept syntax (\code{1}, \code{0}, \code{-1}) only applies to the main formula.
+Numeric literals in \code{vars()} are ignored (e.g., \code{vars(1 + x)} is equivalent to \code{vars(x)}).
 }
 
 \section{Multiple Membership Object \code{mm()}}{
@@ -167,8 +192,10 @@ mm(
   \item \code{id(mmid, mainid)}: Specifies identifiers linking each member-level unit (\code{mmid})
         to its corresponding group-level entities (\code{mainid}).
   \item \code{vars(X.mm)}: Specifies member-level covariates aggregated across memberships.
-        Use \code{+} to include multiple variables. Set to \code{NULL} for RE-only blocks.
+        Use \code{+} to include multiple variables. Supports interactions (\code{*}, \code{:})
+        and transformations (\code{I()}). Set to \code{NULL} for RE-only blocks.
   \item \code{fn(w ~ ..., c, ar)}: Defines the weight function (micro-macro link).
+        Note: Does not support interactions or \code{I()} - pre-create transformed variables.
   \item \code{RE}: Logical; if \code{TRUE}, include random effects for this block.
         Automatically \code{TRUE} if \code{vars = NULL}.
 }
@@ -192,6 +219,7 @@ hm(id = id(hmid), vars = vars(X.hm), name = hmname, type = "RE", showFE = FALSE)
 \itemize{
   \item \code{id = id(hmid)}: Variable identifying nesting-level groups.
   \item \code{vars = vars(X.hm)}: Nesting-level variables, or \code{NULL}.
+        Supports interactions (\code{*}, \code{:}) and transformations (\code{I()}).
   \item \code{name = hmname}: Optional labels for nesting-level units.
   \item \code{type}: \code{"RE"} (default) or \code{"FE"}.
   \item \code{showFE}: If \code{TRUE} and \code{type = "FE"}, report the fixed effects.
@@ -314,7 +342,7 @@ m7 <- bml(
 
 }
 \references{
-Rosche, B. (2025). A Multilevel Model for Coalition Governments: Uncovering
+Rosche, B. (2026). A Multilevel Model for Coalition Governments: Uncovering
 Party-Level Dependencies Within and Between Governments. \emph{Political Analysis}.
 
 Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership

@@ -4,7 +4,7 @@
 \alias{mm}
 \title{Define a multiple-membership structure}
 \usage{
-mm(id, vars = NULL, fn = fn(), RE = NULL, ar = FALSE)
+mm(id, vars = NULL, fn = NULL, RE = NULL, ar = FALSE)
 }
 \arguments{
 \item{id}{An \code{\link{id}} object specifying the member-level and group-level
@@ -12,12 +12,14 @@ identifiers: \code{id(mmid, mainid)} where \code{mmid} identifies members
 and \code{mainid} identifies groups.}
 
 \item{vars}{A \code{\link{vars}} object specifying member-level covariates to
-aggregate, or \code{NULL} for random effects only. Variables are weighted
+aggregate, or \code{NULL} for random effects only. Supports interactions
+(\code{*}, \code{:}) and transformations (\code{I()}). Variables are weighted
 according to the function specified in \code{fn}.}
 
 \item{fn}{A \code{\link{fn}} object specifying the weight function (default:
-\code{fn(w ~ 1/n, c = TRUE)} for equal weights). See \code{\link{fn}} for
-details on weight function specification.}
+\code{fn(w ~ 1/n, c = TRUE)} for equal weights). Note: Weight functions do
+NOT support interactions or \code{I()} - pre-create any needed transformed
+variables in your data. See \code{\link{fn}} for details.}
 
 \item{RE}{Logical; if \code{TRUE}, include random effects for member-level units.
 Automatically set to \code{TRUE} if \code{vars = NULL} (random effects only).}
@@ -94,6 +96,21 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = TRUE,
   ar = TRUE  # Random effects evolve over participations
+)
+
+# Interactions and transformations in vars
+mm(
+  id = id(pid, gid),
+  vars = vars(rile * ipd),  # Main effects plus interaction
+  fn = fn(w ~ 1/n, c = TRUE),
+  RE = FALSE
+)
+
+mm(
+  id = id(pid, gid),
+  vars = vars(rile + I(rile^2)),  # Quadratic term
+  fn = fn(w ~ 1/n, c = TRUE),
+  RE = FALSE
 )
 
 }

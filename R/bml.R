@@ -27,7 +27,12 @@
 #' @section Formula Components:
 #' \itemize{
 #'   \item \strong{Outcome (Y):} The dependent variable. For survival models, use \code{Surv(time, event)}.
-#'   \item \strong{Intercept (1):} Includes an intercept term; use \code{0} to omit it.
+#'   \item \strong{Intercept:} Follows standard R formula conventions (like \code{lm()}):
+#'     \itemize{
+#'       \item \code{y ~ x}: Includes intercept by default
+#'       \item \code{y ~ 1 + x}: Explicitly includes intercept (same as default)
+#'       \item \code{y ~ 0 + x} or \code{y ~ -1 + x}: Excludes intercept
+#'     }
 #'   \item \strong{Main-level predictors (X.main):} Variables defined at the main (group) level, separated by \code{+}.
 #'   \item \strong{HM-level predictors (X.hm):} Variables defined at the nesting level, separated by \code{+}.
 #'   \item \strong{Multiple membership object (\code{mm()}):} Defines how member-level units are
@@ -37,8 +42,28 @@
 #'         higher-level entities. Cross-classified structures can be modeled by including multiple \code{hm()} objects.
 #' }
 #'
-#' \strong{Important:} The formula parser does not support \code{I()} inside \code{bml()}.
-#' Create transformations and interactions in your data object before modeling.
+#' \strong{Formula Features:} The main formula and \code{vars()} specifications support standard R formula syntax:
+#' \itemize{
+#'   \item \strong{Interactions:} Use \code{*} for main effects plus interaction, or \code{:} for interaction only.
+#'         Example: \code{y ~ a * b} expands to \code{y ~ a + b + a:b}.
+#'   \item \strong{Transformations:} Use \code{I()} for arithmetic operations.
+#'         Example: \code{y ~ I(x^2)} or \code{y ~ I(a + b)}.
+#' }
+#'
+#' These features work in:
+#' \itemize{
+#'   \item \strong{Main formula:} \code{y ~ 1 + a * b + I(x^2)}
+#'   \item \strong{mm() vars:} \code{vars(a * b)} or \code{vars(I(x^2))}
+#'   \item \strong{hm() vars:} \code{vars(a:b)} or \code{vars(I(log(x)))}
+#' }
+#'
+#' \strong{Note on weight functions:} The \code{fn()} weight function in \code{mm()} does NOT support
+#' interactions or \code{I()} transformations. Users must pre-create any needed transformed variables
+#' in their data before using them in weight functions. For example, instead of \code{fn(w ~ b1 * x^2)},
+#' first create \code{data$x_sq <- data$x^2} and use \code{fn(w ~ b1 * x_sq)}.
+#'
+#' \strong{Note on intercepts:} Intercept syntax (\code{1}, \code{0}, \code{-1}) only applies to the main formula.
+#' Numeric literals in \code{vars()} are ignored (e.g., \code{vars(1 + x)} is equivalent to \code{vars(x)}).
 #'
 #' @section Multiple Membership Object \code{mm()}:
 #' \preformatted{
@@ -55,8 +80,10 @@
 #'   \item \code{id(mmid, mainid)}: Specifies identifiers linking each member-level unit (\code{mmid})
 #'         to its corresponding group-level entities (\code{mainid}).
 #'   \item \code{vars(X.mm)}: Specifies member-level covariates aggregated across memberships.
-#'         Use \code{+} to include multiple variables. Set to \code{NULL} for RE-only blocks.
+#'         Use \code{+} to include multiple variables. Supports interactions (\code{*}, \code{:})
+#'         and transformations (\code{I()}). Set to \code{NULL} for RE-only blocks.
 #'   \item \code{fn(w ~ ..., c, ar)}: Defines the weight function (micro-macro link).
+#'         Note: Does not support interactions or \code{I()} - pre-create transformed variables.
 #'   \item \code{RE}: Logical; if \code{TRUE}, include random effects for this block.
 #'         Automatically \code{TRUE} if \code{vars = NULL}.
 #' }
@@ -78,6 +105,7 @@
 #' \itemize{
 #'   \item \code{id = id(hmid)}: Variable identifying nesting-level groups.
 #'   \item \code{vars = vars(X.hm)}: Nesting-level variables, or \code{NULL}.
+#'         Supports interactions (\code{*}, \code{:}) and transformations (\code{I()}).
 #'   \item \code{name = hmname}: Optional labels for nesting-level units.
 #'   \item \code{type}: \code{"RE"} (default) or \code{"FE"}.
 #'   \item \code{showFE}: If \code{TRUE} and \code{type = "FE"}, report the fixed effects.
@@ -133,7 +161,7 @@
 #'   Default: \code{max(1, floor((n.iter - n.burnin) / 1000))} (targets ~1000 samples).
 #'   Increase if posterior samples show high autocorrelation.
 #'
-#' @param chains Number of MCMC chains. Default: 3. Use 3-4 chains to assess
+#' @param n.chains Number of MCMC chains. Default: 3. Use 3-4 chains to assess
 #'   convergence via Gelman-Rubin diagnostics.
 #'
 #' @param seed Integer random seed for reproducibility. If \code{NULL}, results
@@ -285,7 +313,7 @@
 #' \code{\link{mm}}, \code{\link{hm}} for model specification helpers
 #'
 #' @references
-#' Rosche, B. (2025). A Multilevel Model for Coalition Governments: Uncovering
+#' Rosche, B. (2026). A Multilevel Model for Coalition Governments: Uncovering
 #' Party-Level Dependencies Within and Between Governments. \emph{Political Analysis}.
 #'
 #' Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
@@ -302,7 +330,7 @@ bml <- function(
   n.iter = 1000,
   n.burnin = 500,
   n.thin = max(1, floor((n.iter - n.burnin) / 1000)),
-  chains = 3,
+  n.chains = 3,
   seed = NULL,
   run = TRUE,
   parallel = FALSE,
@@ -336,6 +364,121 @@ bml <- function(
 
   has_mm <- length(mm) > 0
   has_hm <- length(hm) > 0
+
+  # ========================================================================================== #
+  # 1b. Validate data
+  # ========================================================================================== #
+
+  # Collect all RHS variables that need to be checked for missing values
+  vars_to_check <- c()
+
+  # Main-level variables - use all.vars() to get base variable names
+  # This handles interactions (a*b, a:b) and I() transformations
+  if (!is.null(formula_parts$main_formula)) {
+    main_base_vars <- all.vars(formula_parts$main_formula)
+    vars_to_check <- c(vars_to_check, main_base_vars)
+  }
+
+  # Fixed main-level variables
+  if (!is.null(formula_parts$mainvars_fixed)) {
+    fixed_vars <- sapply(formula_parts$mainvars_fixed, function(x) x$var)
+    fixed_vars <- fixed_vars[fixed_vars != "X0"]
+    vars_to_check <- c(vars_to_check, fixed_vars)
+  }
+
+  # MM-level variables and weight function variables
+  weight_vars <- c()
+  if (has_mm) {
+    for (m in mm) {
+      # mm vars (free)
+      if (!is.null(m$vars)) {
+        if (is.list(m$vars) && !is.null(m$vars$free)) {
+          vars_to_check <- c(vars_to_check, m$vars$free)
+          # Fixed vars
+          if (!is.null(m$vars$fixed)) {
+            vars_to_check <- c(vars_to_check, sapply(m$vars$fixed, function(x) x$var))
+          }
+        } else {
+          vars_to_check <- c(vars_to_check, as.character(m$vars))
+        }
+      }
+      # Weight function variables
+      if (!is.null(m$fn$vars) && length(m$fn$vars) > 0) {
+        vars_to_check <- c(vars_to_check, m$fn$vars)
+        weight_vars <- c(weight_vars, m$fn$vars)
+      }
+    }
+  }
+
+  # HM-level variables
+  if (has_hm) {
+    for (h in hm) {
+      if (!is.null(h$vars)) {
+        if (is.list(h$vars) && !is.null(h$vars$free)) {
+          vars_to_check <- c(vars_to_check, h$vars$free)
+          if (!is.null(h$vars$fixed)) {
+            vars_to_check <- c(vars_to_check, sapply(h$vars$fixed, function(x) x$var))
+          }
+        } else {
+          vars_to_check <- c(vars_to_check, as.character(h$vars))
+        }
+      }
+    }
+  }
+
+  # Check for missing values in RHS variables
+  vars_to_check <- unique(vars_to_check)
+  for (v in vars_to_check) {
+    if (v %in% names(data) && any(is.na(data[[v]]))) {
+      n_missing <- sum(is.na(data[[v]]))
+      stop("Missing values detected in variable '", v, "' (", n_missing, " observations).\n",
+           "Please remove or impute missing values before fitting the model.")
+    }
+  }
+
+  # Check if weight function variables are constant within mainid groups
+  # Only check if parameters are being estimated (not for simple aggregation like w ~ 1/n)
+  if (has_mm && length(weight_vars) > 0) {
+    # Check if any mm block has parameters to estimate
+    has_params <- any(sapply(mm, function(m) length(m$fn$params) > 0))
+
+    if (has_params) {
+      mainid_var <- mm[[1]]$id[2]  # mainid is the second element of id()
+      weight_vars <- unique(weight_vars)
+
+      for (wv in weight_vars) {
+        if (wv %in% names(data)) {
+          # Check variance within each mainid group
+          var_by_group <- data %>%
+            dplyr::group_by(.data[[mainid_var]]) %>%
+            dplyr::summarise(var = stats::var(.data[[wv]], na.rm = TRUE), .groups = "drop")
+
+          # If all variances are 0 (or NA for single-member groups), the variable is constant
+          non_na_vars <- var_by_group$var[!is.na(var_by_group$var)]
+          if (length(non_na_vars) > 0 && all(non_na_vars == 0)) {
+            warning("Weight function variable '", wv, "' is constant across members within groups.")
+          }
+        }
+      }
+    }
+  }
+
+  # Check for duplicate member-group combinations
+  if (has_mm) {
+    mmid_var <- mm[[1]]$id[1]    # mmid is the first element of id()
+    mainid_var <- mm[[1]]$id[2]  # mainid is the second element of id()
+
+    duplicates <- data %>%
+      dplyr::group_by(.data[[mmid_var]], .data[[mainid_var]]) %>%
+      dplyr::filter(dplyr::n() > 1) %>%
+      dplyr::ungroup()
+
+    if (nrow(duplicates) > 0) {
+      n_dups <- nrow(duplicates)
+      stop("Duplicate member-group combinations detected (", n_dups, " rows). ",
+           "Each member (", mmid_var, ") should appear only once per group (", mainid_var, ").")
+    }
+  }
 
   # ========================================================================================== #
   # 2. Create data structures
@@ -398,7 +541,7 @@ bml <- function(
     hm,
     monitor,
     modelfile,
-    chains,
+    n.chains,
     inits,
     cox_intervals
   )
@@ -432,7 +575,7 @@ bml <- function(
         list(
           data = jags.data,
           inits = jags.inits[1],
-          n.chains = chains,
+          n.chains = n.chains,
           parameters.to.save = jags.params,
           n.iter = n.iter,
           n.burnin = n.burnin,
@@ -448,7 +591,7 @@ bml <- function(
       jags.out <- R2jags::jags(
         data = jags.data,
         inits = jags.inits,
-        n.chains = chains,
+        n.chains = n.chains,
         parameters.to.save = jags.params,
         n.iter = n.iter,
         n.burnin = n.burnin,
@@ -511,7 +654,7 @@ bml <- function(
       n.iter = n.iter,
       n.burnin = n.burnin,
       n.thin = n.thin,
-      chains = chains,
+      n.chains = n.chains,
       parallel = parallel,
       seed = seed,
       monitor = monitor,

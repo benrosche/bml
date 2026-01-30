@@ -81,17 +81,41 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
                            paste0("X.w.", k, "[i,", v, "]"), fn_string)
         }
 
-        add("  for (i in 1:n.mm) {")
-
         if (fn$constraint) {
+          # Accumulator pattern optimization for constrained weights
+          # Step 1: Compute unnormalized weights
+          add("  for (i in 1:n.mm) {")
           add("    uw.", k, "[i] <- ", fn_string)
-          add("    w.", k, "[i] <- uw.", k, "[i] / sum(uw.", k, "[mmi1.mm[i]:mmi2.mm[i]])")
-        } else {
-          add("    w.", k, "[i] <- ", fn_string)
-        }
+          add("  }")
+          add("")
 
-        add("  }")
-        add("")
+          # Step 2: Cumulative sum (accumulator pattern)
+          add("  # Accumulator: compute cumulative sums for efficient group sums")
+          add("  cum.uw.", k, "[1] <- 0")
+          add("  for (i in 1:n.mm) {")
+          add("    cum.uw.", k, "[i+1] <- cum.uw.", k, "[i] + uw.", k, "[i]")
+          add("  }")
+          add("")
+
+          # Step 3: Group sums (one per group, not per member)
+          add("  # Group sums (computed once per group)")
+          add("  for (j in 1:n.main) {")
+          add("    sum.uw.", k, "[j] <- cum.uw.", k, "[mmi2[j]+1] - cum.uw.", k, "[mmi1[j]]")
+          add("  }")
+          add("")
+
+          # Step 4: Normalize using pre-computed group sums
+          add("  # Normalized weights using pre-computed group sums")
+          add("  for (i in 1:n.mm) {")
+          add("    w.", k, "[i] <- uw.", k, "[i] / sum.uw.", k, "[grp.mm[i]]")
+          add("  }")
+          add("")
+        } else {
+          add("  for (i in 1:n.mm) {")
+          add("    w.", k, "[i] <- ", fn_string)
+          add("  }")
+          add("")
+        }
       }
 
       # mm variable contributions (free variables only - fixed are pre-computed)
@@ -325,20 +349,9 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
   # Build mu[j]
   mu_terms <- c()
 
-  # Intercept (estimated)
-  if ("X0" %in% mainvars) {
-    mu_terms <- c(mu_terms, "b[1]")
-  }
-
-  # Main-level covariates (excluding intercept)
-  mainvars_no_intercept <- mainvars[mainvars != "X0"]
-  if (length(mainvars_no_intercept) > 0) {
-    if ("X0" %in% mainvars) {
-      # Intercept is b[1], other vars start at 2
-      mu_terms <- c(mu_terms, paste0("inprod(X.main[j,], b[2:", length(mainvars), "])"))
-    } else {
-      mu_terms <- c(mu_terms, "inprod(X.main[j,], b)")
-    }
+  # Main-level covariates (including intercept X0 as column of 1s in X.main)
+  if (length(mainvars) > 0) {
+    mu_terms <- c(mu_terms, "inprod(X.main[j,], b)")
   }
 
   # Main-level fixed covariates - Phase 1 Optimization: use pre-computed offset

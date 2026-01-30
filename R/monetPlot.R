@@ -92,8 +92,11 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
   escape_regex <- function(x) gsub("([][{}()+*^$|.?\\\\])", "\\\\\\1", x)
   
   # Checks --------------------------------------------------------------------------------------- #
-  
-  if(is.null(bml$jags.out)) stop("JAGS output could not be retrieved. Please specify monitor = T when running bml.")
+
+  if (is.null(bml$jags.out) || is.null(bml$jags.out$BUGSoutput) ||
+      is.null(bml$jags.out$BUGSoutput$sims.array)) {
+    stop("JAGS output could not be retrieved. Please ensure that monitor = TRUE when fitting the model.", call. = FALSE)
+  }
   if(is.null(label)) label = parameter
   
   # Get mcmclist and posterior stats ------------------------------------------------------------- #
@@ -110,6 +113,12 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
   p.quantiles <- round(quantile(dplyr::pull(mcmc.ggs, value), c(.05, .5, .95)), r)
   p.mad <- round(mad(dplyr::pull(mcmc.ggs, value)), r)
 
+  # Calculate x-axis limits to trim very low density tails
+  # Use 0.1% and 99.9% quantiles with small padding
+  xlim_quantiles <- quantile(dplyr::pull(mcmc.ggs, value), c(0.001, 0.999))
+  xlim_range <- diff(xlim_quantiles)
+  xlim_limits <- c(xlim_quantiles[1] - 0.05 * xlim_range, xlim_quantiles[2] + 0.05 * xlim_range)
+
   # Create plots --------------------------------------------------------------------------------- #
 
   if(isTRUE(yaxis)) {
@@ -125,6 +134,7 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
     ggmcmc::ggs_density(mcmc.ggs, hpd = TRUE) +
     ggplot2::geom_vline(xintercept = 0) +
     ggplot2::geom_vline(xintercept = p.quantiles[2], linetype = "dashed") +
+    ggplot2::coord_cartesian(xlim = xlim_limits) +
     ggplot2::labs(x="", y=yaxis, title = paste0("Parameter: ", label)) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
@@ -145,7 +155,7 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
     ggmcmc::ggs_traceplot(mcmc.ggs, original_burnin = FALSE) +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_hline(yintercept = p.quantiles[2], linetype = "dashed") +
-    ggplot2::coord_flip() +
+    ggplot2::coord_flip(ylim = xlim_limits) +
     ggplot2::scale_y_continuous(
       breaks = sort(as.numeric(c(p.quantiles, 0))),
       labels = function(x) {
@@ -174,9 +184,9 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
       axis.text.x  = ggplot2::element_text(color = "black", size = 12)
     )
 
+  # Use wrap_plots to avoid S7 operator dispatch issues with /
   return(
-    (p1 / p2) +
-      patchwork::plot_layout(heights = c(1, 1)) +
+    patchwork::wrap_plots(p1, p2, ncol = 1, heights = c(1, 1)) +
       patchwork::plot_annotation(theme = ggplot2::theme(plot.margin = ggplot2::unit(c(0, 0, 0, 0), "cm")))
   )
   

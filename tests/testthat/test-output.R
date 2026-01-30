@@ -4,17 +4,9 @@ data("coalgov")
 # Setup: Create a simple fitted model for output tests
 # ================================================================================================ #
 
-# Skip these tests on CRAN since they require JAGS and take time
-skip_on_cran <- function() {
-  if (identical(Sys.getenv("NOT_CRAN"), "true")) {
-    return(invisible(TRUE))
-  }
-  testthat::skip("Skipping on CRAN")
-}
-
 # Create a minimal model for testing (if JAGS is available)
 create_test_model <- function(monitor = FALSE) {
-  skip_on_cran()
+  testthat::skip_on_cran()
 
   if (!requireNamespace("rjags", quietly = TRUE)) {
     skip("rjags not available")
@@ -31,8 +23,7 @@ create_test_model <- function(monitor = FALSE) {
       n.iter = 500,
       n.burnin = 100,
       n.chains = 2,
-      monitor = monitor,
-      progress = FALSE
+      monitor = monitor
     )
     return(m)
   }, error = function(e) {
@@ -193,7 +184,7 @@ test_that("monetPlot() respects rounding parameter", {
 # ================================================================================================ #
 
 test_that("Full workflow with mm() and output functions works", {
-  skip_on_cran()
+  testthat::skip_on_cran()
 
   if (!requireNamespace("rjags", quietly = TRUE)) {
     skip("rjags not available")
@@ -212,8 +203,7 @@ test_that("Full workflow with mm() and output functions works", {
       n.iter = 500,
       n.burnin = 100,
       n.chains = 2,
-      monitor = TRUE,
-      progress = FALSE
+      monitor = TRUE
     )
 
     # Test summary

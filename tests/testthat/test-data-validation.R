@@ -19,18 +19,51 @@ test_that("Missing data in outcome variable is handled", {
   }, NA)  # NA means no warning expected, or adjust if warnings are expected
 })
 
-test_that("Missing data in covariates is detected", {
+test_that("Missing data in RHS covariates throws error", {
   test_data <- coalgov
   test_data$majority[1:10] <- NA
 
-  expect_warning({
-    m <- bml(
+  expect_error(
+    bml(
       sim.y ~ 1 + majority,
       family = "Gaussian",
       data = test_data,
       run = FALSE
-    )
-  }, NA)  # Adjust based on actual behavior
+    ),
+    "Missing values.*majority"
+  )
+})
+
+test_that("Missing data in mm() vars throws error", {
+  test_data <- coalgov
+  test_data$fdep[1:10] <- NA
+
+  expect_error(
+    bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n)),
+      family = "Weibull",
+      data = test_data,
+      run = FALSE
+    ),
+    "Missing values.*fdep"
+  )
+})
+
+test_that("Missing data in weight function variables throws error", {
+  test_data <- coalgov
+  test_data$pseatrel[1:10] <- NA
+
+  expect_error(
+    bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel)),
+      family = "Weibull",
+      data = test_data,
+      run = FALSE
+    ),
+    "Missing values.*pseatrel"
+  )
 })
 
 test_that("Non-existent outcome variable throws error", {
@@ -64,7 +97,7 @@ test_that("Non-existent ID variable in mm() throws error", {
       data = coalgov,
       run = FALSE
     ),
-    "ID variable.*not found"
+    "ID variable.*not found in data"
   )
 })
 
@@ -77,7 +110,7 @@ test_that("Non-existent variable in mm() vars throws error", {
       data = coalgov,
       run = FALSE
     ),
-    "Variable.*not found"
+    "mm\\(\\) variable.*not found"
   )
 })
 
@@ -90,7 +123,7 @@ test_that("Non-existent variable in mm() fn weight function throws error", {
       data = coalgov,
       run = FALSE
     ),
-    "Variable.*not found"
+    "Weight function variable.*not found"
   )
 })
 
@@ -103,7 +136,7 @@ test_that("Non-existent ID variable in hm() throws error", {
       data = coalgov,
       run = FALSE
     ),
-    "ID variable.*not found"
+    "hm\\(\\) id variable not found"
   )
 })
 
@@ -116,7 +149,7 @@ test_that("Non-existent name variable in hm() throws error", {
       data = coalgov,
       run = FALSE
     ),
-    "name variable.*not found"
+    "hm\\(\\) name variable not found"
   )
 })
 
@@ -162,22 +195,61 @@ test_that("Event indicator must be 0/1 for survival models", {
 })
 
 # ================================================================================================ #
+# Tests for weight variable variation
+# ================================================================================================ #
+
+test_that("Constant weight variables within groups produce warning", {
+  # Create test data where weight variable is constant within each mainid
+  test_data <- coalgov
+  # Set pseatrel to be constant within each government (mainid = gid)
+  test_data <- test_data %>%
+    dplyr::group_by(gid) %>%
+    dplyr::mutate(pseatrel_constant = mean(pseatrel)) %>%
+    dplyr::ungroup()
+
+  expect_warning(
+    bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel_constant)),
+      family = "Weibull",
+      data = test_data,
+      run = FALSE
+    ),
+    "constant across members"
+  )
+})
+
+test_that("Varying weight variables within groups produce no warning", {
+  # pseatrel should vary within governments (parties have different seat shares)
+  expect_no_warning(
+    bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel)),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  )
+})
+
+# ================================================================================================ #
 # Tests for mm() data structure requirements
 # ================================================================================================ #
 
-test_that("mm() requires member IDs to be unique within groups", {
-  # This tests whether duplicate member-group combinations are handled
-  test_data <- coalgov[1:50, ]
+test_that("mm() errors on duplicate member-group combinations", {
+  # Create data with duplicate pid-gid combinations (same party twice in same government)
+  test_data <- rbind(coalgov[1:50, ], coalgov[1, ])
 
-  expect_no_error({
-    m <- bml(
+  expect_error(
+    bml(
       Surv(govdur, earlyterm) ~ 1 + majority +
         mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n)),
       family = "Weibull",
       data = test_data,
       run = FALSE
-    )
-  })
+    ),
+    "Duplicate member-group combinations"
+  )
 })
 
 test_that("mm() weight function variables must exist in data", {
@@ -283,11 +355,12 @@ test_that("All censored observations in survival model", {
   })
 })
 
-test_that("No events in any interval for Cox with intervals", {
+test_that("No events in any interval for Cox with intervals throws error", {
   test_data <- coalgov[1:50, ]
   test_data$earlyterm <- 0  # All censored
 
-  expect_no_error({
+  # Cox model cannot be estimated without any events - should throw error
+  expect_error({
     m <- bml(
       Surv(govdur, earlyterm) ~ 1 + majority,
       family = "Cox",
@@ -295,33 +368,63 @@ test_that("No events in any interval for Cox with intervals", {
       data = test_data,
       run = FALSE
     )
-  })
+  }, "No events observed")
 })
 
 # ================================================================================================ #
 # Tests for formula parsing edge cases
 # ================================================================================================ #
 
-test_that("Complex formula with interactions works", {
-  expect_no_error({
-    m <- bml(
-      sim.y ~ 1 + majority * mwc,
-      family = "Gaussian",
-      data = coalgov,
-      run = FALSE
-    )
-  })
+test_that("Formula with interactions (*) works", {
+  m <- bml(
+    sim.y ~ 1 + majority * mwc,
+    family = "Gaussian",
+    data = coalgov,
+    run = FALSE
+  )
+
+  # majority * mwc expands to: intercept + majority + mwc + majority:mwc = 4 params
+  # Check for "for (x in 1:4)" in the modelstring
+  expect_true(grepl("for\\s*\\(x in 1:4\\)", m$modelstring))
+})
+
+test_that("Formula with interaction (:) works", {
+  m <- bml(
+    sim.y ~ 1 + majority + mwc + majority:mwc,
+    family = "Gaussian",
+    data = coalgov,
+    run = FALSE
+  )
+
+  # Same as majority * mwc: intercept + majority + mwc + majority:mwc = 4 params
+  # Check for "for (x in 1:4)" in the modelstring
+  expect_true(grepl("for\\s*\\(x in 1:4\\)", m$modelstring))
 })
 
 test_that("Formula with I() transformation works", {
-  expect_no_error({
-    m <- bml(
-      sim.y ~ 1 + I(majority + mwc),
-      family = "Gaussian",
-      data = coalgov,
-      run = FALSE
-    )
-  })
+  m <- bml(
+    sim.y ~ 1 + I(majority + mwc),
+    family = "Gaussian",
+    data = coalgov,
+    run = FALSE
+  )
+
+  # intercept + I(majority + mwc) = 2 params
+  # Check for "for (x in 1:2)" in the modelstring
+  expect_true(grepl("for\\s*\\(x in 1:2\\)", m$modelstring))
+})
+
+test_that("Formula with I() squared term works", {
+  m <- bml(
+    sim.y ~ 1 + majority + I(majority^2),
+    family = "Gaussian",
+    data = coalgov,
+    run = FALSE
+  )
+
+  # intercept + majority + I(majority^2) = 3 params
+  # Check for "for (x in 1:3)" in the modelstring
+  expect_true(grepl("for\\s*\\(x in 1:3\\)", m$modelstring))
 })
 
 test_that("Very long formula works", {
@@ -330,6 +433,103 @@ test_that("Very long formula works", {
       sim.y ~ 1 + majority + mwc + hetero +
         mm(id = id(pid, gid), vars = vars(fdep + ipd + rile), fn = fn(w ~ 1/n), RE = TRUE) +
         hm(id = id(cid), vars = vars(investiture + pmpower), type = "RE"),
+      family = "Gaussian",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+# ================================================================================================ #
+# Tests for mm() and hm() vars with interactions and I()
+# ================================================================================================ #
+
+test_that("mm() vars with interaction (*) works", {
+  expect_no_error({
+    bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep * ipd), fn = fn(w ~ 1/n), RE = FALSE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+
+  # fdep * ipd expands to: fdep + ipd + fdep:ipd = 3 mm vars
+  m <- bml(
+    Surv(govdur, earlyterm) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(fdep * ipd), fn = fn(w ~ 1/n), RE = FALSE),
+    family = "Weibull",
+    data = coalgov,
+    run = FALSE
+  )
+  expect_equal(m$jags.data$n.Xmm.1, 3)
+})
+
+test_that("mm() vars with interaction (:) works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep + ipd + fdep:ipd), fn = fn(w ~ 1/n), RE = FALSE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("mm() vars with I() transformation works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep + I(fdep^2)), fn = fn(w ~ 1/n), RE = FALSE),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+
+  # fdep + I(fdep^2) = 2 mm vars
+  m <- bml(
+    Surv(govdur, earlyterm) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(fdep + I(fdep^2)), fn = fn(w ~ 1/n), RE = FALSE),
+    family = "Weibull",
+    data = coalgov,
+    run = FALSE
+  )
+  expect_equal(m$jags.data$n.Xmm.1, 2)
+})
+
+test_that("hm() vars with interaction (*) works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        hm(id = id(cid), vars = vars(investiture * pmpower), type = "RE"),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("hm() vars with I() transformation works", {
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 + majority +
+        hm(id = id(cid), vars = vars(investiture + I(investiture^2)), type = "RE"),
+      family = "Weibull",
+      data = coalgov,
+      run = FALSE
+    )
+  })
+})
+
+test_that("Combined interactions in main formula, mm() and hm() works", {
+  expect_no_error({
+    m <- bml(
+      sim.y ~ 1 + majority * mwc +
+        mm(id = id(pid, gid), vars = vars(fdep * ipd), fn = fn(w ~ 1/n), RE = TRUE) +
+        hm(id = id(cid), vars = vars(investiture + I(pmpower^2)), type = "RE"),
       family = "Gaussian",
       data = coalgov,
       run = FALSE

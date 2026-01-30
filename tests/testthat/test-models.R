@@ -115,13 +115,80 @@ test_that("mm() with multiple variables works", {
 test_that("mm() with parameterized weight function works", {
   expect_no_error({
     m <- bml(
-      Surv(govdur, earlyterm) ~ 1 + majority +
-        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel), RE = FALSE),
+      Surv(govdur, earlyterm) ~ 1 +
+        majority +
+        mm(
+          id = id(pid, gid),
+          vars = vars(fdep),
+          fn = fn(w ~ 1 / (1 + (n - 1) * exp(-(b1 * ipd)))),
+          RE = FALSE
+        ),
       family = "Weibull",
       data = coalgov,
       run = FALSE
     )
   })
+})
+
+test_that("mm() with aggregation functions in weight function works", {
+  # Create bounded version of pseatrel for valid weights (0 to 1)
+  test_data <- coalgov
+  test_data$pseatrel01 <- (test_data$pseatrel - min(test_data$pseatrel, na.rm = TRUE)) /
+    (max(test_data$pseatrel, na.rm = TRUE) - min(test_data$pseatrel, na.rm = TRUE))
+
+  expect_no_error({
+    m <- bml(
+      Surv(govdur, earlyterm) ~ 1 +
+        majority +
+        mm(
+          id = id(pid, gid),
+          vars = vars(fdep),
+          fn = fn(w ~ b1 * min(pseatrel01) + (1 - b1) * mean(pseatrel01)),
+          RE = FALSE
+        ),
+      family = "Weibull",
+      data = test_data,
+      run = FALSE
+    )
+  })
+
+  # When fn has parameters, X.w.1 contains the aggregated columns
+  m <- bml(
+    sim.y ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b1 * min(pseatrel01) + (1 - b1) * max(pseatrel01)), RE = FALSE),
+    family = "Gaussian",
+    data = test_data,
+    run = FALSE
+  )
+  expect_true("pseatrel01_min" %in% colnames(m$jags.data$X.w.1))
+  expect_true("pseatrel01_max" %in% colnames(m$jags.data$X.w.1))
+})
+
+test_that("mm() with quantile aggregation in weight function works", {
+  # Create bounded version of pseatrel for valid weights (0 to 1)
+  test_data <- coalgov
+  test_data$pseatrel01 <- (test_data$pseatrel - min(test_data$pseatrel, na.rm = TRUE)) /
+    (max(test_data$pseatrel, na.rm = TRUE) - min(test_data$pseatrel, na.rm = TRUE))
+
+  expect_no_error({
+    m <- bml(
+      sim.y ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b1 * quantile(pseatrel01, 0.75) / max(pseatrel01)), RE = FALSE),
+      family = "Gaussian",
+      data = test_data,
+      run = FALSE
+    )
+  })
+
+  # Verify quantile column naming (with parameter so X.w.1 exists)
+  m <- bml(
+    sim.y ~ 1 +
+      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b1 * quantile(pseatrel01, 0.25)), RE = FALSE),
+    family = "Gaussian",
+    data = test_data,
+    run = FALSE
+  )
+  expect_true("pseatrel01_q25" %in% colnames(m$jags.data$X.w.1))
 })
 
 test_that("mm() with unconstrained weights works", {

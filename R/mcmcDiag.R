@@ -72,9 +72,16 @@
 #' @export mcmcDiag
 
 mcmcDiag <- function(bml.out, parameters) {
-  
+
+  # Check that JAGS output is available ---------------------------------------------------------- #
+
+  if (is.null(bml.out$jags.out) || is.null(bml.out$jags.out$BUGSoutput) ||
+      is.null(bml.out$jags.out$BUGSoutput$sims.array)) {
+    stop("JAGS output could not be retrieved. Please ensure that monitor = TRUE when fitting the model.", call. = FALSE)
+  }
+
   # Extract mcmc.list from bml.out --------------------------------------------------------------- #
-  
+
   crMCMC <- function(bml.out, parameter, regex=T) {
     m <- coda::as.mcmc.list(bml.out$jags.out$BUGSoutput)
     vars <- colnames(m[[1]])

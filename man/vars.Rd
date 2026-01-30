@@ -7,14 +7,22 @@
 vars(...)
 }
 \arguments{
-\item{...}{Unquoted variable names from your data. Variables can be separated
-by \code{+} or commas. To fix a coefficient, wrap the variable in
-\code{\link{fix}}.}
+\item{...}{Unquoted variable names from your data, combined using \code{+}
+(formula-style). Supports:
+\itemize{
+  \item Simple variables: \code{vars(x + y)}
+  \item Interactions: \code{vars(x * y)} or \code{vars(x:y)}
+  \item Transformations: \code{vars(I(x^2))} or \code{vars(I(x + y))}
+  \item Fixed coefficients: \code{vars(fix(x, 1.0) + y)}
+}
+Note: Numeric literals like \code{1}, \code{0}, or \code{-1} are ignored
+(no intercept support in mm/hm blocks).}
 }
 \value{
 A \code{bml_vars} object containing:
   \itemize{
-    \item \code{free}: Character vector of variables with coefficients to estimate
+    \item \code{formula}: Formula object for use with \code{model.matrix()}
+    \item \code{free}: Character vector of base variable names
     \item \code{fixed}: List of variables with fixed coefficients (if any)
   }
   Returns \code{NULL} if no variables are specified.
@@ -26,11 +34,19 @@ free variables (with coefficients to be estimated) and fixed variables (with
 coefficients held constant using \code{\link{fix}}).
 }
 \examples{
-# Simple variable specification
+# Simple variable specification (formula-style with +)
 vars(income + education)
 
-# Equivalent using comma separation
-vars(income, education)
+# Single variable
+vars(income)
+
+# Interactions
+vars(income * education)  # expands to income + education + income:education
+vars(income:education)    # interaction only
+
+# Transformations
+vars(I(income^2))         # squared term
+vars(income + I(income^2)) # linear and squared
 
 # Mix free and fixed variables
 vars(fix(exposure, 1.0) + income + education)

@@ -2,7 +2,7 @@
 # Function createJagsVars
 # ================================================================================================ #
 
-createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, monitor, modelfile, chains, inits, cox_intervals = NULL) {
+createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, monitor, modelfile, n.chains, inits, cox_intervals = NULL) {
 
   # Unpack main ------------------------------------------------------------------------------ #
 
@@ -41,6 +41,9 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   n.umm  <- length(unique(mmid))
   n.main <- length(mainid)
   n.hm   <- if (has_hm) length(unique(hmid)) else 0
+
+  # Map mm-level observation to its main group index (for accumulator optimization)
+  grp.mm <- if (has_mm) rep(1:n.main, times = mmn) else c()
 
   # For autoregressive RE - mm level
   n.GPN  <- if (has_mm) data %>% dplyr::count(mmid) %>% dplyr::pull(n) %>% max() else c()
@@ -147,10 +150,10 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   # Create X matrices for main and hm levels
   # ========================================================================================== #
 
-  # Main level - free variables
-  mainvars_clean <- mainvars[mainvars != "X0"]
-  if (length(mainvars_clean) > 0) {
-    X.main <- maindat %>% dplyr::select(all_of(mainvars_clean)) %>% as.matrix()
+  # Main level - free variables (including intercept X0 if present)
+  # With model.matrix(), X0 is a column of 1s representing the intercept
+  if (length(mainvars) > 0) {
+    X.main <- maindat %>% dplyr::select(all_of(mainvars)) %>% as.matrix()
     n.Xmain <- ncol(X.main)
   } else {
     X.main <- NULL
@@ -296,9 +299,9 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
         jags.data <- c(jags.data, paste0("X.w.", i))
       }
 
-      # Constraint indices if needed
+      # Accumulator pattern uses grp.mm (not mmi1.mm/mmi2.mm)
       if (block$fn$constraint) {
-        jags.data <- c(jags.data, "mmi1.mm", "mmi2.mm")
+        jags.data <- c(jags.data, "grp.mm")
       }
     }
 
@@ -466,7 +469,7 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   # ========================================================================================== #
 
   jags.inits <- c(jags.inits, inits)
-  jags.inits <- lapply(1:chains, function(x) jags.inits)
+  jags.inits <- lapply(1:n.chains, function(x) jags.inits)
 
   # ========================================================================================== #
   # Build the actual data list for JAGS
@@ -563,8 +566,8 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
       }
     }
     if (needs_constraint_indices) {
-      jags.data.list$mmi1.mm <- mmi1.mm
-      jags.data.list$mmi2.mm <- mmi2.mm
+      # Accumulator pattern only needs grp.mm (not mmi1.mm/mmi2.mm)
+      jags.data.list$grp.mm <- grp.mm
     }
 
     # AR data

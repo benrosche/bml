@@ -4,525 +4,301 @@ data("coalgov")
 # Tests for createModelstring() - generates JAGS model code
 # ================================================================================================ #
 
-test_that("createModelstring() generates valid JAGS code for Gaussian model", {
-  parsed <- bml:::dissectFormula(
-    formula = sim.y ~ 1 + majority,
-    family = "Gaussian",
-    data = coalgov
+# Helper function to set up model components (mirrors bml.R flow)
+setup_model <- function(formula, family, data = coalgov, priors = NULL, cox_intervals = NULL) {
+  DIR <- system.file(package = "bml")
+
+  # 1. Parse formula
+  formula_parts <- bml:::dissectFormula(formula, family, data)
+  mm <- formula_parts$mm
+  hm <- formula_parts$hm
+
+  # 2. Create data structures
+  data_parts <- bml:::createData(data, formula_parts)
+  data      <- data_parts$data
+  mm_blocks <- data_parts$mm_blocks
+  main      <- data_parts$main
+  hm_blocks <- data_parts$hm_blocks
+
+  # 3. Create modelstring
+  model_string <- bml:::createModelstring(
+    family, priors, mm_blocks, main, hm_blocks, mm, hm,
+    DIR, monitor = TRUE, modelfile = FALSE, cox_intervals
   )
 
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
+  list(
+    model_string = model_string,
+    formula_parts = formula_parts,
+    data_parts = data_parts,
+    mm = mm,
+    hm = hm
+  )
+}
+
+test_that("createModelstring() generates valid JAGS code for Gaussian model", {
+  result <- setup_model(
+    formula = sim.y ~ 1 + majority,
     family = "Gaussian"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Gaussian",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Gaussian",
-    cox_intervals = NULL
-  )
-
-  expect_type(model_string, "character")
-  expect_true(grepl("model\\s*\\{", model_string))
-  expect_true(grepl("dnorm", model_string))
-  expect_true(grepl("for.*j.*1:n.main", model_string))
+  expect_type(result$model_string, "character")
+  expect_true(grepl("model\\s*\\{", result$model_string))
+  expect_true(grepl("dnorm", result$model_string))
+  expect_true(grepl("for.*j.*1:n.main", result$model_string))
 })
 
 test_that("createModelstring() generates valid JAGS code for Binomial model", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = earlyterm ~ 1 + majority,
-    family = "Binomial",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Binomial"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Binomial",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Binomial",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("dbern", model_string))
-  expect_true(grepl("logit", model_string) || grepl("ilogit", model_string))
+  expect_true(grepl("dbern", result$model_string))
+  expect_true(grepl("logit", result$model_string) || grepl("ilogit", result$model_string))
 })
 
 test_that("createModelstring() generates valid JAGS code for Weibull model", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority,
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("dweib", model_string))
-  expect_true(grepl("shape", model_string))
+  expect_true(grepl("dweib", result$model_string))
+  expect_true(grepl("shape", result$model_string))
 })
 
 test_that("createModelstring() generates valid JAGS code for Cox model", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority,
-    family = "Cox",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Cox"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Cox",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Cox",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("dpois", model_string))
-  expect_true(grepl("dN", model_string))
-  expect_true(grepl("dL0", model_string))
+  expect_true(grepl("dpois", result$model_string))
+  expect_true(grepl("dN", result$model_string))
+  expect_true(grepl("dL0", result$model_string))
 })
 
 test_that("createModelstring() generates valid JAGS code for Cox with intervals", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority,
     family = "Cox",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
-    family = "Cox"
-  )
-
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Cox",
     cox_intervals = 10
   )
 
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Cox",
-    cox_intervals = 10
-  )
-
-  expect_true(grepl("dpois", model_string))
-  expect_true(grepl("dN_interval", model_string))
-  expect_true(grepl("Y_interval", model_string))
-  expect_true(grepl("lambda0", model_string))
-  expect_true(grepl("n.intervals", model_string))
+  expect_true(grepl("dpois", result$model_string))
+  expect_true(grepl("dN_interval", result$model_string))
+  expect_true(grepl("Y_interval", result$model_string))
+  expect_true(grepl("lambda0", result$model_string))
+  expect_true(grepl("n.intervals", result$model_string))
 })
 
 test_that("createModelstring() includes mm() block code", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("X\\.mm\\.1", model_string))
-  expect_true(grepl("b\\.mm\\.1", model_string))
+  expect_true(grepl("X\\.mm\\.1", result$model_string))
+  expect_true(grepl("b\\.mm\\.1", result$model_string))
 })
 
 test_that("createModelstring() includes mm() random effects", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("alpha\\.mm", model_string))
-  expect_true(grepl("sigma\\.mm", model_string))
-  expect_true(grepl("dnorm.*0.*sigma", model_string))
+  expect_true(grepl("re\\.mm", result$model_string))
+  expect_true(grepl("sigma\\.mm", result$model_string))
+  expect_true(grepl("tau\\.mm", result$model_string))
 })
 
 test_that("createModelstring() includes hm() random effects", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       hm(id = id(cid), type = "RE"),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("alpha\\.hm", model_string))
-  expect_true(grepl("sigma\\.hm", model_string))
+  expect_true(grepl("re\\.hm\\.1", result$model_string))
+  expect_true(grepl("sigma\\.hm\\.1", result$model_string))
+  expect_true(grepl("tau\\.hm\\.1", result$model_string))
 })
 
 test_that("createModelstring() includes hm() fixed effects", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       hm(id = id(cid), type = "FE"),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("b\\.hm", model_string))
-  expect_false(grepl("sigma\\.hm", model_string))  # FE doesn't have sigma
+  expect_true(grepl("b\\.hm", result$model_string))
+  expect_false(grepl("sigma\\.hm", result$model_string))  # FE doesn't have sigma
 })
 
 test_that("createModelstring() includes weight function code", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel), RE = FALSE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("w\\.mm", model_string))
-  expect_true(grepl("b\\.mm\\.wb", model_string))
+  # Weight variable: w.1[i]
+  expect_true(grepl("w\\.1\\[", result$model_string))
+  # Weight function parameters: b.w.1[1], b.w.1[2]
+  expect_true(grepl("b\\.w\\.1", result$model_string))
 })
 
 test_that("createModelstring() includes weight normalization for constrained weights", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = TRUE), RE = FALSE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
-  )
-
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
   )
 
   # Constrained weights should be normalized
-  expect_true(grepl("sum", model_string) || grepl("w\\.mm", model_string))
+  expect_true(grepl("sum", result$model_string) || grepl("w\\.mm", result$model_string))
 })
 
 test_that("createModelstring() includes priors", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = sim.y ~ 1 + majority,
-    family = "Gaussian",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Gaussian"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Gaussian",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Gaussian",
-    cox_intervals = NULL
-  )
-
   # Should have priors for b coefficients
-  expect_true(grepl("b\\[.*\\].*~.*dnorm", model_string))
-  # Should have prior for sigma
-  expect_true(grepl("sigma.*~.*dunif", model_string) ||
-              grepl("tau.*~.*dgamma", model_string))
+  expect_true(grepl("b\\[.*\\].*~.*dnorm", result$model_string))
+  # Should have prior for tau (scaled gamma)
+  expect_true(grepl("tau.*~.*dscaled\\.gamma", result$model_string))
 })
 
 test_that("createModelstring() handles multiple mm() blocks", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
       mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n), RE = TRUE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  expect_true(grepl("mm\\.1", model_string))
-  expect_true(grepl("mm\\.2", model_string))
+  expect_true(grepl("mm\\.1", result$model_string))
+  expect_true(grepl("mm\\.2", result$model_string))
 })
 
 test_that("createModelstring() handles AR specifications", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE, ar = TRUE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
-  )
-
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
   )
 
   # AR should have different structure for first vs subsequent
-  expect_true(grepl("ar", model_string, ignore.case = TRUE))
+  expect_true(grepl("ar", result$model_string, ignore.case = TRUE))
 })
 
 test_that("createModelstring() handles offset from fixed coefficients", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + fix(majority, 1.0),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
-  )
-
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
   )
 
   # Fixed coefficient should appear as offset
-  expect_true(grepl("offset", model_string) || grepl("mu\\[j\\]", model_string))
+  expect_true(grepl("offset", result$model_string) || grepl("mu\\[j\\]", result$model_string))
 })
 
 test_that("createModelstring() produces well-formed JAGS model", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_model(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
       hm(id = id(cid), type = "RE"),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  model_string <- bml:::createModelstring(
-    jags_vars = jags_vars,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
   # Check basic structure
-  expect_true(grepl("^\\s*model\\s*\\{", model_string))
-  expect_true(grepl("\\}\\s*$", model_string))
+  expect_true(grepl("^\\s*model\\s*\\{", result$model_string))
+  expect_true(grepl("\\}\\s*$", result$model_string))
 
   # Count braces - should be balanced
-  open_braces <- length(gregexpr("\\{", model_string)[[1]])
-  close_braces <- length(gregexpr("\\}", model_string)[[1]])
+  open_braces <- length(gregexpr("\\{", result$model_string)[[1]])
+  close_braces <- length(gregexpr("\\}", result$model_string)[[1]])
   expect_equal(open_braces, close_braces)
+})
+
+# ================================================================================================ #
+# Tests for accumulator pattern optimization
+# ================================================================================================ #
+
+test_that("createModelstring() uses accumulator pattern for constrained weights with parameters", {
+  result <- setup_model(
+    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel, c = TRUE), RE = FALSE),
+    family = "Weibull"
+  )
+
+  # Should have cumulative sum pattern (accumulator)
+  expect_true(grepl("cum\\.uw\\.1\\[1\\]\\s*<-\\s*0", result$model_string),
+              info = "Should initialize cumulative sum to 0")
+
+  expect_true(grepl("cum\\.uw\\.1\\[i\\+1\\]\\s*<-\\s*cum\\.uw\\.1\\[i\\]\\s*\\+\\s*uw\\.1\\[i\\]", result$model_string),
+              info = "Should have accumulator loop pattern")
+
+  # Should have group sums computed once per group
+  expect_true(grepl("sum\\.uw\\.1\\[j\\]\\s*<-\\s*cum\\.uw\\.1\\[mmi2\\[j\\]\\+1\\]\\s*-\\s*cum\\.uw\\.1\\[mmi1\\[j\\]\\]", result$model_string),
+              info = "Should compute group sums using cumulative sum differences")
+
+  # Should use grp.mm for normalization
+  expect_true(grepl("w\\.1\\[i\\]\\s*<-\\s*uw\\.1\\[i\\]\\s*/\\s*sum\\.uw\\.1\\[grp\\.mm\\[i\\]\\]", result$model_string),
+              info = "Should normalize using grp.mm indexing")
+})
+
+test_that("createModelstring() does NOT use accumulator for unconstrained weights", {
+  result <- setup_model(
+    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel, c = FALSE), RE = FALSE),
+    family = "Weibull"
+  )
+
+  # Should NOT have cumulative sum pattern
+  expect_false(grepl("cum\\.uw", result$model_string),
+               info = "Should not have cumulative sums for unconstrained weights")
+
+  # Should NOT have group sums
+  expect_false(grepl("sum\\.uw", result$model_string),
+               info = "Should not have group sums for unconstrained weights")
+
+  # Should NOT reference grp.mm
+  expect_false(grepl("grp\\.mm", result$model_string),
+               info = "Should not use grp.mm for unconstrained weights")
+})
+
+test_that("createModelstring() does NOT use accumulator when weights are pre-computed", {
+  result <- setup_model(
+    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = TRUE), RE = FALSE),
+    family = "Weibull"
+  )
+
+  # When fn has no parameters (like 1/n), weights are pre-computed in R
+  # So the accumulator pattern should NOT be in the JAGS model
+  expect_false(grepl("cum\\.uw", result$model_string),
+               info = "Should not have accumulator when weights are pre-computed")
+
+  # Should indicate weights are pre-computed
+  expect_true(grepl("pre-computed", result$model_string, ignore.case = TRUE),
+              info = "Should indicate weights are pre-computed")
+})
+
+test_that("accumulator pattern produces balanced braces", {
+  result <- setup_model(
+    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel, c = TRUE), RE = TRUE),
+    family = "Weibull"
+  )
+
+  # Count braces - should still be balanced with accumulator pattern
+  open_braces <- length(gregexpr("\\{", result$model_string)[[1]])
+  close_braces <- length(gregexpr("\\}", result$model_string)[[1]])
+  expect_equal(open_braces, close_braces,
+               info = "Accumulator pattern should maintain balanced braces")
 })

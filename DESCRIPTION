@@ -14,15 +14,14 @@ Imports:
     readr,
     tidyr,
     stringr,
-    rjags,
     R2jags,
-    zeallot,
     ggplot2,
     ggmcmc,
     coda,
     patchwork,
     tibble,
-    purrr
+    purrr,
+    rlang
 URL: https://benrosche.github.io/bml
 BugReports: https://github.com/benrosche/bml/issues
 RoxygenNote: 7.3.3
@@ -31,6 +30,7 @@ Authors@R: person("Benjamin", "Rosche", role=c("aut", "cre"),
 Suggests:
     rmarkdown,
     knitr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    rjags
 VignetteBuilder: knitr
 Config/testthat/edition: 3

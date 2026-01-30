@@ -4,450 +4,298 @@ data("coalgov")
 # Tests for createJagsVars() - creates variable list for JAGS
 # ================================================================================================ #
 
-test_that("createJagsVars() creates correct structure for Gaussian model", {
-  parsed <- bml:::dissectFormula(
-    formula = sim.y ~ 1 + majority,
-    family = "Gaussian",
-    data = coalgov
+# Helper function to set up jags variables (mirrors bml.R flow)
+setup_jags_vars <- function(formula, family, data = coalgov, cox_intervals = NULL) {
+  # 1. Parse formula
+  formula_parts <- bml:::dissectFormula(formula, family, data)
+  mm <- formula_parts$mm
+  hm <- formula_parts$hm
+
+  # 2. Create data structures
+  data_parts <- bml:::createData(data, formula_parts)
+  data      <- data_parts$data
+  mm_blocks <- data_parts$mm_blocks
+  main      <- data_parts$main
+  hm_blocks <- data_parts$hm_blocks
+
+  # 3. Create jags variables
+  jags_vars <- bml:::createJagsVars(
+    data = data,
+    family = family,
+    mm_blocks = mm_blocks,
+    main = main,
+    hm_blocks = hm_blocks,
+    mm = mm,
+    hm = hm,
+    monitor = TRUE,
+    modelfile = FALSE,
+    n.chains = 2,
+    inits = NULL,
+    cox_intervals = cox_intervals
   )
 
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
+  list(
+    jags_vars = jags_vars,
+    formula_parts = formula_parts,
+    data_parts = data_parts
+  )
+}
+
+test_that("createJagsVars() creates correct structure for Gaussian model", {
+  result <- setup_jags_vars(
+    formula = sim.y ~ 1 + majority,
     family = "Gaussian"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Gaussian",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  expect_type(jags_vars, "list")
-  expect_true("Y" %in% names(jags_vars))
-  expect_true("X" %in% names(jags_vars))
-  expect_true("n.main" %in% names(jags_vars))
-  expect_true("n.b" %in% names(jags_vars))
+  expect_type(jv, "list")
+  expect_true("jags.data" %in% names(jv))
+  expect_true("jags.params" %in% names(jv))
+  expect_true("Ns" %in% names(jv))
+
+  # Check JAGS data contains expected elements
+  expect_true("Y" %in% names(jv$jags.data))
+  expect_true("X.main" %in% names(jv$jags.data))
+  expect_true("n.main" %in% names(jv$jags.data))
+  # n.Xmain is in Ns, not jags.data (not needed by JAGS model)
+  expect_true("n.Xmain" %in% names(jv$Ns))
 })
 
 test_that("createJagsVars() creates correct structure for Weibull model", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority,
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  expect_true("t" %in% names(jags_vars))
-  expect_true("event" %in% names(jags_vars))
-  expect_true("X" %in% names(jags_vars))
+  expect_true("t" %in% names(jv$jags.data))
+  expect_true("ct.lb" %in% names(jv$jags.data))
+  expect_true("censored" %in% names(jv$jags.data))
+  expect_true("X.main" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() handles Cox model without intervals", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority,
-    family = "Cox",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Cox"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Cox",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  expect_true("t" %in% names(jags_vars))
-  expect_true("event" %in% names(jags_vars))
-  expect_true("Y" %in% names(jags_vars))
-  expect_true("dN" %in% names(jags_vars))
-  expect_true("dL0" %in% names(jags_vars))
-  expect_true("n.tu" %in% names(jags_vars))
+  expect_true("Y" %in% names(jv$jags.data))
+  expect_true("dN" %in% names(jv$jags.data))
+  expect_true("t.unique" %in% names(jv$jags.data))
+  expect_true("n.tu" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() handles Cox model with intervals", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority,
-    family = "Cox",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
-    family = "Cox"
-  )
-
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
     family = "Cox",
     cox_intervals = 10
   )
 
-  expect_true("Y_interval" %in% names(jags_vars))
-  expect_true("dN_interval" %in% names(jags_vars))
-  expect_true("n.intervals" %in% names(jags_vars))
-  expect_equal(jags_vars$n.intervals, 10)
-  expect_false("Y" %in% names(jags_vars))  # Should not have old Y matrix
-  expect_false("dN" %in% names(jags_vars))  # Should not have old dN matrix
+  jv <- result$jags_vars
+
+  expect_true("Y_interval" %in% names(jv$jags.data))
+  expect_true("dN_interval" %in% names(jv$jags.data))
+  expect_true("n.intervals" %in% names(jv$jags.data))
+  expect_equal(jv$jags.data$n.intervals, 10)
 })
 
 test_that("createJagsVars() correctly handles mm() blocks", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  expect_true("X.mm.1" %in% names(jags_vars))
-  expect_true("n.mm.b.1" %in% names(jags_vars))
-  expect_true("mmid1" %in% names(jags_vars))
-  expect_true("mainid1" %in% names(jags_vars))
-  expect_true("n.mm1" %in% names(jags_vars))
+  expect_true("X.mm.1" %in% names(jv$jags.data))
+  expect_true("n.Xmm.1" %in% names(jv$jags.data))
+  # mmid is only in jags.data when RE = TRUE
+  expect_true("n.mm" %in% names(jv$jags.data))
+  expect_true("mmi1" %in% names(jv$jags.data))
+  expect_true("mmi2" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() correctly handles mm() RE", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  # Should have indicators for RE
-  expect_true("mm.re1" %in% names(jags_vars))
-  expect_equal(jags_vars$mm.re1, 1)
+  # RE requires unique mm count
+  expect_true("n.umm" %in% names(jv$jags.data))
+  expect_true(jv$jags.data$n.umm > 0)
 })
 
 test_that("createJagsVars() correctly handles hm() blocks", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       hm(id = id(cid), type = "RE"),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  expect_true("hmid1" %in% names(jags_vars))
-  expect_true("n.hm1" %in% names(jags_vars))
-  expect_true("hm.type1" %in% names(jags_vars))
+  expect_true("hmid" %in% names(jv$jags.data))
+  expect_true("n.hm" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() correctly handles parameterized weight functions", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel), RE = FALSE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  # Should have weight function variables
-  expect_true(any(grepl("X.mm.wvar", names(jags_vars))))
-  expect_true(any(grepl("n.mm.wb", names(jags_vars))))
+  # Weight function variables should be in X.w.1
+  expect_true("X.w.1" %in% names(jv$jags.data))
 })
 
-test_that("createJagsVars() correctly handles deterministic weights", {
-  # Equal weights should be pre-computed
-  parsed <- bml:::dissectFormula(
+test_that("createJagsVars() correctly handles deterministic weights (Phase 2 optimization)", {
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  # If weights are pre-computed, we should have w.mm
-  if ("w.mm1" %in% names(jags_vars)) {
-    expect_true(is.numeric(jags_vars$w.mm1))
-  }
+  # Phase 2: When fn has no parameters, weights should be pre-computed
+  # Check that w.1 is passed as data (pre-computed)
+  expect_true("w.1" %in% names(jv$jags.data))
+  expect_true(is.numeric(jv$jags.data$w.1))
 })
 
-test_that("createJagsVars() correctly handles weight constraints", {
-  # Constrained weights
-  parsed_constrained <- bml:::dissectFormula(
+test_that("createJagsVars() correctly handles weight constraints with accumulator", {
+  # Constrained weights with parameters use accumulator pattern
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = TRUE), RE = FALSE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed_constrained,
+      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel, c = TRUE), RE = FALSE),
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed_constrained,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  expect_true("mm.wc1" %in% names(jags_vars))
-  expect_equal(jags_vars$mm.wc1, 1)
-
-  # Unconstrained weights
-  parsed_unconstrained <- bml:::dissectFormula(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = FALSE), RE = FALSE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed_unconstrained,
-    family = "Weibull"
-  )
-
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed_unconstrained,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
-
-  expect_equal(jags_vars$mm.wc1, 2)
+  # Accumulator pattern requires grp.mm
+  expect_true("grp.mm" %in% names(jv$jags.data))
 })
 
-test_that("createJagsVars() correctly handles fixed coefficients", {
-  parsed <- bml:::dissectFormula(
+test_that("createJagsVars() correctly handles fixed coefficients (Phase 1 optimization)", {
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + fix(majority, 1.0),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  # Fixed coefficients should reduce n.b and add offset
-  expect_true("offset" %in% names(jags_vars) || jags_vars$n.b < 2)
+  # Fixed coefficients should produce an offset
+  expect_true("offset.main" %in% names(jv$jags.data))
 })
 
-test_that("createJagsVars() correctly counts parameters", {
-  parsed <- bml:::dissectFormula(
+test_that("createJagsVars() correctly counts main-level parameters", {
+  result <- setup_jags_vars(
     formula = sim.y ~ 1 + majority + mwc,
-    family = "Gaussian",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Gaussian"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Gaussian",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
   # 1 intercept + 2 covariates = 3 parameters
-  expect_equal(jags_vars$n.b, 3)
+  # n.Xmain is in Ns, not jags.data
+  expect_equal(jv$Ns$n.Xmain, 3)
+  expect_equal(ncol(jv$jags.data$X.main), 3)
 })
 
 test_that("createJagsVars() correctly handles multiple mm() blocks", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
       mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n), RE = TRUE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
-  expect_true("X.mm.1" %in% names(jags_vars))
-  expect_true("X.mm.2" %in% names(jags_vars))
-  expect_true("n.mm1" %in% names(jags_vars))
-  expect_true("n.mm2" %in% names(jags_vars))
+  expect_true("X.mm.1" %in% names(jv$jags.data))
+  expect_true("X.mm.2" %in% names(jv$jags.data))
+  expect_true("n.Xmm.1" %in% names(jv$jags.data))
+  expect_true("n.Xmm.2" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() correctly handles AR specifications", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE, ar = TRUE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
   # AR requires special indexing
-  expect_true("mm.ar1" %in% names(jags_vars))
-  expect_equal(jags_vars$mm.ar1, 1)
+  expect_true("n.GPn" %in% names(jv$jags.data))
+  expect_true("n.GPNi" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() dimensions are consistent", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = Surv(govdur, earlyterm) ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(fdep + ipd), fn = fn(w ~ 1/n), RE = TRUE),
-    family = "Weibull",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Weibull"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Weibull",
-    cox_intervals = NULL
-  )
+  jv <- result$jags_vars
 
   # Check dimensional consistency
-  expect_equal(length(jags_vars$t), jags_vars$n.main)
-  expect_equal(nrow(jags_vars$X), jags_vars$n.main)
-  expect_equal(ncol(jags_vars$X), jags_vars$n.b)
-  expect_equal(nrow(jags_vars$X.mm.1), jags_vars$n.main)
-  expect_equal(ncol(jags_vars$X.mm.1), jags_vars$n.mm.b.1)
+  expect_equal(length(jv$jags.data$t), jv$jags.data$n.main)
+  expect_equal(nrow(jv$jags.data$X.main), jv$jags.data$n.main)
+  expect_equal(ncol(jv$jags.data$X.main), jv$Ns$n.Xmain)
 })
 
 test_that("createJagsVars() handles Binomial model", {
-  parsed <- bml:::dissectFormula(
+  result <- setup_jags_vars(
     formula = earlyterm ~ 1 + majority,
-    family = "Binomial",
-    data = coalgov
-  )
-
-  data_list <- bml:::createData(
-    data = coalgov,
-    parsed = parsed,
     family = "Binomial"
   )
 
-  jags_vars <- bml:::createJagsVars(
-    data = data_list,
-    parsed = parsed,
-    family = "Binomial",
-    cox_intervals = NULL
+  jv <- result$jags_vars
+
+  expect_true("Y" %in% names(jv$jags.data))
+  expect_true("X.main" %in% names(jv$jags.data))
+  # Binomial Y should be 0/1
+  expect_true(all(jv$jags.data$Y %in% c(0, 1)))
+})
+
+test_that("createJagsVars() returns jags.params for monitoring", {
+  result <- setup_jags_vars(
+    formula = sim.y ~ 1 + majority,
+    family = "Gaussian"
   )
 
-  expect_true("Y" %in% names(jags_vars))
-  expect_true("X" %in% names(jags_vars))
-  # Binomial Y should be 0/1
-  expect_true(all(jags_vars$Y %in% c(0, 1)))
+  jv <- result$jags_vars
+
+  expect_true(length(jv$jags.params) > 0)
+  expect_true("b" %in% jv$jags.params)
+  expect_true("sigma" %in% jv$jags.params)
+})
+
+test_that("createJagsVars() returns jags.inits", {
+  result <- setup_jags_vars(
+    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    family = "Weibull"
+  )
+
+  jv <- result$jags_vars
+
+  expect_type(jv$jags.inits, "list")
 })

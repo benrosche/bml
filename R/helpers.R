@@ -74,13 +74,21 @@ fix <- function(var, value) {
 #' free variables (with coefficients to be estimated) and fixed variables (with
 #' coefficients held constant using \code{\link{fix}}).
 #'
-#' @param ... Unquoted variable names from your data. Variables can be separated
-#'   by \code{+} or commas. To fix a coefficient, wrap the variable in
-#'   \code{\link{fix}}.
+#' @param ... Unquoted variable names from your data, combined using \code{+}
+#'   (formula-style). Supports:
+#'   \itemize{
+#'     \item Simple variables: \code{vars(x + y)}
+#'     \item Interactions: \code{vars(x * y)} or \code{vars(x:y)}
+#'     \item Transformations: \code{vars(I(x^2))} or \code{vars(I(x + y))}
+#'     \item Fixed coefficients: \code{vars(fix(x, 1.0) + y)}
+#'   }
+#'   Note: Numeric literals like \code{1}, \code{0}, or \code{-1} are ignored
+#'   (no intercept support in mm/hm blocks).
 #'
 #' @return A \code{bml_vars} object containing:
 #'   \itemize{
-#'     \item \code{free}: Character vector of variables with coefficients to estimate
+#'     \item \code{formula}: Formula object for use with \code{model.matrix()}
+#'     \item \code{free}: Character vector of base variable names
 #'     \item \code{fixed}: List of variables with fixed coefficients (if any)
 #'   }
 #'   Returns \code{NULL} if no variables are specified.
@@ -88,11 +96,19 @@ fix <- function(var, value) {
 #' @seealso \code{\link{fix}}, \code{\link{mm}}, \code{\link{hm}}
 #'
 #' @examples
-#' # Simple variable specification
+#' # Simple variable specification (formula-style with +)
 #' vars(income + education)
 #'
-#' # Equivalent using comma separation
-#' vars(income, education)
+#' # Single variable
+#' vars(income)
+#'
+#' # Interactions
+#' vars(income * education)  # expands to income + education + income:education
+#' vars(income:education)    # interaction only
+#'
+#' # Transformations
+#' vars(I(income^2))         # squared term
+#' vars(income + I(income^2)) # linear and squared
 #'
 #' # Mix free and fixed variables
 #' vars(fix(exposure, 1.0) + income + education)
@@ -111,45 +127,79 @@ fix <- function(var, value) {
 vars <- function(...) {
   expr <- substitute(list(...))
 
-  fixed_list <- list()
-  free_vars <- character()
+  # Check for comma-separated arguments (should use formula-style with +)
+  if (length(expr) > 2) {
+    stop("Variables in vars() must be specified using formula-style with '+', not comma-separated.\n",
+         "  Correct:   vars(x + y + z)\n",
+         "  Incorrect: vars(x, y, z)")
+  }
 
-  # Recursive function to extract variables and fix() calls
-  extract_vars <- function(e) {
+  fixed_list <- list()
+  free_terms <- character()  # Store terms (not just var names) for formula
+
+  # Recursive function to extract fix() calls and build formula terms
+  extract_and_build <- function(e, depth = 0) {
     if (is.call(e)) {
-      if (length(e) > 0 && as.character(e[[1]]) == "fix") {
+      fn_name <- as.character(e[[1]])
+
+      if (fn_name == "fix") {
         # It's a fix() call - extract var name and value
         var_name <- as.character(e[[2]])
         value <- eval(e[[3]], parent.frame(2))
         fixed_list[[length(fixed_list) + 1]] <<- list(var = var_name, value = value)
-      } else {
-        # Recurse through other calls (e.g., +)
-        for (i in seq_along(e)[-1]) {
-          extract_vars(e[[i]])
+        return(NULL)  # Don't include in formula
+      } else if (fn_name == "+") {
+        # Addition - process both sides
+        left <- extract_and_build(e[[2]], depth + 1)
+        right <- extract_and_build(e[[3]], depth + 1)
+        # Combine non-NULL results
+        return(c(left, right))
+      } else if (fn_name == "list" && depth == 0) {
+        # Top-level list() wrapper
+        if (length(e) >= 2) {
+          return(extract_and_build(e[[2]], depth + 1))
         }
+        return(NULL)
+      } else {
+        # Other calls (I(), :, *, etc.) - keep as term
+        term_str <- deparse(e, width.cutoff = 500)
+        term_str <- paste(term_str, collapse = "")
+        return(term_str)
       }
     } else if (is.name(e) && as.character(e) != "") {
-      # It's a free variable name
       var_name <- as.character(e)
-      if (var_name != "list") {  # Filter out the list() wrapper
-        free_vars <<- c(free_vars, var_name)
+      if (var_name != "list") {
+        return(var_name)
       }
+    } else if (is.numeric(e)) {
+      # Numeric literals (1, 0, -1) - ignore for intercept
+      return(NULL)
     }
+    return(NULL)
   }
 
-  extract_vars(expr)
+  free_terms <- extract_and_build(expr)
+  free_terms <- free_terms[!is.null(free_terms) & free_terms != ""]
+  free_terms <- unique(free_terms)
 
-  if (length(free_vars) == 0 && length(fixed_list) == 0) return(NULL)
+  if (length(free_terms) == 0 && length(fixed_list) == 0) return(NULL)
 
-  # If only free vars (no fixed), return character vector for backward compatibility
-  if (length(fixed_list) == 0) {
-    return(structure(unique(free_vars), class = "bml_vars"))
+  # Create formula for model.matrix() (no intercept in mm/hm)
+  if (length(free_terms) > 0) {
+    formula_str <- paste("~ 0 +", paste(free_terms, collapse = " + "))
+    vars_formula <- as.formula(formula_str)
+    # Extract base variable names using all.vars()
+    base_vars <- all.vars(vars_formula)
+  } else {
+    vars_formula <- NULL
+    base_vars <- character()
   }
 
-  # Otherwise return list structure
+  # Return structure with formula
   structure(
     list(
-      free = unique(free_vars),
+      formula = vars_formula,
+      free = base_vars,
       fixed = if (length(fixed_list) > 0) fixed_list else NULL
     ),
     class = "bml_vars"
@@ -170,6 +220,8 @@ vars <- function(...) {
 #'     \item Simple: \code{w ~ 1/n} (equal weights based on group size)
 #'     \item Parameterized: \code{w ~ b0 + b1 * tenure} (weights depend on
 #'       member characteristics and estimated parameters)
+#'     \item With group aggregates: \code{w ~ b1 * min(x) + (1-b1) * mean(x)}
+#'       (weights based on group-level summaries; see Details)
 #'   }
 #'   Parameters must be named \code{b0}, \code{b1}, \code{b2}, etc.
 #'
@@ -192,9 +244,49 @@ vars <- function(...) {
 #'   \item Equal weights: \code{w ~ 1/n}
 #'   \item Duration-based: \code{w ~ duration}
 #'   \item Flexible parameterized: \code{w ~ b0 + b1 * seniority}
+#'   \item Group aggregates: \code{w ~ b1 * min(x) + (1-b1) * mean(x)}
 #' }
 #'
 #' When \code{c = TRUE}, the weights are constrained: \eqn{\sum_{k \in group} w_k = 1}.
+#'
+#' \strong{Group-Level Aggregation Functions:}
+#'
+#' The weight function supports aggregation functions that compute summaries
+#' within each group (mainid). These are pre-computed in R before passing to JAGS.
+#' Supported functions:
+#' \itemize{
+#'   \item \code{min(var)}, \code{max(var)}: Minimum/maximum value within the group
+#'   \item \code{mean(var)}, \code{sum(var)}: Mean/sum of values within the group
+#'   \item \code{median(var)}, \code{mode(var)}: Median/mode (most frequent) value within the group
+#'   \item \code{sd(var)}, \code{var(var)}, \code{range(var)}: Standard deviation/variance/range (max-min) within the group
+#'   \item \code{first(var)}, \code{last(var)}: First/last value (based on data order)
+#'   \item \code{quantile(var, prob)}: Quantile at probability \code{prob} (0 to 1).
+#'     For example, \code{quantile(x, 0.25)} computes the 25th percentile.
+#' }
+#'
+#' Example: \code{fn(w ~ b1 * min(tenure) + (1-b1) * max(tenure))} creates weights
+#' that blend the minimum and maximum tenure within each group, with the blend
+#' controlled by the estimated parameter \code{b1}.
+#'
+#' Example with quantile: \code{fn(w ~ quantile(tenure, 0.75) / max(tenure))} uses
+#' the 75th percentile relative to the maximum within each group.
+#'
+#' Note: Nested aggregation functions (e.g., \code{min(max(x))}) are not supported.
+#'
+#' \strong{JAGS Mathematical Functions:}
+#'
+#' The following mathematical functions are passed directly to JAGS and can be
+#' used in weight formulas:
+#' \itemize{
+#'   \item \code{exp}, \code{log}, \code{log10}, \code{sqrt}, \code{abs}, \code{pow}
+#'   \item \code{sin}, \code{cos}, \code{tan}, \code{asin}, \code{acos}, \code{atan}
+#'   \item \code{sinh}, \code{cosh}, \code{tanh}
+#'   \item \code{round}, \code{trunc}, \code{floor}, \code{ceiling}
+#' }
+#'
+#' Example: \code{fn(w ~ 1 / (1 + (n - 1) * exp(-(b1 * x))))} uses an exponential
+#' decay function where weights depend on member characteristics. See Rosche (2026)
+#' for more details on parameterized weight functions.
 #'
 #' @seealso \code{\link{mm}}, \code{\link{bml}}
 #'
@@ -210,6 +302,18 @@ vars <- function(...) {
 #'
 #' # Unconstrained weights
 #' fn(w ~ importance, c = FALSE)
+#'
+#' # Weights based on group aggregates
+#' fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE)
+#'
+#' # Combining individual and aggregate measures
+#' fn(w ~ b0 + b1 * (tenure / max(tenure)), c = TRUE)
+#'
+#' # Using median for robust central tendency
+#' fn(w ~ tenure / median(tenure), c = TRUE)
+#'
+#' # Using quantiles for percentile-based weights
+#' fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE)
 #'
 #' @references
 #' Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
@@ -230,23 +334,140 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
   # Insert intercept variable for b0
   fn_string <- gsub("\\bb0\\b", "b0 * X0", fn_string)
 
-  # Extract variables and parameters
-  all_v <- all.vars(w)
-  params <- unique(stringr::str_extract_all(fn_string, "\\bb\\d+\\b")[[1]])
-  wvars <- setdiff(all_v, c("w", params))
+  # ========================================================================================== #
+  # Detect aggregation functions: min, max, mean, sum, sd, var, first, last, median, mode, range, quantile
+  # ========================================================================================== #
+
+  # Single-argument aggregation functions (computed in R before passing to JAGS)
+  supported_agg_simple <- c("min", "max", "mean", "sum", "sd", "var", "first", "last", "median", "mode", "range")
+  agg_pattern_simple <- "\\b(min|max|mean|sum|sd|var|first|last|median|mode|range)\\s*\\(\\s*([a-zA-Z_][a-zA-Z0-9_\\.]*)\\s*\\)"
+
+  # Two-argument aggregation function: quantile(var, prob)
+  agg_pattern_quantile <- "\\bquantile\\s*\\(\\s*([a-zA-Z_][a-zA-Z0-9_\\.]*)\\s*,\\s*(-?[0-9]*\\.?[0-9]+)\\s*\\)"
+
+  # All supported aggregation functions
+  supported_agg <- c(supported_agg_simple, "quantile")
+
+  # JAGS mathematical functions (passed through directly to JAGS)
+  jags_math_funcs <- c("exp", "log", "log10", "sqrt", "abs", "pow",
+                       "sin", "cos", "tan", "asin", "acos", "atan",
+                       "sinh", "cosh", "tanh",
+                       "round", "trunc", "floor", "ceiling")
+
+  # All allowed functions (aggregation + JAGS math)
+  all_allowed_funcs <- c(supported_agg, jags_math_funcs)
+
+  # Check for nested aggregation functions (not supported)
+  nested_pattern <- "\\b(min|max|mean|sum|sd|var|first|last|median|mode|range|quantile)\\s*\\([^)]*\\b(min|max|mean|sum|sd|var|first|last|median|mode|range|quantile)\\s*\\("
+  if (grepl(nested_pattern, fn_string)) {
+    stop("Nested aggregation functions are not supported in weight formulas.\n",
+         "  Example of invalid: fn(w ~ min(max(x)))\n",
+         "  Valid: fn(w ~ min(x) + max(y))", call. = FALSE)
+  }
+
+  # Check for unsupported functions (any function call not in allowed list)
+  all_func_calls <- stringr::str_match_all(fn_string, "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(")[[1]]
+  if (nrow(all_func_calls) > 0) {
+    func_names <- all_func_calls[, 2]
+    unsupported <- setdiff(func_names, all_allowed_funcs)
+    if (length(unsupported) > 0) {
+      stop("Unsupported function(s) in weight formula: ", paste(unsupported, collapse = ", "), "\n",
+           "  Supported aggregation functions: ", paste(supported_agg, collapse = ", "), "\n",
+           "  Supported JAGS math functions: ", paste(jags_math_funcs, collapse = ", "), "\n",
+           "  Note: Use variables directly (e.g., tenure) or with parameters (e.g., b1 * tenure)", call. = FALSE)
+    }
+  }
+
+  # Extract simple aggregation function calls (single argument)
+  agg_matches_simple <- stringr::str_match_all(fn_string, agg_pattern_simple)[[1]]
+
+  # Extract quantile function calls (two arguments)
+  agg_matches_quantile <- stringr::str_match_all(fn_string, agg_pattern_quantile)[[1]]
+
+  agg_funcs <- NULL
+  agg_vars <- NULL
+
+  # Process simple aggregation functions
+  if (nrow(agg_matches_simple) > 0) {
+    agg_funcs <- list()
+    for (i in 1:nrow(agg_matches_simple)) {
+      agg_funcs[[length(agg_funcs) + 1]] <- list(
+        original = agg_matches_simple[i, 1],  # e.g., "min(fdp)"
+        func     = agg_matches_simple[i, 2],  # e.g., "min"
+        var      = agg_matches_simple[i, 3],  # e.g., "fdp"
+        prob     = NULL,                       # Not applicable for simple functions
+        col_name = paste0(agg_matches_simple[i, 3], "_", agg_matches_simple[i, 2])  # e.g., "fdp_min"
+      )
+    }
+  }
+
+  # Process quantile function calls
+  if (nrow(agg_matches_quantile) > 0) {
+    if (is.null(agg_funcs)) agg_funcs <- list()
+    for (i in 1:nrow(agg_matches_quantile)) {
+      var_name <- agg_matches_quantile[i, 2]
+      prob_val <- as.numeric(agg_matches_quantile[i, 3])
+
+      # Validate probability is between 0 and 1
+      if (prob_val < 0 || prob_val > 1) {
+        stop("quantile() probability must be between 0 and 1. Got: ", prob_val, call. = FALSE)
+      }
+
+      # Create column name: var_q25 for quantile(var, 0.25)
+      prob_pct <- round(prob_val * 100)
+      col_name <- paste0(var_name, "_q", prob_pct)
+
+      agg_funcs[[length(agg_funcs) + 1]] <- list(
+        original = agg_matches_quantile[i, 1],  # e.g., "quantile(fdp, 0.25)"
+        func     = "quantile",
+        var      = var_name,
+        prob     = prob_val,                     # Store the probability
+        col_name = col_name                      # e.g., "fdp_q25"
+      )
+    }
+  }
+
+  # Collect base variables needed for computing aggregates
+  if (!is.null(agg_funcs)) {
+    agg_vars <- unique(sapply(agg_funcs, function(x) x$var))
+  }
+
+  # Transform formula string: replace aggregation calls with column names
+  fn_string_transformed <- fn_string
+  if (!is.null(agg_funcs)) {
+    for (agg in agg_funcs) {
+      # Escape special regex characters in the original match
+      escaped <- gsub("([\\(\\)\\.])", "\\\\\\1", agg$original)
+      fn_string_transformed <- gsub(escaped, agg$col_name, fn_string_transformed)
+    }
+  }
+
+  # ========================================================================================== #
+  # Extract variables and parameters from the transformed string
+  # ========================================================================================== #
+
+  # Extract parameters (b0, b1, b2, ...)
+  params <- unique(stringr::str_extract_all(fn_string_transformed, "\\bb\\d+\\b")[[1]])
+
+  # Get all variables from the transformed formula string
+  # Parse the transformed string to extract variable names
+  all_v_transformed <- all.vars(as.formula(paste("w ~", fn_string_transformed)))
+  wvars <- setdiff(all_v_transformed, c("w", params))
 
   # Variables that have parameters (b * X pattern)
-  vars_p <- stringr::str_match_all(fn_string, "b\\d+\\s*\\*\\s*([a-zA-Z_][a-zA-Z0-9_\\.]*)")[[1]]
+  vars_p <- stringr::str_match_all(fn_string_transformed, "b\\d+\\s*\\*\\s*([a-zA-Z_][a-zA-Z0-9_\\.]*)")[[1]]
   vars_p <- if (nrow(vars_p) > 0) vars_p[, 2] else character(0)
 
   structure(
     list(
       formula    = w,
-      string     = fn_string,
+      string     = fn_string_transformed,
       vars       = wvars,
       vars_p     = vars_p,
       params     = params,
-      constraint = c
+      constraint = c,
+      agg_funcs  = agg_funcs,
+      agg_vars   = agg_vars
     ),
     class = "bml_fn"
   )
@@ -265,12 +486,14 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
 #'   and \code{mainid} identifies groups.
 #'
 #' @param vars A \code{\link{vars}} object specifying member-level covariates to
-#'   aggregate, or \code{NULL} for random effects only. Variables are weighted
+#'   aggregate, or \code{NULL} for random effects only. Supports interactions
+#'   (\code{*}, \code{:}) and transformations (\code{I()}). Variables are weighted
 #'   according to the function specified in \code{fn}.
 #'
 #' @param fn A \code{\link{fn}} object specifying the weight function (default:
-#'   \code{fn(w ~ 1/n, c = TRUE)} for equal weights). See \code{\link{fn}} for
-#'   details on weight function specification.
+#'   \code{fn(w ~ 1/n, c = TRUE)} for equal weights). Note: Weight functions do
+#'   NOT support interactions or \code{I()} - pre-create any needed transformed
+#'   variables in your data. See \code{\link{fn}} for details.
 #'
 #' @param RE Logical; if \code{TRUE}, include random effects for member-level units.
 #'   Automatically set to \code{TRUE} if \code{vars = NULL} (random effects only).
@@ -345,6 +568,21 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
 #'   ar = TRUE  # Random effects evolve over participations
 #' )
 #'
+#' # Interactions and transformations in vars
+#' mm(
+#'   id = id(pid, gid),
+#'   vars = vars(rile * ipd),  # Main effects plus interaction
+#'   fn = fn(w ~ 1/n, c = TRUE),
+#'   RE = FALSE
+#' )
+#'
+#' mm(
+#'   id = id(pid, gid),
+#'   vars = vars(rile + I(rile^2)),  # Quadratic term
+#'   fn = fn(w ~ 1/n, c = TRUE),
+#'   RE = FALSE
+#' )
+#'
 #' @references
 #' Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
 #' multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
@@ -354,7 +592,7 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
 #' Research Report RR791, Department for Education and Skills.
 #'
 #' @export
-mm <- function(id, vars = NULL, fn = fn(), RE = NULL, ar = FALSE) {
+mm <- function(id, vars = NULL, fn = NULL, RE = NULL, ar = FALSE) {
 
 
   # Validate id
@@ -366,7 +604,7 @@ mm <- function(id, vars = NULL, fn = fn(), RE = NULL, ar = FALSE) {
   }
 
   # Validate fn
-  if (!inherits(fn, "bml_fn")) {
+  if (is.null(fn) || !inherits(fn, "bml_fn")) {
     stop("'fn' must be specified using fn(w ~ ..., c = TRUE/FALSE)")
   }
 
@@ -406,7 +644,8 @@ mm <- function(id, vars = NULL, fn = fn(), RE = NULL, ar = FALSE) {
 #'   countries, regions).
 #'
 #' @param vars A \code{\link{vars}} object specifying nesting-level covariates,
-#'   or \code{NULL} for intercept-only effects.
+#'   or \code{NULL} for intercept-only effects. Supports interactions (\code{*}, \code{:})
+#'   and transformations (\code{I()}).
 #'
 #' @param name Unquoted variable name for nesting-level labels (optional). If
 #'   provided, these labels will be displayed in model output for fixed effects.
@@ -501,7 +740,6 @@ hm <- function(id, vars = NULL, name = NULL, type = "RE", showFE = FALSE, ar = F
   type <- match.arg(type, c("RE", "FE"))
 
   # Handle name - capture as string
-
   name_char <- if (!missing(name) && !is.null(substitute(name))) {
     deparse(substitute(name))
   } else {

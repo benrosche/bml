@@ -12,7 +12,8 @@ hm(id, vars = NULL, name = NULL, type = "RE", showFE = FALSE, ar = FALSE)
 countries, regions).}
 
 \item{vars}{A \code{\link{vars}} object specifying nesting-level covariates,
-or \code{NULL} for intercept-only effects.}
+or \code{NULL} for intercept-only effects. Supports interactions (\code{*}, \code{:})
+and transformations (\code{I()}).}
 
 \item{name}{Unquoted variable name for nesting-level labels (optional). If
 provided, these labels will be displayed in model output for fixed effects.}
