@@ -41,7 +41,7 @@ create_mock_jags_output <- function(params) {
 }
 
 # Helper to create minimal main structure
-create_main <- function(vars = c("X0", "majority"), lhs = "sim.y") {
+create_main <- function(vars = c("X0", "majority"), lhs = "event_wkb") {
   list(
     vars = vars,
     vars_fixed = NULL,
@@ -276,7 +276,7 @@ test_that("formatJags() handles mm() block parameters", {
 
   mm_blocks <- list(
     list(
-      vars = c("fdep"),
+      vars = c("finance"),
       vars_fixed = NULL,
       dat = data.frame(mmid = 1:20, mainid = rep(1:10, each = 2)),
       dat_fixed = NULL,
@@ -293,7 +293,7 @@ test_that("formatJags() handles mm() block parameters", {
   mm <- list(
     list(
       id = c("pid", "gid"),
-      vars = list(formula = ~ 0 + fdep),
+      vars = list(formula = ~ 0 + finance),
       fn = list(formula = NULL, params = character(0), vars = c("n")),
       RE = TRUE,
       ar = FALSE
@@ -388,7 +388,7 @@ test_that("formatJags() includes level specification", {
 
   mm_blocks <- list(
     list(
-      vars = c("fdep"),
+      vars = c("finance"),
       vars_fixed = NULL,
       dat = data.frame(mmid = 1:20, mainid = rep(1:10, each = 2)),
       dat_fixed = NULL,
@@ -405,7 +405,7 @@ test_that("formatJags() includes level specification", {
   mm <- list(
     list(
       id = c("pid", "gid"),
-      vars = list(formula = ~ 0 + fdep),
+      vars = list(formula = ~ 0 + finance),
       fn = list(formula = NULL, params = character(0), vars = c("n")),
       RE = TRUE,
       ar = FALSE
@@ -466,7 +466,7 @@ test_that("formatJags() handles fixed main-level variables", {
     dat = data.frame(mainid = 1:10),
     dat_fixed = data.frame(X0 = rep(1, 10)),
     fix_values = c(0),
-    lhs = "sim.y",
+    lhs = "event_wkb",
     formula = ~ 0 + majority
   )
   Ns <- create_Ns()

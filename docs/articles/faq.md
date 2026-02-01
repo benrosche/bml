@@ -1,6 +1,138 @@
-# faq
+# Frequently Asked Questions
 
-1.  What’s the difference between the MMMM and a conventional multilevel
-    model?
-2.  What’s the difference between a conventional MMMM and the
-    generalized MMMM?
+## 1. What’s the difference between a multiple-membership model and a conventional multilevel model?
+
+In a conventional hierarchical multilevel model, each lower-level unit
+belongs to exactly one higher-level unit (e.g., students nested in
+schools). In a **multiple-membership model (MMMM)**, lower-level units
+can belong to multiple higher-level units simultaneously, or
+alternatively, higher-level outcomes can be influenced by multiple
+lower-level units.
+
+For example:
+
+- **Conventional MLM:** Students (level 1) nested in schools (level 2) —
+  each student attends exactly one school.
+- **MMMM:** Coalition governments (level 2) composed of multiple
+  political parties (level 1) — each party can participate in multiple
+  governments over time, and each government comprises multiple parties.
+
+The MMMM accounts for this complex membership structure by weighting the
+contributions of each lower-level unit, allowing researchers to model
+how multiple units jointly shape higher-level outcomes.
+
+## 2. What’s the difference between a conventional MMMM and the extended MMMM implemented in `bml`?
+
+The **conventional MMMM** (as implemented in MLwiN, brms, or other
+software) uses **fixed, pre-specified weights** to aggregate lower-level
+effects. For instance, you might use equal weights (1/n) or weights
+based on time spent in each context.
+
+The **extended MMMM** in `bml` allows you to:
+
+1.  **Parameterize the weight function:** Instead of fixing weights, you
+    can specify a functional form for weights (e.g., `w ~ 1/n^exp(b*X)`)
+    and estimate the parameters that determine how lower-level units are
+    aggregated.
+
+2.  **Test alternative aggregation mechanisms:** Compare different
+    weighting schemes (equal weights, proportional weights, functions of
+    covariates) to determine which best fits the data.
+
+3.  **Endogenize weight matrices:** Rather than imposing spatial or
+    network weights externally, let the data determine connection
+    strengths as functions of covariates.
+
+This flexibility enables researchers to explicitly model the
+**micro-to-macro link** — how lower-level characteristics aggregate to
+produce higher-level outcomes.
+
+## 3. When should I use `bml` instead of other multilevel modeling packages?
+
+Use `bml` when:
+
+- **You have multiple-membership structures:** Higher-level outcomes
+  depend on multiple lower-level units (e.g., coalitions composed of
+  parties, teams composed of individuals, neighborhoods influenced by
+  surrounding areas).
+
+- **You want to model the aggregation process:** Rather than assuming a
+  fixed aggregation (e.g., simple average), you want to test and
+  estimate how lower-level effects combine.
+
+- **You need flexible weight functions:** Your theory suggests weights
+  should depend on covariates, group size, or other features, not be
+  fixed in advance.
+
+- **You’re studying micro-to-macro relationships:** Your research
+  question focuses on how lower-level units jointly shape higher-level
+  outcomes, rather than how higher-level contexts shape lower-level
+  outcomes.
+
+For standard hierarchical models without multiple membership, packages
+like `lme4`, `brms`, or `MCMCglmm` may be more efficient. For
+conventional MMMMs with fixed weights, `brms` or MLwiN are excellent
+alternatives.
+
+## 4. What outcome types and distributions does `bml` support?
+
+`bml` supports a variety of outcome distributions commonly used in
+social science research:
+
+- **Continuous outcomes:** Gaussian (normal) regression
+- **Binary outcomes:** Logit (logistic) regression
+- **Categorical outcomes:** Conditional logit (multinomial logit)
+  regression
+- **Survival/duration outcomes:**
+  - Cox proportional hazards model
+  - Weibull accelerated failure time (AFT) model
+  - Support for competing risks analysis
+
+You can also specify hierarchical random effects
+([`hm()`](https://benrosche.github.io/bml/reference/hm.md) blocks) in
+addition to multiple-membership structures, allowing for complex
+cross-classified and nested designs.
+
+## 5. How do I specify the weight function, and what are the `c` and `ar` parameters?
+
+The weight function is specified in the
+[`fn()`](https://benrosche.github.io/bml/reference/fn.md) container
+within an [`mm()`](https://benrosche.github.io/bml/reference/mm.md)
+block:
+
+``` r
+
+mm(
+  id = id(member_id, group_id),
+  vars = vars(X),
+  fn = fn(w ~ 1/n, c = TRUE),
+  RE = TRUE,
+  ar = FALSE
+)
+```
+
+**Weight function components:**
+
+- **`w ~ ...`**: Specifies the functional form for weights. You can use:
+  - Group size: `n` (number of members in each group)
+  - Covariates: Any variable in your data
+  - Mathematical functions: [`exp()`](https://rdrr.io/r/base/Log.html),
+    [`log()`](https://rdrr.io/r/base/Log.html),
+    [`sqrt()`](https://rdrr.io/r/base/MathFun.html), etc.
+  - Examples: `w ~ 1/n` (equal weights), `w ~ tenure` (proportional to
+    tenure), `w ~ 1/n^exp(b*similarity)` (similarity-weighted)
+- **`c` parameter:** Controls weight normalization
+  - `c = TRUE` (default): Weights are normalized to sum to 1 within each
+    group (row-standardization)
+  - `c = FALSE`: Weights are not normalized (useful when aggregating
+    sums rather than averages)
+- **`ar` parameter:** Autoregressive random effects
+  - `ar = FALSE` (default): Standard independent random effects for each
+    member
+  - `ar = TRUE`: Member-level random effects evolve as a random walk
+    across repeated group participations, capturing dynamics where a
+    member’s unobserved heterogeneity changes over time
+
+**Important:** Only one
+[`mm()`](https://benrosche.github.io/bml/reference/mm.md) block can have
+`RE = TRUE` in a given model.

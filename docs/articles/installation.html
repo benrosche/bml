@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,9 +37,9 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
     <li><a class="dropdown-item" href="../articles/installation.html">Installation</a></li>
-    <li><a class="dropdown-item" href="../articles/model.html">Model structure</a></li>
+    <li><a class="dropdown-item" href="../articles/model.html">Model Structure</a></li>
     <li><a class="dropdown-item" href="../articles/examples.html">Examples</a></li>
-    <li><a class="dropdown-item" href="../articles/faq.html">faq</a></li>
+    <li><a class="dropdown-item" href="../articles/faq.html">Frequently Asked Questions</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -75,7 +75,7 @@
 via <strong>JAGS</strong>, so installation has two parts:</p>
 <ol style="list-style-type: decimal">
 <li>Install JAGS (system software)</li>
-<li>Install the <code>bml</code> R package (from GitHub)</li>
+<li>Install the <code>bml</code> R package (from CRAN or GitHub)</li>
 </ol>
 <div class="section level2">
 <h2 id="install-jags">1. Install JAGS<a class="anchor" aria-label="anchor" href="#install-jags"></a>
@@ -88,19 +88,32 @@ via <strong>JAGS</strong>, so installation has two parts:</p>
 it.</p>
 </div>
 <div class="section level2">
-<h2 id="install-bml-from-github">2. Install <code>bml</code> from GitHub<a class="anchor" aria-label="anchor" href="#install-bml-from-github"></a>
+<h2 id="install-bml-r-package">2. Install <code>bml</code> R package<a class="anchor" aria-label="anchor" href="#install-bml-r-package"></a>
 </h2>
-<p><code>bml</code> is not on CRAN yet, so install it from GitHub. Using
-<a href="https://remotes.r-lib.org" class="external-link">remotes</a> keeps the dependency footprint small.</p>
+<div class="section level3">
+<h3 id="option-a-install-from-cran-recommended">Option A: Install from CRAN (Recommended)<a class="anchor" aria-label="anchor" href="#option-a-install-from-cran-recommended"></a>
+</h3>
+<p>The stable release version is available on CRAN:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"bml"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="option-b-install-development-version-from-github">Option B: Install development version from GitHub<a class="anchor" aria-label="anchor" href="#option-b-install-development-version-from-github"></a>
+</h3>
+<p>For the latest development features, install from GitHub using
+<a href="https://remotes.r-lib.org" class="external-link">remotes</a>:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"benrosche/bml"</span><span class="op">)</span></span></code></pre></div>
 <p>If you want to build vignettes locally during installation:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"benrosche/bml"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="verify-the-installation">3. Verify the installation<a class="anchor" aria-label="anchor" href="#verify-the-installation"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://benrosche.github.io/bml">bml</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">"bml"</span><span class="op">)</span></span>
 <span></span>
@@ -114,7 +127,7 @@ it.</p>
 installing</strong></p>
 <p>If <a href="https://remotes.r-lib.org" class="external-link">remotes</a> treats an installation warning as an error
 on your machine, you can opt out:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>R_REMOTES_NO_ERRORS_FROM_WARNINGS <span class="op">=</span> <span class="st">"true"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"benrosche/bml"</span><span class="op">)</span></span></code></pre></div>
 <p><strong>JAGS not found / <code>rjags</code> fails to

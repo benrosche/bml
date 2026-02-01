@@ -11,7 +11,7 @@ JAGS must be installed separately: https://sourceforge.net/projects/mcmc-jags/."
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,9 +26,9 @@ JAGS must be installed separately: https://sourceforge.net/projects/mcmc-jags/."
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
     <li><a class="dropdown-item" href="../articles/installation.html">Installation</a></li>
-    <li><a class="dropdown-item" href="../articles/model.html">Model structure</a></li>
+    <li><a class="dropdown-item" href="../articles/model.html">Model Structure</a></li>
     <li><a class="dropdown-item" href="../articles/examples.html">Examples</a></li>
-    <li><a class="dropdown-item" href="../articles/faq.html">faq</a></li>
+    <li><a class="dropdown-item" href="../articles/faq.html">Frequently Asked Questions</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -63,12 +63,13 @@ multilevel models with parameterizable weight functions via JAGS.</p>
 <span>  n.iter <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  n.burnin <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  n.thin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="op">(</span><span class="va">n.iter</span> <span class="op">-</span> <span class="va">n.burnin</span><span class="op">)</span><span class="op">/</span><span class="fl">1000</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  chains <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  n.chains <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  run <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  monitor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  modelfile <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  cox_intervals <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -78,97 +79,159 @@ multilevel models with parameterizable weight functions via JAGS.</p>
 
 
 <dl><dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>
-<dd><p>A symbolic model formula.</p></dd>
+<dd><p>A symbolic model formula. See 'Formula Components' section for details.
+The general structure is: <code>outcome ~ 1 + predictors + mm(...) + hm(...)</code>.
+For survival models, use <code>Surv(time, event)</code> on the left-hand side.</p></dd>
 
 
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
-<dd><p>A character string specifying the model family.</p></dd>
+<dd><p>Character string specifying the outcome distribution and link function.
+Options:</p><ul><li><p><code>"Gaussian"</code>: Normal distribution with identity link (continuous outcomes)</p></li>
+<li><p><code>"Binomial"</code>: Binomial distribution with logit link (binary outcomes)</p></li>
+<li><p><code>"Weibull"</code>: Weibull survival model (requires <code>Surv(time, event)</code> outcome)</p></li>
+<li><p><code>"Cox"</code>: Cox proportional hazards model (requires <code>Surv(time, event)</code> outcome)</p></li>
+</ul></dd>
 
 
 <dt id="arg-priors">priors<a class="anchor" aria-label="anchor" href="#arg-priors"></a></dt>
-<dd><p>A named list or character vector mapping parameter groups to JAGS priors.</p></dd>
+<dd><p>Named list or character vector of JAGS prior specifications. Parameter
+names follow the pattern: <code>b.mm.k</code> (mm block k coefficients), <code>b.w.k</code>
+(weight function parameters), <code>tau.mm</code> (mm random effect precision), etc.
+Example: <code>list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm ~ dgamma(2, 0.1)")</code>.
+Default priors are weakly informative.</p></dd>
 
 
 <dt id="arg-inits">inits<a class="anchor" aria-label="anchor" href="#arg-inits"></a></dt>
-<dd><p>A list of initial values used for all chains.</p></dd>
+<dd><p>List of initial values for MCMC chains. Applied to all chains. If
+<code>NULL</code>, JAGS generates initial values automatically.</p></dd>
 
 
 <dt id="arg-n-iter">n.iter<a class="anchor" aria-label="anchor" href="#arg-n-iter"></a></dt>
-<dd><p>Total number of MCMC iterations.</p></dd>
+<dd><p>Total number of MCMC iterations per chain. Default: 1000.
+Increase for better convergence (e.g., 10000-50000 for production models).</p></dd>
 
 
 <dt id="arg-n-burnin">n.burnin<a class="anchor" aria-label="anchor" href="#arg-n-burnin"></a></dt>
-<dd><p>Number of burn-in iterations to discard.</p></dd>
+<dd><p>Number of burn-in iterations to discard at the start of each
+chain. Default: 500. Should be sufficient for chains to reach stationarity.</p></dd>
 
 
 <dt id="arg-n-thin">n.thin<a class="anchor" aria-label="anchor" href="#arg-n-thin"></a></dt>
-<dd><p>Thinning rate for MCMC sampling.</p></dd>
+<dd><p>Thinning rate: save every k-th iteration to reduce autocorrelation.
+Default: <code>max(1, floor((n.iter - n.burnin) / 1000))</code> (targets ~1000 samples).
+Increase if posterior samples show high autocorrelation.</p></dd>
 
 
-<dt id="arg-chains">chains<a class="anchor" aria-label="anchor" href="#arg-chains"></a></dt>
-<dd><p>Number of MCMC chains to run.</p></dd>
+<dt id="arg-n-chains">n.chains<a class="anchor" aria-label="anchor" href="#arg-n-chains"></a></dt>
+<dd><p>Number of MCMC chains. Default: 3. Use 3-4 chains to assess
+convergence via Gelman-Rubin diagnostics.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Random seed for reproducibility.</p></dd>
+<dd><p>Integer random seed for reproducibility. If <code>NULL</code>, results
+will vary across runs.</p></dd>
 
 
 <dt id="arg-run">run<a class="anchor" aria-label="anchor" href="#arg-run"></a></dt>
-<dd><p>Logical; if <code>TRUE</code> (default), JAGS is executed.</p></dd>
+<dd><p>Logical; if <code>TRUE</code> (default), JAGS is executed and the model
+is fitted. If <code>FALSE</code>, returns the model specification without fitting
+(useful for inspecting generated JAGS code or data structures).</p></dd>
 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
-<dd><p>Logical; if <code>TRUE</code>, run chains in parallel.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, run MCMC chains in parallel using
+multiple cores. Requires parallel backend setup. Default: <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-monitor">monitor<a class="anchor" aria-label="anchor" href="#arg-monitor"></a></dt>
-<dd><p>Logical; if <code>TRUE</code>, store additional outputs.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, store full MCMC chains and additional
+outputs for diagnostic plots. Required for <code><a href="monetPlot.html">monetPlot</a></code> and
+<code><a href="mcmcDiag.html">mcmcDiag</a></code>. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-modelfile">modelfile<a class="anchor" aria-label="anchor" href="#arg-modelfile"></a></dt>
-<dd><p>Character or logical for saving/loading JAGS model.</p></dd>
+<dd><p>Logical or character path:</p><ul><li><p><code>FALSE</code> (default): JAGS code generated internally</p></li>
+<li><p><code>TRUE</code>: Save generated JAGS code to <code>modelstring.txt</code> in working directory</p></li>
+<li><p>Character path: Read JAGS code from specified file instead of generating</p></li>
+</ul></dd>
+
+
+<dt id="arg-cox-intervals">cox_intervals<a class="anchor" aria-label="anchor" href="#arg-cox-intervals"></a></dt>
+<dd><p>For Cox models only: controls baseline hazard flexibility
+and computational efficiency.</p><ul><li><p><code>NULL</code> (default): Non-parametric baseline hazard using all unique
+    event times (maximum flexibility, slower for large datasets)</p></li>
+<li><p>Integer k: Piecewise constant baseline hazard with k intervals
+    (faster, suitable for datasets with many unique event times). Recommended:
+    k = 10-20 for most applications.</p></li>
+</ul></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame where each row represents a level-1 observation.</p></dd>
+<dd><p>Data frame in member-level (long) format where each row represents
+a member-level observation. Must contain all variables referenced in the
+formula, including identifiers specified in <code><a href="id.html">id()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class "bml" containing model outputs.</p>
-    </div>
+    <p>A list of class <code>"bml"</code> containing:</p><ul><li><p><code>reg.table</code>: Data frame of posterior summaries (means, SDs,
+      credible intervals) for main parameters. Access columns via
+      <code>$Parameter</code>, <code>$mean</code>, <code>$sd</code>, <code>$lb</code>, <code>$ub</code>.</p></li>
+<li><p><code>jags.out</code>: Full JAGS output object (if <code>monitor = TRUE</code>)</p></li>
+<li><p><code>modelstring</code>: Generated JAGS model code</p></li>
+<li><p><code>jags.data</code>: Data passed to JAGS</p></li>
+<li><p><code>jags.inits</code>: Initial values used</p></li>
+<li><p><code>formula</code>: Original formula</p></li>
+<li><p><code>family</code>: Model family</p></li>
+<li><p>Additional components for random effects, weights, predictions
+      (when applicable)</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>In addition to hierarchical and cross-classified multilevel models, the <strong>bml</strong> package allows
 users to fit Bayesian multiple-membership models. Unlike tools such as
-<code>brms</code> or MLwiN (<a href="https://www.bristol.ac.uk/cmm/software/mlwin/" class="external-link">https://www.bristol.ac.uk/cmm/software/mlwin/</a>),
+<code>brms</code> or <a href="https://www.bristol.ac.uk/cmm/software/mlwin/" class="external-link">MLwiN</a>,
 <strong>bml</strong> lets users specify and estimate models in which membership weights are parameterized
 through flexible formula syntax. This enables a more nuanced examination of how effects from
-lower-level units aggregate to higher levels (the micro-macro link).</p>
+member-level units aggregate to group level (the micro-macro link).</p>
 <p>The package automatically generates JAGS code to fit the model and processes the output
 to facilitate interpretation of model parameters and diagnostics.</p>
+<p>The package and modeling framework are introduced in:
+Rosche, B. (2026). <em>A Multilevel Model for Coalition Governments: Uncovering Party-Level
+Dependencies Within and Between Governments</em>. <em>Political Analysis</em>.</p>
 <p>For accessible introductions to multiple-membership models, see Fielding and Goldstein (2006)
 and Beretvas (2010). Advanced treatments include Goldstein (2011, Ch. 13),
-Rasbash and Browne (2001, 2008), Browne et al. (2001), and Leckie (2013).
-The package and modeling framework are introduced in:
-Rosche, B. (2025). <em>A Multilevel Model for Coalition Governments: Uncovering Party-Level
-Dependencies Within and Between Governments</em>. <em>Political Analysis</em>.</p>
+Rasbash and Browne (2001, 2008), Browne et al. (2001), and Leckie (2013).</p>
     </div>
     <div class="section level2">
     <h2 id="formula-components">Formula Components<a class="anchor" aria-label="anchor" href="#formula-components"></a></h2>
 
 
 <ul><li><p><strong>Outcome (Y):</strong> The dependent variable. For survival models, use <code>Surv(time, event)</code>.</p></li>
-<li><p><strong>Intercept (1):</strong> Includes an intercept term; use <code>0</code> to omit it.</p></li>
-<li><p><strong>Level-2 predictors (X.L2):</strong> Variables defined at level 2, separated by <code>+</code>.</p></li>
-<li><p><strong>Level-3 predictors (X.L3):</strong> Variables defined at level 3, separated by <code>+</code>.</p></li>
-<li><p><strong>Multiple membership object (<code><a href="mm.html">mm()</a></code>):</strong> Defines how lower-level (level-1) units are
-        associated with higher-level (level-2) constructs using a user-specified weighting function.
+<li><p><strong>Intercept:</strong> Follows standard R formula conventions (like <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>):</p><ul><li><p><code>y ~ x</code>: Includes intercept by default</p></li>
+<li><p><code>y ~ 1 + x</code>: Explicitly includes intercept (same as default)</p></li>
+<li><p><code>y ~ 0 + x</code> or <code>y ~ -1 + x</code>: Excludes intercept</p></li>
+</ul></li>
+<li><p><strong>Main-level predictors (X.main):</strong> Variables defined at the main (group) level, separated by <code>+</code>.</p></li>
+<li><p><strong>HM-level predictors (X.hm):</strong> Variables defined at the nesting level, separated by <code>+</code>.</p></li>
+<li><p><strong>Multiple membership object (<code><a href="mm.html">mm()</a></code>):</strong> Defines how member-level units are
+        associated with group-level constructs using a user-specified weighting function.
         Multiple <code><a href="mm.html">mm()</a></code> objects can be specified with different weight functions.</p></li>
-<li><p><strong>Hierarchical membership (<code><a href="hm.html">hm()</a></code>):</strong> Specifies nesting of level-2 units within
-        level-3 entities. Cross-classified structures can be modeled by including multiple <code><a href="hm.html">hm()</a></code> objects.</p></li>
-</ul><p><strong>Important:</strong> The formula parser does not support <code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code> inside <code>bml()</code>.
-Create transformations and interactions in your data object before modeling.</p>
+<li><p><strong>Hierarchical membership (<code><a href="hm.html">hm()</a></code>):</strong> Specifies nesting of main-level units within
+        higher-level entities. Cross-classified structures can be modeled by including multiple <code><a href="hm.html">hm()</a></code> objects.</p></li>
+</ul><p><strong>Formula Features:</strong> The main formula and <code><a href="vars.html">vars()</a></code> specifications support standard R formula syntax:</p><ul><li><p><strong>Interactions:</strong> Use <code>*</code> for main effects plus interaction, or <code>:</code> for interaction only.
+        Example: <code>y ~ a * b</code> expands to <code>y ~ a + b + a:b</code>.</p></li>
+<li><p><strong>Transformations:</strong> Use <code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code> for arithmetic operations.
+        Example: <code>y ~ I(x^2)</code> or <code>y ~ I(a + b)</code>.</p></li>
+</ul><p>These features work in:</p><ul><li><p><strong>Main formula:</strong> <code>y ~ 1 + a * b + I(x^2)</code></p></li>
+<li><p><strong>mm() vars:</strong> <code>vars(a * b)</code> or <code>vars(I(x^2))</code></p></li>
+<li><p><strong>hm() vars:</strong> <code>vars(a:b)</code> or <code>vars(I(log(x)))</code></p></li>
+</ul><p><strong>Note on weight functions:</strong> The <code><a href="fn.html">fn()</a></code> weight function in <code><a href="mm.html">mm()</a></code> does NOT support
+interactions or <code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code> transformations. Users must pre-create any needed transformed variables
+in their data before using them in weight functions. For example, instead of <code>fn(w ~ b1 * x^2)</code>,
+first create <code>data$x_sq &lt;- data$x^2</code> and use <code>fn(w ~ b1 * x_sq)</code>.</p>
+<p><strong>Note on intercepts:</strong> Intercept syntax (<code>1</code>, <code>0</code>, <code>-1</code>) only applies to the main formula.
+Numeric literals in <code><a href="vars.html">vars()</a></code> are ignored (e.g., <code>vars(1 + x)</code> is equivalent to <code>vars(x)</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="multiple-membership-object-mm-">Multiple Membership Object <code><a href="mm.html">mm()</a></code><a class="anchor" aria-label="anchor" href="#multiple-membership-object-mm-"></a></h2>
@@ -176,23 +239,34 @@ Create transformations and interactions in your data object before modeling.</p>
 
 <div class="sourceCode"><pre><code><span></span>
 <span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
-<span>  id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">l1id</span>, <span class="va">l2id</span><span class="op">)</span>,</span>
-<span>  vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X.L1</span><span class="op">)</span>,</span>
-<span>  fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span>, ar <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
-<span>  RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">mmid</span>, <span class="va">mainid</span><span class="op">)</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X.mm</span><span class="op">)</span>,</span>
+<span>  fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  RE   <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  ar   <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 
-<p><strong>Components:</strong></p><ul><li><p><code>id(l1id, l2id)</code>: Specifies identifiers linking each level-1 unit (<code>l1id</code>)
-        to its corresponding level-2 entities (<code>l2id</code>).</p></li>
-<li><p><code>vars(X.L1)</code>: Specifies level-1 covariates aggregated across memberships.
-        Use <code>+</code> to include multiple variables. Set to <code>NULL</code> for RE-only blocks.</p></li>
-<li><p><code>fn(w ~ ..., c, ar)</code>: Defines the weight function (micro-macro link).</p></li>
+<p><strong>Components:</strong></p><ul><li><p><code>id(mmid, mainid)</code>: Specifies identifiers linking each member-level unit (<code>mmid</code>)
+        to its corresponding group-level entities (<code>mainid</code>).</p></li>
+<li><p><code>vars(X.mm)</code>: Specifies member-level covariates aggregated across memberships.
+        Use <code>+</code> to include multiple variables. Supports interactions (<code>*</code>, <code>:</code>)
+        and transformations (<code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code>). Set to <code>NULL</code> for RE-only blocks.</p></li>
+<li><p><code>fn(w ~ ..., c)</code>: Defines the weight function (micro-macro link).
+        The <code>c</code> parameter controls weight normalization: when <code>c = TRUE</code> (default),
+        weights are normalized to sum to 1 within each group
+        (\(\tilde{w}_{ik} = w_{ik} / \sum_{k} w_{ik}\)).
+        Set <code>c = FALSE</code> for unnormalized weights (e.g., when aggregating sums).
+        Note: Does not support interactions or <code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code> - pre-create transformed variables.</p></li>
 <li><p><code>RE</code>: Logical; if <code>TRUE</code>, include random effects for this block.
         Automatically <code>TRUE</code> if <code>vars = NULL</code>.</p></li>
+<li><p><code>ar</code>: Logical; if <code>TRUE</code>, member-level random effects evolve as a
+        random walk across repeated participations in groups. This captures dynamics
+        where a member's unobserved heterogeneity changes over time. Default: <code>FALSE</code>.</p></li>
 </ul><p><strong>Multiple mm() blocks:</strong>
-You can specify multiple <code><a href="mm.html">mm()</a></code> blocks with different weight functions:</p><div class="sourceCode"><pre><code><span></span>
+You can specify multiple <code><a href="mm.html">mm()</a></code> blocks with different weight functions.
+However, <code>RE = TRUE</code> can only be specified for one <code><a href="mm.html">mm()</a></code> block.</p><div class="sourceCode"><pre><code><span></span>
 <span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X1</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">tenure</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 
     </div>
@@ -201,11 +275,12 @@ You can specify multiple <code><a href="mm.html">mm()</a></code> blocks with dif
 
 
 <div class="sourceCode"><pre><code><span></span>
-<span><span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">l3id</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X.L3</span><span class="op">)</span>, name <span class="op">=</span> <span class="va">l3name</span>, type <span class="op">=</span> <span class="st">"RE"</span>, showFE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">hmid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X.hm</span><span class="op">)</span>, name <span class="op">=</span> <span class="va">hmname</span>, type <span class="op">=</span> <span class="st">"RE"</span>, showFE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 
-<p><strong>Components:</strong></p><ul><li><p><code>id = id(l3id)</code>: Variable identifying level-3 groups.</p></li>
-<li><p><code>vars = vars(X.L3)</code>: Level-3 variables, or <code>NULL</code>.</p></li>
-<li><p><code>name = l3name</code>: Optional labels for level-3 units.</p></li>
+<p><strong>Components:</strong></p><ul><li><p><code>id = id(hmid)</code>: Variable identifying nesting-level groups.</p></li>
+<li><p><code>vars = vars(X.hm)</code>: Nesting-level variables, or <code>NULL</code>.
+        Supports interactions (<code>*</code>, <code>:</code>) and transformations (<code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code>).</p></li>
+<li><p><code>name = hmname</code>: Optional labels for nesting-level units.</p></li>
 <li><p><code>type</code>: <code>"RE"</code> (default) or <code>"FE"</code>.</p></li>
 <li><p><code>showFE</code>: If <code>TRUE</code> and <code>type = "FE"</code>, report the fixed effects.</p></li>
 </ul></div>
@@ -224,11 +299,25 @@ You can specify multiple <code><a href="mm.html">mm()</a></code> blocks with dif
 
 <p>Priors can be specified for parameters. With multiple mm() blocks, use indexed names:</p><div class="sourceCode"><pre><code><span></span>
 <span><span class="va">priors</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="st">"b.l1.1 ~ dnorm(0, 0.01)"</span>,</span>
+<span>  <span class="st">"b.mm.1 ~ dnorm(0, 0.01)"</span>,</span>
 <span>  <span class="st">"b.w.1 ~ dnorm(0, 0.1)"</span>,</span>
-<span>  <span class="st">"tau.l1 ~ dscaled.gamma(25, 1)"</span></span>
+<span>  <span class="st">"tau.mm ~ dscaled.gamma(25, 1)"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Rosche, B. (2026). A Multilevel Model for Coalition Governments: Uncovering
+Party-Level Dependencies Within and Between Governments. <em>Political Analysis</em>.</p>
+<p>Browne, W. J., Goldstein, H., &amp; Rasbash, J. (2001). Multiple membership
+multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103-124.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="summary.bml.html">summary.bml</a></code> for model summaries,
+<code><a href="monetPlot.html">monetPlot</a></code> for posterior visualization,
+<code><a href="mcmcDiag.html">mcmcDiag</a></code> for convergence diagnostics,
+<code><a href="mm.html">mm</a></code>, <code><a href="hm.html">hm</a></code> for model specification helpers</p></div>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
@@ -240,7 +329,8 @@ You can specify multiple <code><a href="mm.html">mm()</a></code> blocks with dif
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">coalgov</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Single mm() block</span></span></span>
+<span class="r-in"><span><span class="co"># Basic multiple-membership model</span></span></span>
+<span class="r-in"><span><span class="co"># Parties (pid) within governments (gid), nested in countries (cid)</span></span></span>
 <span class="r-in"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span></span></span>
@@ -251,17 +341,79 @@ You can specify multiple <code><a href="mm.html">mm()</a></code> blocks with dif
 <span class="r-in"><span>    <span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  family  <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
+<span class="r-in"><span>  n.iter  <span class="op">=</span> <span class="fl">10000</span>,</span></span>
+<span class="r-in"><span>  n.burnin <span class="op">=</span> <span class="fl">5000</span>,</span></span>
 <span class="r-in"><span>  data    <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># View results</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">m1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="monetPlot.html">monetPlot</a></span><span class="op">(</span><span class="va">m1</span>, <span class="st">"b[2]"</span><span class="op">)</span>  <span class="co"># Plot for majority coefficient</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Multiple mm() blocks with different weight functions</span></span></span>
 <span class="r-in"><span><span class="va">m2</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">Y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  family  <span class="op">=</span> <span class="st">"Gaussian"</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  family  <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
 <span class="r-in"><span>  data    <span class="op">=</span> <span class="va">coalgov</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Cox model with piecewise baseline hazard (faster for large datasets)</span></span></span>
+<span class="r-in"><span><span class="va">m3</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  family  <span class="op">=</span> <span class="st">"Cox"</span>,</span></span>
+<span class="r-in"><span>  cox_intervals <span class="op">=</span> <span class="fl">10</span>,  <span class="co"># Use 10 intervals instead of all unique times</span></span></span>
+<span class="r-in"><span>  data    <span class="op">=</span> <span class="va">coalgov</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Parameterized weight function</span></span></span>
+<span class="r-in"><span><span class="va">m4</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      id   <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      fn   <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">govmaxdur</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,  <span class="co"># Weights depend on data</span></span></span>
+<span class="r-in"><span>      RE   <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
+<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">coalgov</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Fixed coefficients (offsets)</span></span></span>
+<span class="r-in"><span><span class="va">m5</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      id   <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="fu"><a href="fix.html">fix</a></span><span class="op">(</span><span class="va">fdep</span>, <span class="fl">1.0</span><span class="op">)</span> <span class="op">+</span> <span class="va">rile</span><span class="op">)</span>,  <span class="co"># Fix fdep coefficient to 1.0</span></span></span>
+<span class="r-in"><span>      fn   <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      RE   <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
+<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">coalgov</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Custom priors</span></span></span>
+<span class="r-in"><span><span class="va">m6</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
+<span class="r-in"><span>  priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="st">"b[1] ~ dnorm(0, 0.01)"</span>,       <span class="co"># Intercept prior</span></span></span>
+<span class="r-in"><span>    <span class="st">"b.mm.1 ~ dnorm(0, 0.1)"</span>,      <span class="co"># MM coefficient prior</span></span></span>
+<span class="r-in"><span>    <span class="st">"tau.mm ~ dgamma(2, 0.5)"</span>      <span class="co"># MM precision prior</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">coalgov</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Cross-classified model (multiple hm blocks)</span></span></span>
+<span class="r-in"><span><span class="va">m7</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">Y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">region</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span></span>
+<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">mydata</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

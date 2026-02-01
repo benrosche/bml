@@ -1,6 +1,13 @@
-# Specify ID variables
+# Specify identifier variables for multiple-membership and hierarchical structures
 
-Helper function to specify level identifiers in mm() and hm() objects.
+Helper function used within
+[`mm`](https://benrosche.github.io/bml/reference/mm.md) and
+[`hm`](https://benrosche.github.io/bml/reference/hm.md) to specify the
+identifier variables that define memberships and nesting structures. In
+multiple-membership models, `id()` links member-level units (e.g., party
+IDs) to group-level units (e.g., government IDs). In hierarchical
+models, `id()` specifies the nesting-level identifier (e.g., country
+ID).
 
 ## Usage
 
@@ -12,9 +19,33 @@ id(...)
 
 - ...:
 
-  Unquoted variable names (e.g., id(l1id, l2id) for mm(), id(l3id) for
-  hm())
+  Unquoted variable names from your data:
+
+  - For [`mm()`](https://benrosche.github.io/bml/reference/mm.md): Two
+    identifiers `id(mmid, mainid)` where `mmid` identifies member-level
+    units and `mainid` identifies group-level units
+
+  - For [`hm()`](https://benrosche.github.io/bml/reference/hm.md): One
+    identifier `id(hmid)` where `hmid` identifies nesting-level units
 
 ## Value
 
-A bml_id object containing the variable names as characters
+A `bml_id` object containing the variable names as character strings.
+
+## See also
+
+[`mm`](https://benrosche.github.io/bml/reference/mm.md),
+[`hm`](https://benrosche.github.io/bml/reference/hm.md),
+[`bml`](https://benrosche.github.io/bml/reference/bml.md)
+
+## Examples
+
+``` r
+# Multiple-membership: parties (pid) within governments (gid)
+id(pid, gid)
+#> Error in id(pid, gid): could not find function "id"
+
+# Hierarchical: governments within countries
+id(cid)
+#> Error in id(cid): could not find function "id"
+```

@@ -1,61 +1,140 @@
-#' Coalition governments in comparative perspective (1944-2013)
+#' Coalition Governments in Western Democracies (1944-2014)
 #'
 #' @description
-#' A dataset containing information about political parties participating in coalition
-#' governments across multiple countries and time periods. The data are structured at
-#' the party-government level (member level), making it suitable for multiple-membership
+#' A dataset containing information on coalition governments and their member parties
+#' across 30 parliamentary democracies. The data are in long format where the unit of
+#' analysis is parties in governments, making it suitable for multiple-membership
 #' multilevel models where governments (groups) are composed of multiple parties (members).
 #'
-#' @format A data frame with 1,286 rows and 27 variables. Each row represents a party's
-#'   participation in a specific government:
+#' @format A tibble with 2,077 rows and 21 variables. Each row represents a party's
+#'   participation in a specific coalition government. The sample contains 628 governments
+#'   formed by 312 unique parties across 29 countries.
+#'
+#' \strong{Identifiers:}
 #' \describe{
-#'   \item{pid}{Integer. Party identifier (member-level unit in mm() specification)}
-#'   \item{pname}{Character. Party name}
-#'   \item{gid}{Integer. Government identifier (group-level unit in mm() specification)}
-#'   \item{gname}{Character. Government name}
-#'   \item{cid}{Integer. Country identifier (nesting-level unit in hm() specification)}
-#'   \item{cname}{Character. Country name}
-#'   \item{gstart}{Date. Government start date}
-#'   \item{gend}{Date. Government end date}
-#'   \item{n}{Integer. Number of parties in the government (group size for weight functions)}
-#'   \item{prime}{Integer. Prime minister party indicator}
-#'   \item{pfam}{Character. Party family}
-#'   \item{rile}{Numeric. Party's right-left ideological position}
-#'   \item{ipd}{Numeric. Intra-party democracy score}
-#'   \item{fdep}{Numeric. Party's financial dependency}
-#'   \item{pseatrel}{Numeric. Party's relative seat share within coalition}
-#'   \item{majority}{Integer. Majority government indicator: 1 = government controls majority
-#'     of seats, 0 = minority government}
-#'   \item{mwc}{Integer. Minimal winning coalition indicator}
-#'   \item{hetero}{Numeric. Ideological heterogeneity within government}
-#'   \item{investiture}{Numeric. Investiture vote requirement at country level}
-#'   \item{pmpower}{Numeric. Prime ministerial powers at country level}
-#'   \item{earlyterm}{Integer. Early termination indicator: 1 = government terminated early,
-#'     0 = government completed full term (event indicator for survival models)}
-#'   \item{govdur}{Numeric. Government duration in days (outcome variable for survival models)}
-#'   \item{govmaxdur}{Numeric. Maximum possible government duration in days}
-#'   \item{sim.w}{Numeric. Simulated weights for demonstration purposes}
-#'   \item{sim.y}{Numeric. Simulated linear outcome}
-#'   \item{sim.st}{Numeric. Simulated survival time}
-#'   \item{sim.e}{Integer. Simulated event status}
+#'   \item{gid}{Government identifier (group-level unit in \code{mm()} specification).
+#'     Range: [3, 1105]}
+#'   \item{pid}{Party identifier (member-level unit in \code{mm()} specification).
+#'     Range: [11110, 96955]}
+#'   \item{cid}{Country identifier (nesting-level unit in \code{hm()} specification).
+#'     Range: [11, 96]}
+#'   \item{country}{Three-letter country code (ISO 3166-1 alpha-3)}
+#'   \item{pname}{Full party name}
+#' }
+#'
+#' \strong{Government-level variables:}
+#' \describe{
+#'   \item{pelection}{Date of the preceding election that led to the government's formation.
+#'     Range: [1939-04-02, 2014-12-14]}
+#'   \item{n}{Number of parties in the coalition (group size for weight functions).
+#'     Range: [2, 9], mean: 3.31}
+#'   \item{dur_wkb}{Government duration in days, measured from investiture to termination
+#'     (outcome variable for survival models). Range: [7, 1840], mean: 554.5}
+#'   \item{event_wkb}{Early termination indicator: 1 = government terminated due to
+#'     political conflict (voluntary resignation, dissension within government, lack of
+#'     parliamentary support, or head of state intervention) more than one year before
+#'     the official end of term; 0 = censored (regular elections, other reasons, or
+#'     termination within one year of scheduled elections). Range: [0, 1], mean: 0.39}
+#'   \item{comp_early}{Early election indicator for competing risks analysis: 1 = government
+#'     terminated by calling early elections, 0 = otherwise. Sourced from WKB.
+#'     Range: [0, 1], mean: 0.04}
+#'   \item{comp_replace}{Nonelectoral replacement indicator for competing risks analysis:
+#'     1 = government terminated by nonelectoral replacement (cabinet reshuffle without
+#'     elections), 0 = otherwise. Sourced from WKB. Range: [0, 1], mean: 0.36}
+#'   \item{majority}{Majority government indicator: 1 = coalition controls majority of
+#'     parliamentary seats, 0 = minority government. Range: [0, 1], mean: 0.80}
+#'   \item{mwc}{Minimal winning coalition indicator: 1 = coalition would lose its majority
+#'     if any party left, 0 = oversized coalition. Range: [0, 1], mean: 0.35}
+#'   \item{rile_SD}{Inter-party ideological heterogeneity. Standard deviation of coalition
+#'     parties' left-right positions (from CMP) relative to the ideological distribution
+#'     of all parties in parliament. Standardized and inverted so higher values indicate
+#'     greater ideological cohesion. Range: [-8.40, 2.12], mean: 0.04}
+#' }
+#'
+#' \strong{Country-level variables:}
+#' \describe{
+#'   \item{investiture}{Investiture vote requirement (time-constant country characteristic):
+#'     1 = country requires formal parliamentary investiture vote, 0 = no formal requirement.
+#'     Range: [0, 1], mean: 0.46}
+#' }
+#'
+#' \strong{Party-level variables:}
+#' \describe{
+#'   \item{pseat}{Party's proportional seat share within the coalition.
+#'     Range: [0.00, 73.00], mean: 0.22}
+#'   \item{prime}{Prime minister party indicator: \code{TRUE} = party holds prime
+#'     ministership (n = 628), \code{FALSE} = junior coalition partner (n = 1,449)}
+#'   \item{cohesion}{Intra-party ideological cohesion, measured using an adaptation of
+#'     the Cowles-Jones ratio. Computed as the ratio of continuous ideological shifts
+#'     to reversals in a party's left-right position over time. Higher values indicate
+#'     more consistent ideological trajectories (greater cohesion). Standardized.
+#'     Range: [-1.13, 3.85], mean: 0.00}
+#'   \item{rile}{Party's left-right ideological position (from CMP). Measured on a
+#'     continuous scale where higher values indicate more right-wing positions and lower
+#'     values indicate more left-wing positions. Standardized.
+#'     Range: [-3.21, 3.68], mean: 0.00}
+#'   \item{finance}{Party's economic dependence on member contributions (from PPDB).
+#'     Measured as the share of party funding from member dues relative to total income.
+#'     Standardized; higher values indicate greater dependence on member financing.
+#'     Treated as time-constant due to data limitations. Range: [-0.98, 4.40], mean: 0.00}
+#'   \item{Nmembers}{Number of party members (from PPDB). Standardized; treated as
+#'     time-constant due to data limitations. Range: [-0.33, 15.02], mean: 0.00}
 #' }
 #'
 #' @details
-#' This dataset is particularly useful for demonstrating multiple-membership models where:
+#' This dataset demonstrates multiple-membership multilevel modeling where:
 #' \itemize{
 #'   \item \strong{Members:} Political parties (identified by \code{pid})
 #'   \item \strong{Groups:} Coalition governments (identified by \code{gid})
 #'   \item \strong{Nesting:} Governments nested within countries (identified by \code{cid})
 #' }
 #'
-#' Each government can have multiple parties, and parties can participate in multiple
-#' governments over time. This creates a multiple-membership structure where party-level
-#' characteristics need to be aggregated to the government level using appropriate
-#' weighting functions.
+#' Each coalition government comprises multiple parties, and parties can participate in
+#' multiple governments over time. This creates a multiple-membership structure where
+#' party-level characteristics are aggregated to the government level using weighting
+#' functions specified in \code{mm()} blocks.
+#'
+#' \strong{Sample:} After matching party data across sources and excluding single-party
+#' and caretaker governments, the sample comprises 628 governments formed by 312 unique
+#' parties across 29 countries: Australia, Austria, Belgium, Bulgaria, Croatia, Czech
+#' Republic, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Ireland, Israel,
+#' Italy, Japan, Latvia, Lithuania, Netherlands, Norway, Poland, Portugal, Romania,
+#' Slovakia, Spain, Sweden, Switzerland, and United Kingdom.
+#'
+#' \strong{Measurement notes:}
+#' \itemize{
+#'   \item Government duration follows the WKB convention: time from investiture to
+#'     termination or new elections
+#'   \item Early termination events focus on political gridlock (conflict-related endings)
+#'     and exclude terminations within one year of scheduled elections
+#'   \item \code{comp_early} and \code{comp_replace} enable competing risks analysis
+#'     distinguishing between termination mechanisms
+#'   \item Party-level variables (\code{cohesion}, \code{finance}, \code{Nmembers}) are
+#'     standardized (mean = 0) for analysis
+#' }
 #'
 #' @source
-#' Coalition government data compiled from multiple comparative politics sources covering
-#' parliamentary democracies from 1944-2013.
+#' Data compiled from multiple sources:
+#' \itemize{
+#'   \item \strong{Coalition governments:} Woldendorp, Keman, and Budge (WKB) dataset,
+#'     updated by Seki and Williams (2014)
+#'   \item \strong{Party ideology:} Comparative Manifesto Project (CMP; Volkens et al. 2016)
+#'   \item \strong{Party organization:} Political Party Database (PPDB; Scarrow, Poguntke,
+#'     and Webb 2017)
+#' }
+#'
+#' Missing party-level data imputed using multiple imputation by chained equations with
+#' predictive mean matching.
+#'
+#' @references
+#' Seki, K., & Williams, L. K. (2014). Updating the Party Government data set.
+#' \emph{Electoral Studies}, 34, 270-279.
+#'
+#' Volkens, A., et al. (2016). The Manifesto Data Collection. Manifesto Project
+#' (MRG/CMP/MARPOR). Version 2016a. Berlin: Wissenschaftszentrum Berlin fur Sozialforschung.
+#'
+#' Scarrow, S. E., Webb, P. D., & Poguntke, T. (Eds.). (2017). \emph{Organizing Political
+#' Parties: Representation, Participation, and Power}. Oxford University Press.
 #'
 #' @seealso \code{\link{bml}} for modeling examples using this dataset
 #'
@@ -64,20 +143,21 @@
 #'
 #' # Explore structure
 #' head(coalgov)
-#' table(coalgov$cname)  # Countries in sample
+#' table(coalgov$country)
 #'
-#' # Summarize government durations
-#' summary(coalgov$govdur[coalgov$earlyterm == 1])  # Early terminated
-#' summary(coalgov$govdur[coalgov$earlyterm == 0])  # Full term
+#' # Government statistics
+#' length(unique(coalgov$gid))
+#' mean(coalgov$event_wkb, na.rm = TRUE)
+#' summary(coalgov$dur_wkb)
 #'
 #' # Party participation patterns
-#' table(table(coalgov$pid))  # Distribution of government participations per party
+#' table(table(coalgov$pid))
 #'
 #' \dontrun{
-#' # Basic model: government duration as function of majority status and party fragmentation
+#' # Model: government duration as function of majority status and party characteristics
 #' m1 <- bml(
-#'   Surv(govdur, earlyterm) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+#'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
+#'     mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE) +
 #'     hm(id = id(cid), type = "RE"),
 #'   family = "Weibull",
 #'   data = coalgov
@@ -89,85 +169,3 @@
 #' @keywords datasets
 "coalgov"
 
-#' School networks data from CILS4EU study
-#'
-#' @description
-#' Network and survey data from the Children of Immigrants Longitudinal Survey in
-#' Four European Countries (CILS4EU). The data include friendship networks among
-#' students nested within classrooms and schools, along with individual-level
-#' characteristics and outcomes. Structured for hierarchical and multiple-membership
-#' network models.
-#'
-#' @format Two data objects are provided:
-#'
-#' \strong{nodedat}: Node-level (student) attributes
-#' \describe{
-#'   \item{youthid}{Integer. Student identifier (unique across all schools)}
-#'   \item{schoolid}{Integer. School identifier}
-#'   \item{classid}{Integer. Classroom identifier}
-#'   \item{sex}{Factor. Student gender}
-#'   \item{etn}{Factor. Ethnicity or immigrant background}
-#'   \item{parent_edu}{Numeric. Parental education level}
-#'   \item{parent_inc}{Numeric. Parental income}
-#'   \item{test_lang}{Numeric. Language test score}
-#'   \item{test_cogn}{Numeric. Cognitive test score}
-#' }
-#'
-#' \strong{edgedat}: Edge-level (friendship) data
-#' \describe{
-#'   \item{youthid_from}{Integer. Nominator (student reporting friendship)}
-#'   \item{youthid_to}{Integer. Nominee (student nominated as friend)}
-#'   \item{rank}{Integer. Ranking of friendship nomination}
-#' }
-#'
-#' @details
-#' This dataset is designed for social network analysis with multilevel structure:
-#' \itemize{
-#'   \item \strong{Level 1:} Students (nodes)
-#'   \item \strong{Level 2:} Classrooms
-#'   \item \strong{Level 3:} Schools
-#' }
-#'
-#' Students can form friendships both within and across classrooms (though primarily
-#' within classrooms). This creates opportunities for modeling peer effects, social
-#' influence, and network formation processes using multiple-membership or hierarchical
-#' specifications.
-#'
-#' \strong{Potential Applications:}
-#' \itemize{
-#'   \item Peer influence on academic performance
-#'   \item Homophily in friendship formation
-#'   \item Cross-level interactions (school/classroom effects on peer networks)
-#'   \item Multiple-membership models where students are influenced by multiple peers
-#' }
-#'
-#' @source
-#' CILS4EU - Children of Immigrants Longitudinal Survey in Four European Countries.
-#' A cross-national longitudinal survey of children of immigrants and native-born
-#' children in England, Germany, the Netherlands, and Sweden.
-#'
-#' @seealso \code{\link{bml}} for modeling approaches
-#'
-#' @examples
-#' data(schoolnets)
-#'
-#' # Explore node data
-#' head(nodedat)
-#' table(nodedat$schoolid)  # Students per school
-#'
-#' # Explore network structure
-#' head(edgedat)
-#' nrow(edgedat)  # Total friendships
-#'
-#' \dontrun{
-#' # Example: Model test scores as function of peer characteristics
-#' # This would require preparing data with peer-level aggregation
-#' }
-#'
-#' @rdname schoolnets
-#' @docType data
-#' @keywords datasets
-"nodedat"
-
-#' @rdname schoolnets
-"edgedat"

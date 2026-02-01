@@ -29,11 +29,18 @@ createData <- function(data, formula_parts) {
 
   # Get ID variable names
   if (has_mm) {
-    mmid_name   <- mm[[1]]$id[1]
     mainid_name <- mm[[1]]$id[2]
+    # Collect all unique mmid variable names and group blocks by mmid
+    all_mmid_names <- unique(sapply(mm, function(m) m$id[1]))
+    mmid_to_blocks <- list()
+    for (i in seq_along(mm)) {
+      mmid_nm <- mm[[i]]$id[1]
+      mmid_to_blocks[[mmid_nm]] <- c(mmid_to_blocks[[mmid_nm]], i)
+    }
   } else {
-    mmid_name   <- "mmid"
     mainid_name <- "mainid"
+    all_mmid_names <- "mmid"
+    mmid_to_blocks <- list(mmid = integer(0))
     data <- data %>% dplyr::mutate(mmid = 1, mainid = 1)
   }
 
@@ -44,13 +51,30 @@ createData <- function(data, formula_parts) {
     data <- data %>% dplyr::mutate(hmid = 1)
   }
 
-  # Rename to standard names and create sequential IDs
+  # Rename mainid and hmid to standard names
   data <- data %>%
-    dplyr::rename(mmid = all_of(mmid_name), mainid = all_of(mainid_name), hmid = all_of(hmid_name)) %>%
-    dplyr::group_by(mmid) %>% dplyr::mutate(mmid = dplyr::cur_group_id()) %>% dplyr::ungroup() %>%
+    dplyr::rename(mainid = all_of(mainid_name), hmid = all_of(hmid_name)) %>%
     dplyr::group_by(mainid) %>% dplyr::mutate(mainid = dplyr::cur_group_id()) %>% dplyr::ungroup() %>%
-    dplyr::group_by(hmid) %>% dplyr::mutate(hmid = dplyr::cur_group_id()) %>% dplyr::ungroup() %>%
-    dplyr::arrange(mainid, mmid)
+    dplyr::group_by(hmid) %>% dplyr::mutate(hmid = dplyr::cur_group_id()) %>% dplyr::ungroup()
+
+  # Rename each unique mmid variable to mmid.g format and create sequential IDs
+  for (g in seq_along(all_mmid_names)) {
+    mmid_orig_name <- all_mmid_names[g]
+    mmid_new_name <- paste0("mmid.", g)
+    data <- data %>%
+      dplyr::rename(!!mmid_new_name := all_of(mmid_orig_name)) %>%
+      dplyr::group_by(.data[[mmid_new_name]]) %>%
+      dplyr::mutate(!!mmid_new_name := dplyr::cur_group_id()) %>%
+      dplyr::ungroup()
+  }
+
+  # For backward compatibility, create 'mmid' as alias for 'mmid.1'
+  if (has_mm && "mmid.1" %in% colnames(data)) {
+    data$mmid <- data$mmid.1
+  }
+
+  # Sort data by mainid
+  data <- data %>% dplyr::arrange(mainid)
 
   # ========================================================================================= #
   # MM level: Process mm() blocks
@@ -73,14 +97,20 @@ createData <- function(data, formula_parts) {
       }
     })))
 
-    # Create base mm data with all base variables
+    # Create base mm data with all base variables (include all mmid columns)
+    mmid_cols <- paste0("mmid.", seq_along(all_mmid_names))
     mmdat_base <- data %>%
-      dplyr::arrange(mainid, mmid) %>%
-      dplyr::select(mmid, mainid, any_of(all_mmvars_base))
+      dplyr::arrange(mainid) %>%
+      dplyr::select(all_of(mmid_cols), mainid, any_of(all_mmvars_base))
 
     # Process each mm block
     for (i in seq_along(mm)) {
       block <- mm[[i]]
+
+      # Determine which mmid group this block belongs to
+      block_mmid_name <- block$id[1]
+      mmid_group <- which(all_mmid_names == block_mmid_name)
+      mmid_col <- paste0("mmid.", mmid_group)
 
       # Extract formula and fixed vars from new structure
       vars_formula <- NULL
@@ -99,7 +129,7 @@ createData <- function(data, formula_parts) {
         X_mm <- model.matrix(vars_formula, data = mmdat_base)
         X_mm_df <- as.data.frame(X_mm)
         dat_free <- dplyr::bind_cols(
-          mmdat_base %>% dplyr::select(mmid, mainid),
+          mmdat_base %>% dplyr::select(all_of(mmid_col), mainid) %>% dplyr::rename(mmid = all_of(mmid_col)),
           X_mm_df
         )
         # Get actual column names from model.matrix (these are the "vars")
@@ -112,7 +142,7 @@ createData <- function(data, formula_parts) {
       # Handle fixed variables
       dat_fixed <- if (!is.null(vars_fixed)) {
         var_names <- sapply(vars_fixed, function(x) x$var)
-        mmdat_base %>% dplyr::select(mmid, mainid, all_of(var_names))
+        mmdat_base %>% dplyr::select(all_of(mmid_col), mainid, all_of(var_names)) %>% dplyr::rename(mmid = all_of(mmid_col))
       } else NULL
 
       fix_values <- if (!is.null(vars_fixed)) {
@@ -176,7 +206,8 @@ createData <- function(data, formula_parts) {
       }
 
       wdat <- wdat %>%
-        dplyr::select(mmid, mainid, all_of(wvars))
+        dplyr::select(all_of(mmid_col), mainid, all_of(wvars)) %>%
+        dplyr::rename(mmid = all_of(mmid_col))
 
       mm_blocks[[i]] <- list(
         vars       = vars_free,
@@ -187,13 +218,15 @@ createData <- function(data, formula_parts) {
         wdat       = wdat,
         fn         = block$fn,
         RE         = block$RE,
-        ar         = block$ar
+        ar         = block$ar,
+        mmid_group = mmid_group
       )
     }
 
     # Store common info
-    attr(mm_blocks, "mmid_name")   <- mmid_name
-    attr(mm_blocks, "mainid_name") <- mainid_name
+    attr(mm_blocks, "all_mmid_names") <- all_mmid_names
+    attr(mm_blocks, "mmid_to_blocks") <- mmid_to_blocks
+    attr(mm_blocks, "mainid_name")    <- mainid_name
     attr(mm_blocks, "has_RE")      <- any(sapply(mm, function(m) m$RE))
     attr(mm_blocks, "has_vars")    <- any(sapply(mm_blocks, function(m) {
       !is.null(m$vars) || !is.null(m$vars_fixed)

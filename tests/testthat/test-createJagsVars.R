@@ -43,7 +43,7 @@ setup_jags_vars <- function(formula, family, data = coalgov, cox_intervals = NUL
 
 test_that("createJagsVars() creates correct structure for Gaussian model", {
   result <- setup_jags_vars(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian"
   )
 
@@ -64,7 +64,7 @@ test_that("createJagsVars() creates correct structure for Gaussian model", {
 
 test_that("createJagsVars() creates correct structure for Weibull model", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Weibull"
   )
 
@@ -78,7 +78,7 @@ test_that("createJagsVars() creates correct structure for Weibull model", {
 
 test_that("createJagsVars() handles Cox model without intervals", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Cox"
   )
 
@@ -92,7 +92,7 @@ test_that("createJagsVars() handles Cox model without intervals", {
 
 test_that("createJagsVars() handles Cox model with intervals", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Cox",
     cox_intervals = 10
   )
@@ -107,8 +107,8 @@ test_that("createJagsVars() handles Cox model with intervals", {
 
 test_that("createJagsVars() correctly handles mm() blocks", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE),
     family = "Weibull"
   )
 
@@ -116,29 +116,29 @@ test_that("createJagsVars() correctly handles mm() blocks", {
 
   expect_true("X.mm.1" %in% names(jv$jags.data))
   expect_true("n.Xmm.1" %in% names(jv$jags.data))
-  # mmid is only in jags.data when RE = TRUE
-  expect_true("n.mm" %in% names(jv$jags.data))
-  expect_true("mmi1" %in% names(jv$jags.data))
-  expect_true("mmi2" %in% names(jv$jags.data))
+  # Per-group indices (now use .g suffix for mmid groups)
+  expect_true("n.mm.1" %in% names(jv$jags.data))
+  expect_true("mmi1.1" %in% names(jv$jags.data))
+  expect_true("mmi2.1" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() correctly handles mm() RE", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE),
     family = "Weibull"
   )
 
   jv <- result$jags_vars
 
-  # RE requires unique mm count
-  expect_true("n.umm" %in% names(jv$jags.data))
-  expect_true(jv$jags.data$n.umm > 0)
+  # RE requires unique mm count (per-group naming)
+  expect_true("n.umm.1" %in% names(jv$jags.data))
+  expect_true(jv$jags.data$`n.umm.1` > 0)
 })
 
 test_that("createJagsVars() correctly handles hm() blocks", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       hm(id = id(cid), type = "RE"),
     family = "Weibull"
   )
@@ -151,8 +151,8 @@ test_that("createJagsVars() correctly handles hm() blocks", {
 
 test_that("createJagsVars() correctly handles parameterized weight functions", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ b0 + b1 * pseat), RE = FALSE),
     family = "Weibull"
   )
 
@@ -164,8 +164,8 @@ test_that("createJagsVars() correctly handles parameterized weight functions", {
 
 test_that("createJagsVars() correctly handles deterministic weights (Phase 2 optimization)", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE),
     family = "Weibull"
   )
 
@@ -180,20 +180,20 @@ test_that("createJagsVars() correctly handles deterministic weights (Phase 2 opt
 test_that("createJagsVars() correctly handles weight constraints with accumulator", {
   # Constrained weights with parameters use accumulator pattern
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel, c = TRUE), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ b0 + b1 * pseat, c = TRUE), RE = FALSE),
     family = "Weibull"
   )
 
   jv <- result$jags_vars
 
-  # Accumulator pattern requires grp.mm
-  expect_true("grp.mm" %in% names(jv$jags.data))
+  # Accumulator pattern requires grp.mm (per-group naming)
+  expect_true("grp.mm.1" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() correctly handles fixed coefficients (Phase 1 optimization)", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + fix(majority, 1.0),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + fix(majority, 1.0),
     family = "Weibull"
   )
 
@@ -205,7 +205,7 @@ test_that("createJagsVars() correctly handles fixed coefficients (Phase 1 optimi
 
 test_that("createJagsVars() correctly counts main-level parameters", {
   result <- setup_jags_vars(
-    formula = sim.y ~ 1 + majority + mwc,
+    formula = event_wkb ~ 1 + majority + mwc,
     family = "Gaussian"
   )
 
@@ -219,9 +219,9 @@ test_that("createJagsVars() correctly counts main-level parameters", {
 
 test_that("createJagsVars() correctly handles multiple mm() blocks", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
-      mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE) +
+      mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
     family = "Weibull"
   )
 
@@ -235,22 +235,22 @@ test_that("createJagsVars() correctly handles multiple mm() blocks", {
 
 test_that("createJagsVars() correctly handles AR specifications", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE, ar = TRUE),
     family = "Weibull"
   )
 
   jv <- result$jags_vars
 
-  # AR requires special indexing
-  expect_true("n.GPn" %in% names(jv$jags.data))
-  expect_true("n.GPNi" %in% names(jv$jags.data))
+  # AR requires special indexing (per-group naming)
+  expect_true("n.GPn.1" %in% names(jv$jags.data))
+  expect_true("n.GPNi.1" %in% names(jv$jags.data))
 })
 
 test_that("createJagsVars() dimensions are consistent", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep + ipd), fn = fn(w ~ 1/n), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance + cohesion), fn = fn(w ~ 1/n), RE = TRUE),
     family = "Weibull"
   )
 
@@ -264,7 +264,7 @@ test_that("createJagsVars() dimensions are consistent", {
 
 test_that("createJagsVars() handles Binomial model", {
   result <- setup_jags_vars(
-    formula = earlyterm ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Binomial"
   )
 
@@ -278,7 +278,7 @@ test_that("createJagsVars() handles Binomial model", {
 
 test_that("createJagsVars() returns jags.params for monitoring", {
   result <- setup_jags_vars(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian"
   )
 
@@ -291,7 +291,7 @@ test_that("createJagsVars() returns jags.params for monitoring", {
 
 test_that("createJagsVars() returns jags.inits", {
   result <- setup_jags_vars(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Weibull"
   )
 

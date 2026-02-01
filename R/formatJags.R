@@ -20,6 +20,12 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
   n.HMN      <- Ns$n.HMN
   n.mmblocks <- Ns$n.mmblocks
 
+  # Per-mmid-group info
+  all_mmid_names <- Ns$all_mmid_names
+  mmid_to_blocks <- Ns$mmid_to_blocks
+  n.umm_list     <- Ns$n.umm_list
+  n.GPN_list     <- Ns$n.GPN_list
+
   mainvars <- main$vars
   lhs      <- main$lhs
 
@@ -112,37 +118,47 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
 
   if (monitor) {
 
-    # MM-level Random Effects --------------------------------------------------------------- #
+    # MM-level Random Effects - per mmid group -------------------------------------------- #
 
-    if (has_mm_RE) {
-      re.mm_raw <- reg.table %>%
-        dplyr::filter(startsWith(name, "re.mm")) %>%
-        dplyr::select(-sd, -lb, -ub)
+    if (has_mm && !is.null(all_mmid_names)) {
+      for (g in seq_along(all_mmid_names)) {
+        block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+        has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
+        any_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
 
-      if (any_ar) {
-        # Autoregressive structure
-        re.mm_df <- re.mm_raw %>%
-          tidyr::separate(name, c("i", "j"), ",", remove = FALSE) %>%
-          dplyr::mutate(
-            i = as.numeric(stringr::str_remove(i, "re.mm\\[")),
-            j = as.numeric(stringr::str_remove(j, "]"))
-          ) %>%
-          dplyr::arrange(i, j)
+        if (has_re_in_group) {
+          re.mm_raw <- reg.table %>%
+            dplyr::filter(startsWith(name, paste0("re.mm.", g, "["))) %>%
+            dplyr::select(-sd, -lb, -ub)
 
-        remat <- matrix(NA, nrow = n.umm, ncol = n.GPN)
-        rownames(remat) <- paste0("MM unit ", seq_len(n.umm))
-        colnames(remat) <- paste0("Random walk ", seq_len(n.GPN))
+          if (any_ar_in_group) {
+            # Autoregressive structure
+            re.mm_df <- re.mm_raw %>%
+              tidyr::separate(name, c("i", "j"), ",", remove = FALSE) %>%
+              dplyr::mutate(
+                i = as.numeric(stringr::str_remove(i, paste0("re.mm.", g, "\\["))),
+                j = as.numeric(stringr::str_remove(j, "]"))
+              ) %>%
+              dplyr::arrange(i, j)
 
-        for (r in seq_len(nrow(re.mm_df))) {
-          remat[re.mm_df$i[r], re.mm_df$j[r]] <- re.mm_df$mean[r]
+            n_umm_g <- n.umm_list[[g]]
+            n_GPN_g <- n.GPN_list[[g]]
+            remat <- matrix(NA, nrow = n_umm_g, ncol = n_GPN_g)
+            rownames(remat) <- paste0("MM unit ", seq_len(n_umm_g))
+            colnames(remat) <- paste0("Random walk ", seq_len(n_GPN_g))
+
+            for (r in seq_len(nrow(re.mm_df))) {
+              remat[re.mm_df$i[r], re.mm_df$j[r]] <- re.mm_df$mean[r]
+            }
+
+            re.mm[[g]] <- remat
+          } else {
+            re.mm[[g]] <- re.mm_raw %>% dplyr::pull(mean)
+          }
+
+          reg.table <- reg.table %>% dplyr::filter(!startsWith(name, paste0("re.mm.", g, "[")))
         }
-
-        re.mm <- remat
-      } else {
-        re.mm <- re.mm_raw %>% dplyr::pull(mean)
       }
-
-      reg.table <- reg.table %>% dplyr::filter(!startsWith(name, "re.mm["))
     }
 
     # HM-level Random Effects --------------------------------------------------------------- #
@@ -350,14 +366,18 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
     }
   }
 
-  # Variance parameters: annotate sigma.mm with the mm block that has RE = TRUE
-  if (has_mm) {
-    re_block <- which(sapply(mm_blocks, function(b) b$RE))
-    if (length(re_block) == 1) {
-      mm_tag <- paste0(" (mm.", re_block, ")")
-      sigma_mm_idx <- which(newnames == "sigma.mm")
-      if (length(sigma_mm_idx) > 0) {
-        newnames[sigma_mm_idx] <- paste0("sigma.mm", mm_tag)
+  # Variance parameters: annotate sigma.mm.g with the mm blocks that have RE = TRUE
+  if (has_mm && !is.null(all_mmid_names)) {
+    for (g in seq_along(all_mmid_names)) {
+      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+      re_blocks_in_group <- block_indices[sapply(block_indices, function(i) mm_blocks[[i]]$RE)]
+
+      if (length(re_blocks_in_group) == 1) {
+        mm_tag <- paste0(" (mm.", re_blocks_in_group, ")")
+        sigma_mm_idx <- which(newnames == paste0("sigma.mm.", g))
+        if (length(sigma_mm_idx) > 0) {
+          newnames[sigma_mm_idx] <- paste0("sigma.mm.", g, mm_tag)
+        }
       }
     }
   }

@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>faq • bml</title>
+<title>Frequently Asked Questions • bml</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="faq">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="Frequently Asked Questions">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,9 +37,9 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
     <li><a class="dropdown-item" href="../articles/installation.html">Installation</a></li>
-    <li><a class="dropdown-item" href="../articles/model.html">Model structure</a></li>
+    <li><a class="dropdown-item" href="../articles/model.html">Model Structure</a></li>
     <li><a class="dropdown-item" href="../articles/examples.html">Examples</a></li>
-    <li><a class="dropdown-item" href="../articles/faq.html">faq</a></li>
+    <li><a class="dropdown-item" href="../articles/faq.html">Frequently Asked Questions</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -62,7 +62,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>faq</h1>
+      <h1>Frequently Asked Questions</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/benrosche/bml/blob/HEAD/vignettes/faq.Rmd" class="external-link"><code>vignettes/faq.Rmd</code></a></small>
@@ -71,12 +71,173 @@
 
     
     
+<div class="section level2">
+<h2 id="whats-the-difference-between-a-multiple-membership-model-and-a-conventional-multilevel-model">1. What’s the difference between a multiple-membership model and a
+conventional multilevel model?<a class="anchor" aria-label="anchor" href="#whats-the-difference-between-a-multiple-membership-model-and-a-conventional-multilevel-model"></a>
+</h2>
+<p>In a conventional hierarchical multilevel model, each lower-level
+unit belongs to exactly one higher-level unit (e.g., students nested in
+schools). In a <strong>multiple-membership model (MMMM)</strong>,
+lower-level units can belong to multiple higher-level units
+simultaneously, or alternatively, higher-level outcomes can be
+influenced by multiple lower-level units.</p>
+<p>For example:</p>
+<ul>
+<li>
+<strong>Conventional MLM:</strong> Students (level 1) nested in
+schools (level 2) — each student attends exactly one school.</li>
+<li>
+<strong>MMMM:</strong> Coalition governments (level 2) composed of
+multiple political parties (level 1) — each party can participate in
+multiple governments over time, and each government comprises multiple
+parties.</li>
+</ul>
+<p>The MMMM accounts for this complex membership structure by weighting
+the contributions of each lower-level unit, allowing researchers to
+model how multiple units jointly shape higher-level outcomes.</p>
+</div>
+<div class="section level2">
+<h2 id="whats-the-difference-between-a-conventional-mmmm-and-the-extended-mmmm-implemented-in-bml">2. What’s the difference between a conventional MMMM and the
+extended MMMM implemented in <code>bml</code>?<a class="anchor" aria-label="anchor" href="#whats-the-difference-between-a-conventional-mmmm-and-the-extended-mmmm-implemented-in-bml"></a>
+</h2>
+<p>The <strong>conventional MMMM</strong> (as implemented in MLwiN,
+brms, or other software) uses <strong>fixed, pre-specified
+weights</strong> to aggregate lower-level effects. For instance, you
+might use equal weights (1/n) or weights based on time spent in each
+context.</p>
+<p>The <strong>extended MMMM</strong> in <code>bml</code> allows you
+to:</p>
 <ol style="list-style-type: decimal">
-<li>What’s the difference between the MMMM and a conventional multilevel
-model?</li>
-<li>What’s the difference between a conventional MMMM and the
-generalized MMMM?</li>
-</ol></main>
+<li><p><strong>Parameterize the weight function:</strong> Instead of
+fixing weights, you can specify a functional form for weights (e.g.,
+<code>w ~ 1/n^exp(b*X)</code>) and estimate the parameters that
+determine how lower-level units are aggregated.</p></li>
+<li><p><strong>Test alternative aggregation mechanisms:</strong> Compare
+different weighting schemes (equal weights, proportional weights,
+functions of covariates) to determine which best fits the data.</p></li>
+<li><p><strong>Endogenize weight matrices:</strong> Rather than imposing
+spatial or network weights externally, let the data determine connection
+strengths as functions of covariates.</p></li>
+</ol>
+<p>This flexibility enables researchers to explicitly model the
+<strong>micro-to-macro link</strong> — how lower-level characteristics
+aggregate to produce higher-level outcomes.</p>
+</div>
+<div class="section level2">
+<h2 id="when-should-i-use-bml-instead-of-other-multilevel-modeling-packages">3. When should I use <code>bml</code> instead of other multilevel
+modeling packages?<a class="anchor" aria-label="anchor" href="#when-should-i-use-bml-instead-of-other-multilevel-modeling-packages"></a>
+</h2>
+<p>Use <code>bml</code> when:</p>
+<ul>
+<li><p><strong>You have multiple-membership structures:</strong>
+Higher-level outcomes depend on multiple lower-level units (e.g.,
+coalitions composed of parties, teams composed of individuals,
+neighborhoods influenced by surrounding areas).</p></li>
+<li><p><strong>You want to model the aggregation process:</strong>
+Rather than assuming a fixed aggregation (e.g., simple average), you
+want to test and estimate how lower-level effects combine.</p></li>
+<li><p><strong>You need flexible weight functions:</strong> Your theory
+suggests weights should depend on covariates, group size, or other
+features, not be fixed in advance.</p></li>
+<li><p><strong>You’re studying micro-to-macro relationships:</strong>
+Your research question focuses on how lower-level units jointly shape
+higher-level outcomes, rather than how higher-level contexts shape
+lower-level outcomes.</p></li>
+</ul>
+<p>For standard hierarchical models without multiple membership,
+packages like <code>lme4</code>, <code>brms</code>, or
+<code>MCMCglmm</code> may be more efficient. For conventional MMMMs with
+fixed weights, <code>brms</code> or MLwiN are excellent
+alternatives.</p>
+</div>
+<div class="section level2">
+<h2 id="what-outcome-types-and-distributions-does-bml-support">4. What outcome types and distributions does <code>bml</code>
+support?<a class="anchor" aria-label="anchor" href="#what-outcome-types-and-distributions-does-bml-support"></a>
+</h2>
+<p><code>bml</code> supports a variety of outcome distributions commonly
+used in social science research:</p>
+<ul>
+<li>
+<strong>Continuous outcomes:</strong> Gaussian (normal)
+regression</li>
+<li>
+<strong>Binary outcomes:</strong> Logit (logistic) regression</li>
+<li>
+<strong>Categorical outcomes:</strong> Conditional logit
+(multinomial logit) regression</li>
+<li>
+<strong>Survival/duration outcomes:</strong>
+<ul>
+<li>Cox proportional hazards model</li>
+<li>Weibull accelerated failure time (AFT) model</li>
+<li>Support for competing risks analysis</li>
+</ul>
+</li>
+</ul>
+<p>You can also specify hierarchical random effects (<code><a href="../reference/hm.html">hm()</a></code>
+blocks) in addition to multiple-membership structures, allowing for
+complex cross-classified and nested designs.</p>
+</div>
+<div class="section level2">
+<h2 id="how-do-i-specify-the-weight-function-and-what-are-the-c-and-ar-parameters">5. How do I specify the weight function, and what are the
+<code>c</code> and <code>ar</code> parameters?<a class="anchor" aria-label="anchor" href="#how-do-i-specify-the-weight-function-and-what-are-the-c-and-ar-parameters"></a>
+</h2>
+<p>The weight function is specified in the <code><a href="../reference/fn.html">fn()</a></code> container
+within an <code><a href="../reference/mm.html">mm()</a></code> block:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>  id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">member_id</span>, <span class="va">group_id</span><span class="op">)</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>,</span>
+<span>  fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  RE <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  ar <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><strong>Weight function components:</strong></p>
+<ul>
+<li>
+<strong><code>w ~ ...</code></strong>: Specifies the functional form
+for weights. You can use:
+<ul>
+<li>Group size: <code>n</code> (number of members in each group)</li>
+<li>Covariates: Any variable in your data</li>
+<li>Mathematical functions: <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp()</a></code>, <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">log()</a></code>,
+<code><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt()</a></code>, etc.</li>
+<li>Examples: <code>w ~ 1/n</code> (equal weights),
+<code>w ~ tenure</code> (proportional to tenure),
+<code>w ~ 1/n^exp(b*similarity)</code> (similarity-weighted)</li>
+</ul>
+</li>
+<li>
+<strong><code>c</code> parameter:</strong> Controls weight
+normalization
+<ul>
+<li>
+<code>c = TRUE</code> (default): Weights are normalized to sum to 1
+within each group (row-standardization)</li>
+<li>
+<code>c = FALSE</code>: Weights are not normalized (useful when
+aggregating sums rather than averages)</li>
+</ul>
+</li>
+<li>
+<strong><code>ar</code> parameter:</strong> Autoregressive random
+effects
+<ul>
+<li>
+<code>ar = FALSE</code> (default): Standard independent random
+effects for each member</li>
+<li>
+<code>ar = TRUE</code>: Member-level random effects evolve as a
+random walk across repeated group participations, capturing dynamics
+where a member’s unobserved heterogeneity changes over time</li>
+</ul>
+</li>
+</ul>
+<p><strong>Important:</strong> Only one <code><a href="../reference/mm.html">mm()</a></code> block can have
+<code>RE = TRUE</code> in a given model.</p>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

@@ -4,7 +4,7 @@
 so installation has two parts:
 
 1.  Install JAGS (system software)
-2.  Install the `bml` R package (from GitHub)
+2.  Install the `bml` R package (from CRAN or GitHub)
 
 ## 1. Install JAGS
 
@@ -14,11 +14,21 @@ Install the latest JAGS version for your operating system from:
 
 After installing JAGS, restart R so `rjags` can find it.
 
-## 2. Install `bml` from GitHub
+## 2. Install `bml` R package
 
-`bml` is not on CRAN yet, so install it from GitHub. Using
-[remotes](https://remotes.r-lib.org) keeps the dependency footprint
-small.
+### Option A: Install from CRAN (Recommended)
+
+The stable release version is available on CRAN:
+
+``` r
+
+install.packages("bml")
+```
+
+### Option B: Install development version from GitHub
+
+For the latest development features, install from GitHub using
+[remotes](https://remotes.r-lib.org):
 
 ``` r
 
@@ -27,6 +37,11 @@ remotes::install_github("benrosche/bml")
 ```
 
 If you want to build vignettes locally during installation:
+
+``` r
+
+remotes::install_github("benrosche/bml", build_vignettes = TRUE)
+```
 
 ## 3. Verify the installation
 

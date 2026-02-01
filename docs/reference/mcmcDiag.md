@@ -21,10 +21,9 @@ mcmcDiag(bml.out, parameters)
 
 - parameters:
 
-  Character vector of parameter names (or patterns) to extract, passed
-  to `crMCMC`. Depending on your `crMCMC()` implementation, these may be
-  exact names or patterns (e.g., a prefix like `"b.l2"` that matches
-  `"b.l2[1]"`, `"b.l2[2]"`, …).
+  Character vector of parameter names (or patterns) to extract. These
+  may be exact names or patterns (e.g., a prefix like `"b"` that matches
+  `"b[1]"`, `"b[2]"`, …).
 
 ## Value
 
@@ -36,9 +35,9 @@ include: `"Gelman/Rubin convergence statistic"`, `"Geweke z-score"`,
 ## Details
 
 Internally, the function converts the BUGS/JAGS output to a
-[`coda::mcmc.list`](https://rdrr.io/pkg/coda/man/mcmc.list.html) via
-`crMCMC`, then computes per-chain diagnostics and averages them across
-chains for each parameter:
+[`coda::mcmc.list`](https://rdrr.io/pkg/coda/man/mcmc.list.html), then
+computes per-chain diagnostics and averages them across chains for each
+parameter:
 
 - **Gelman–Rubin** (\\\hat{R}\\):
   [`coda::gelman.diag()`](https://rdrr.io/pkg/coda/man/gelman.diag.html).
@@ -63,7 +62,6 @@ transposed so that *rows are diagnostics* and *columns are parameters*.
 
 ## See also
 
-`crMCMC`,
 [`gelman.diag`](https://rdrr.io/pkg/coda/man/gelman.diag.html),
 [`geweke.diag`](https://rdrr.io/pkg/coda/man/geweke.diag.html),
 [`heidel.diag`](https://rdrr.io/pkg/coda/man/heidel.diag.html),
@@ -77,6 +75,30 @@ Benjamin Rosche <benrosche@nyu.edu>
 
 ``` r
 if (FALSE) { # \dontrun{
-mcmcdiag(fit, parameters = c("beta", "sigma"))
+data(coalgov)
+
+# Fit model
+m1 <- bml(
+  Surv(govdur, earlyterm) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+  family = "Weibull",
+  monitor = TRUE,
+  data = coalgov
+)
+
+# Check convergence for main parameters
+mcmcDiag(m1, parameters = "b")  # All b coefficients
+
+# Check specific parameters
+mcmcDiag(m1, parameters = c("b[1]", "b[2]", "shape"))
+
+# Check mm block parameters
+mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm"))
+
+# Interpreting results:
+# - Gelman-Rubin < 1.1: Good convergence
+# - |Geweke z| < 2: No evidence against convergence
+# - Heidelberger p > 0.05: Chain appears stationary
+# - Low autocorrelation at lag 50: Good mixing
 } # }
 ```

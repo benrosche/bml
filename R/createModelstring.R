@@ -54,17 +54,22 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
     add("  # ==================== MM Level: Multiple Membership ==================== #")
     add("")
 
+    # Get grouping info (needed throughout mm level processing)
+    all_mmid_names <- attr(mm_blocks, "all_mmid_names")
+    mmid_to_blocks <- attr(mm_blocks, "mmid_to_blocks")
+
     # Weight functions and mm variable contributions for each block
     for (k in seq_along(mm_blocks)) {
       block <- mm_blocks[[k]]
       fn <- block$fn
+      g <- block$mmid_group  # Which mmid group this block belongs to
 
       # Phase 2 Optimization: Skip weight computation if no parameters (weights pre-computed in R)
       if (length(fn$params) == 0) {
         add("  # Weights for mm block ", k, " (pre-computed in R)")
         add("  # w.", k, "[i] passed as data")
       } else {
-        add("  # Weight function for mm block ", k)
+        add("  # Weight function for mm block ", k, " (mmid group ", g, ")")
 
         # Build the weight function string for JAGS
         fn_string <- fn$string
@@ -83,8 +88,8 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
 
         if (fn$constraint) {
           # Accumulator pattern optimization for constrained weights
-          # Step 1: Compute unnormalized weights
-          add("  for (i in 1:n.mm) {")
+          # Step 1: Compute unnormalized weights (use group-specific n.mm.g)
+          add("  for (i in 1:n.mm.", g, ") {")
           add("    uw.", k, "[i] <- ", fn_string)
           add("  }")
           add("")
@@ -92,26 +97,26 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
           # Step 2: Cumulative sum (accumulator pattern)
           add("  # Accumulator: compute cumulative sums for efficient group sums")
           add("  cum.uw.", k, "[1] <- 0")
-          add("  for (i in 1:n.mm) {")
+          add("  for (i in 1:n.mm.", g, ") {")
           add("    cum.uw.", k, "[i+1] <- cum.uw.", k, "[i] + uw.", k, "[i]")
           add("  }")
           add("")
 
-          # Step 3: Group sums (one per group, not per member)
+          # Step 3: Group sums (one per group, not per member) - use group-specific mmi1.g, mmi2.g
           add("  # Group sums (computed once per group)")
           add("  for (j in 1:n.main) {")
-          add("    sum.uw.", k, "[j] <- cum.uw.", k, "[mmi2[j]+1] - cum.uw.", k, "[mmi1[j]]")
+          add("    sum.uw.", k, "[j] <- cum.uw.", k, "[mmi2.", g, "[j]+1] - cum.uw.", k, "[mmi1.", g, "[j]]")
           add("  }")
           add("")
 
-          # Step 4: Normalize using pre-computed group sums
+          # Step 4: Normalize using pre-computed group sums - use group-specific grp.mm.g
           add("  # Normalized weights using pre-computed group sums")
-          add("  for (i in 1:n.mm) {")
-          add("    w.", k, "[i] <- uw.", k, "[i] / sum.uw.", k, "[grp.mm[i]]")
+          add("  for (i in 1:n.mm.", g, ") {")
+          add("    w.", k, "[i] <- uw.", k, "[i] / sum.uw.", k, "[grp.mm.", g, "[i]]")
           add("  }")
           add("")
         } else {
-          add("  for (i in 1:n.mm) {")
+          add("  for (i in 1:n.mm.", g, ") {")
           add("    w.", k, "[i] <- ", fn_string)
           add("  }")
           add("")
@@ -120,45 +125,50 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
 
       # mm variable contributions (free variables only - fixed are pre-computed)
       if (!is.null(block$vars) && length(block$vars) > 0) {
-        add("  # MM-level variables for block ", k)
-        add("  for (i in 1:n.mm) {")
+        add("  # MM-level variables for block ", k, " (mmid group ", g, ")")
+        add("  for (i in 1:n.mm.", g, ") {")
         add("    mm.vars.", k, "[i] <- inprod(X.mm.", k, "[i,], b.mm.", k, ")")
         add("  }")
         add("")
       }
     }
 
-    # Random effects (shared across blocks that use RE)
-    if (has_mm_RE) {
-      # Check if any block uses AR
-      any_ar <- any(sapply(mm_blocks, function(b) b$ar))
+    # Random effects - per mmid group
+    for (g in seq_along(all_mmid_names)) {
+      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+      has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
 
-      add("  # MM-level random effects")
-      add("  for (i in 1:n.umm) {")
-      if (any_ar) {
-        add("    re.mm[i,1] ~ dnorm(0, tau.mm)")
-        add("    for (t in 2:n.GPNi[i]) {")
-        add("      re.mm[i,t] ~ dnorm(re.mm[i,t-1], tau.mm)")
-        add("    }")
-      } else {
-        add("    re.mm[i] ~ dnorm(0, tau.mm)")
-      }
-      add("  }")
-      add("")
+      if (has_re_in_group) {
+        # Check if any block in this group uses AR
+        any_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
 
-      # If AR, extract the appropriate RE value for each mm observation
-      if (any_ar) {
-        add("  # Extract AR random effects for each mm observation")
-        add("  for (i in 1:n.mm) {")
-        add("    re.mm.i[i] <- re.mm[mmid[i], n.GPn[i]]")
+        add("  # MM-level random effects (mmid group ", g, ")")
+        add("  for (i in 1:n.umm.", g, ") {")
+        if (any_ar_in_group) {
+          add("    re.mm.", g, "[i,1] ~ dnorm(0, tau.mm.", g, ")")
+          add("    for (t in 2:n.GPNi.", g, "[i]) {")
+          add("      re.mm.", g, "[i,t] ~ dnorm(re.mm.", g, "[i,t-1], tau.mm.", g, ")")
+          add("    }")
+        } else {
+          add("    re.mm.", g, "[i] ~ dnorm(0, tau.mm.", g, ")")
+        }
         add("  }")
         add("")
-      }
 
-      add("  # MM-level variance")
-      add("  tau.mm ~ dscaled.gamma(25, 1)")
-      add("  sigma.mm <- 1/sqrt(tau.mm)")
-      add("")
+        # If AR, extract the appropriate RE value for each mm observation
+        if (any_ar_in_group) {
+          add("  # Extract AR random effects for each mm observation (mmid group ", g, ")")
+          add("  for (i in 1:n.mm.", g, ") {")
+          add("    re.mm.", g, ".i[i] <- re.mm.", g, "[mmid.", g, "[i], n.GPn.", g, "[i]]")
+          add("  }")
+          add("")
+        }
+
+        add("  # MM-level variance (mmid group ", g, ")")
+        add("  tau.mm.", g, " ~ dscaled.gamma(25, 1)")
+        add("  sigma.mm.", g, " <- 1/sqrt(tau.mm.", g, ")")
+        add("")
+      }
     }
 
     # Priors for b.mm and b.w for each block
@@ -308,32 +318,37 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
     add("    mm.agg[j] <- sum(")
 
     mm_terms <- c()
-    # Check once if any mm block uses AR (determines re.mm dimensionality)
-    any_ar <- any(sapply(mm_blocks, function(b) b$ar))
 
     for (k in seq_along(mm_blocks)) {
       block <- mm_blocks[[k]]
+      g <- block$mmid_group  # Which mmid group this block belongs to
+
+      # Check if any block in this mmid group uses AR
+      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+      any_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
 
       terms_k <- c()
 
+      # Use group-specific indices: mmi1.g, mmi2.g
+      idx_range <- paste0("mmi1.", g, "[j]:mmi2.", g, "[j]")
+
       # Variables contribution (free)
       if (!is.null(block$vars) && length(block$vars) > 0) {
-        terms_k <- c(terms_k, paste0("w.", k, "[mmi1[j]:mmi2[j]] * mm.vars.", k, "[mmi1[j]:mmi2[j]]"))
+        terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * mm.vars.", k, "[", idx_range, "]"))
       }
 
       # Variables contribution (fixed) - Phase 1 Optimization: use pre-computed offset
       if (!is.null(block$vars_fixed) && length(block$vars_fixed) > 0) {
-        terms_k <- c(terms_k, paste0("w.", k, "[mmi1[j]:mmi2[j]] * offset.mm.", k, "[mmi1[j]:mmi2[j]]"))
+        terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * offset.mm.", k, "[", idx_range, "]"))
       }
 
-      # RE contribution
-      # Note: All mm blocks share re.mm, so indexing must be consistent across blocks
+      # RE contribution - use group-specific re.mm.g and mmid.g
       if (block$RE) {
-        if (any_ar) {
-          # Use pre-extracted re.mm.i which has AR values at mm-level
-          terms_k <- c(terms_k, paste0("w.", k, "[mmi1[j]:mmi2[j]] * re.mm.i[mmi1[j]:mmi2[j]]"))
+        if (any_ar_in_group) {
+          # Use pre-extracted re.mm.g.i which has AR values at mm-level
+          terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * re.mm.", g, ".i[", idx_range, "]"))
         } else {
-          terms_k <- c(terms_k, paste0("w.", k, "[mmi1[j]:mmi2[j]] * re.mm[mmid[mmi1[j]:mmi2[j]]]"))
+          terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * re.mm.", g, "[mmid.", g, "[", idx_range, "]]"))
         }
       }
 

@@ -16,7 +16,7 @@ setup_data <- function(formula, family, data = coalgov) {
 
 test_that("createData() returns correct structure", {
   result <- setup_data(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian"
   )
 
@@ -29,7 +29,7 @@ test_that("createData() returns correct structure", {
 
 test_that("createData() correctly processes simple Gaussian model", {
   result <- setup_data(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian"
   )
 
@@ -39,25 +39,25 @@ test_that("createData() correctly processes simple Gaussian model", {
   expect_true("dat" %in% names(result$data_parts$main))
 
   # Should include the outcome variable name
-  expect_true("sim.y" %in% result$data_parts$main$lhs)
+  expect_true("event_wkb" %in% result$data_parts$main$lhs)
 })
 
 test_that("createData() correctly processes survival model", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Weibull"
   )
 
   # Survival models have time and event in lhs
   expect_true(length(result$data_parts$main$lhs) == 2)
-  expect_true("govdur" %in% result$data_parts$main$lhs)
-  expect_true("earlyterm" %in% result$data_parts$main$lhs)
+  expect_true("dur_wkb" %in% result$data_parts$main$lhs)
+  expect_true("event_wkb" %in% result$data_parts$main$lhs)
 })
 
 test_that("createData() correctly handles mm() blocks", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE),
     family = "Weibull"
   )
 
@@ -75,12 +75,12 @@ test_that("createData() correctly handles mm() blocks", {
 
   # Variables should be extracted
 
-  expect_true("fdep" %in% block$vars)
+  expect_true("finance" %in% block$vars)
 })
 
 test_that("createData() correctly handles hm() blocks", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       hm(id = id(cid), type = "RE"),
     family = "Weibull"
   )
@@ -98,9 +98,9 @@ test_that("createData() correctly handles hm() blocks", {
 
 test_that("createData() correctly handles multiple mm() blocks", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
-      mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE) +
+      mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
     family = "Weibull"
   )
 
@@ -108,14 +108,14 @@ test_that("createData() correctly handles multiple mm() blocks", {
   expect_equal(length(result$data_parts$mm_blocks), 2)
 
   # Each block should have its own variables
-  expect_true("fdep" %in% result$data_parts$mm_blocks[[1]]$vars)
-  expect_true("ipd" %in% result$data_parts$mm_blocks[[2]]$vars)
+  expect_true("finance" %in% result$data_parts$mm_blocks[[1]]$vars)
+  expect_true("cohesion" %in% result$data_parts$mm_blocks[[2]]$vars)
 })
 
 test_that("createData() correctly stores weight function info", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE),
     family = "Weibull"
   )
 
@@ -129,8 +129,8 @@ test_that("createData() correctly stores weight function info", {
 
 test_that("createData() correctly handles parameterized weight functions", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ b0 + b1 * pseat), RE = FALSE),
     family = "Weibull"
   )
 
@@ -141,12 +141,12 @@ test_that("createData() correctly handles parameterized weight functions", {
   expect_true("b0" %in% block$fn$params || "b1" %in% block$fn$params)
 
   # fn should have variables
-  expect_true("pseatrel" %in% block$fn$vars)
+  expect_true("pseat" %in% block$fn$vars)
 })
 
 test_that("createData() correctly handles fix() variables at main level", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + fix(majority, 1.0),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + fix(majority, 1.0),
     family = "Weibull"
   )
 
@@ -156,8 +156,8 @@ test_that("createData() correctly handles fix() variables at main level", {
 
 test_that("createData() correctly handles fix() in mm() blocks", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fix(fdep, 1.0) + ipd), fn = fn(w ~ 1/n), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(fix(finance, 1.0) + cohesion), fn = fn(w ~ 1/n), RE = FALSE),
     family = "Weibull"
   )
 
@@ -167,13 +167,13 @@ test_that("createData() correctly handles fix() in mm() blocks", {
   expect_true("vars_fixed" %in% names(block))
   expect_false(is.null(block$vars_fixed))
 
-  # Free variable should be ipd
-  expect_true("ipd" %in% block$vars)
+  # Free variable should be cohesion
+  expect_true("cohesion" %in% block$vars)
 })
 
 test_that("createData() preserves sample size in main data", {
   result <- setup_data(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian"
   )
 
@@ -183,8 +183,8 @@ test_that("createData() preserves sample size in main data", {
 
 test_that("createData() creates sequential IDs", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE),
     family = "Weibull"
   )
 
@@ -199,7 +199,7 @@ test_that("createData() creates sequential IDs", {
 
 test_that("createData() creates sequential hm IDs", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       hm(id = id(cid), type = "RE"),
     family = "Weibull"
   )
@@ -212,13 +212,13 @@ test_that("createData() creates sequential hm IDs", {
 test_that("createData() handles intercept correctly", {
   # With intercept
   result_with <- setup_data(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian"
   )
 
   # Without intercept
   result_without <- setup_data(
-    formula = sim.y ~ 0 + majority,
+    formula = event_wkb ~ 0 + majority,
     family = "Gaussian"
   )
 
@@ -231,7 +231,7 @@ test_that("createData() handles intercept correctly", {
 
 test_that("createData() handles AR specifications", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE, ar = TRUE),
     family = "Weibull"
   )
@@ -246,7 +246,7 @@ test_that("createData() handles subset of data", {
   subset_data <- coalgov[1:100, ]
 
   result <- setup_data(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian",
     data = subset_data
   )
@@ -256,19 +256,19 @@ test_that("createData() handles subset of data", {
 
 test_that("createData() handles Cox models", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Cox"
   )
 
   # Should have survival lhs variables
-  expect_true("govdur" %in% result$data_parts$main$lhs)
-  expect_true("earlyterm" %in% result$data_parts$main$lhs)
+  expect_true("dur_wkb" %in% result$data_parts$main$lhs)
+  expect_true("event_wkb" %in% result$data_parts$main$lhs)
 })
 
 test_that("createData() stores mm_blocks attributes", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE),
     family = "Weibull"
   )
 
@@ -282,7 +282,7 @@ test_that("createData() stores mm_blocks attributes", {
 
 test_that("createData() handles hm with fixed effects type", {
   result <- setup_data(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       hm(id = id(cid), type = "FE"),
     family = "Weibull"
   )

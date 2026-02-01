@@ -233,11 +233,12 @@ mod.bml1 <-
     lnCMEDV ~
       NOX + CRIM + RM + DIS + AGE +
       mm(
-        id(tid_nb, tid),
-        mmc(),
-        mmw(w ~ 1/n, c=T)
+        id = id(tid_nb, tid),
+        vars = NULL,
+        fn = fn(w ~ 1/n, c = TRUE),
+        RE = TRUE
       ),
-    n.iter = 1000, n.burnin = 100, seed=1, monitor = T,
+    n.iter = 1000, n.burnin = 100, seed = 1, monitor = TRUE,
     data = boston_df
   )
 
@@ -251,11 +252,12 @@ mod.bml2 <-
     lnCMEDV ~
       NOX + CRIM + RM + DIS + AGE +
       mm(
-        id(tid_nb, tid),
-        mmc(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
-        mmw(w ~ 1/n, c=T)
+        id = id(tid_nb, tid),
+        vars = vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
+        fn = fn(w ~ 1/n, c = TRUE),
+        RE = TRUE
       ),
-    n.iter = 1000, n.burnin = 100, seed=1, monitor = T,
+    n.iter = 1000, n.burnin = 100, seed = 1, monitor = TRUE,
     data = boston_df
   )
 
@@ -263,9 +265,9 @@ mod.bml2 %>% summary()
 
 # Calculate spatial correlation in the residual
 getLambda <- function(x) {
-  s.l1 <- x$reg.table["sigma.l1", "coefficients"]
-  s.l2 <- x$reg.table["sigma.l2", "coefficients"]
-  return(s.l1^2/(s.l1^2+s.l2^2))
+  s.mm <- x$reg.table["sigma.mm", "coefficients"]
+  s    <- x$reg.table["sigma", "coefficients"]
+  return(s.mm^2/(s.mm^2+s^2))
 }
 
 mod.bml1 %>% getLambda()
@@ -280,16 +282,16 @@ by typing [`?bml`](https://benrosche.github.io/bml/reference/bml.md).
 
 The most important component is the formula object, which in our case
 looks like this:
-`lnCMEDV ~ NOX + CRIM + RM + DIS + AGE + mm(id(tid_nb, tid), mmc(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb), mmw(w ~ 1/n, constraint=1))`
+`lnCMEDV ~ NOX + CRIM + RM + DIS + AGE + mm(id = id(tid_nb, tid), vars = vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb), fn = fn(w ~ 1/n, c = TRUE), RE = TRUE)`
 
 The only difference compared to a
 [`lm()`](https://rdrr.io/r/stats/lm.html) formula is the inclusion of
 the [`mm()`](https://benrosche.github.io/bml/reference/mm.md) container.
 Within this container, we define three sub-containers:  
 - `ids()` for the identifiers  
-- `mmc()` for the covariates being considered,  
-- `mmw()` to endogenize the weight function. Here, `w ~ 1/n` specifies
-the row-standardized weight.
+- `vars = NULL` for the covariates being considered,  
+- `fn = fn()` to endogenize the weight function. Here, `w ~ 1/n`
+specifies the row-standardized weight.
 
 The combination of the spatial lag and spatial error models can also be
 estimated within the spatial regression framework. Let’s estimate it and
@@ -323,7 +325,7 @@ coefs <-
             variable=="(Intercept)" ~ "X0",
             TRUE ~ variable))
   ) %>%
-  filter(!variable %in% c("X0", "sigma.l1", "sigma.l2", "DIC"))
+  filter(!variable %in% c("X0", "sigma.mm", "sigma", "DIC"))
 
 ggplot(coefs, aes(x=variable, y=coefficients, color=model)) +
   geom_hline(yintercept = 0, color="red") +
@@ -368,10 +370,10 @@ boston_df2 <-
   )
 ```
 
-The weight function is specified within the `mmw()` container, allowing
-for any function that produces bounded weights. Logical operators such
-as *==, \>, \<* can be used to define conditions that enable aggregation
-functions, such as `min` or `max`.
+The weight function is specified within the `fn = fn()` container,
+allowing for any function that produces bounded weights. Logical
+operators such as *==, \>, \<* can be used to define conditions that
+enable aggregation functions, such as `min` or `max`.
 
 Here, I use the following functional form:
 
@@ -399,18 +401,18 @@ $`\sum_{j \in n(i)} w_{j} (z_{j}^{\intercal} \gamma + u_{j})`$.
 
 If the total sum of weights changes, the regression coefficients
 $`\gamma`$ will be rescaled. To prevent this, we can apply one of two
-constraints:
+constraints using the `c` parameter in
+[`fn()`](https://benrosche.github.io/bml/reference/fn.md):
 
-- **`constraint=1`**: Ensures that the weights of a location’s neighbors
-  sum to 1 for each focal location, while allowing them to vary within
-  each location.  
-- **`constraint=2`**: Ensures that all weights sum to the total number
-  of neighborhoods, allowing them to vary both within and across
-  locations.
+- **`c = TRUE`**: Ensures that the weights of a location’s neighbors sum
+  to 1 for each focal location, while allowing them to vary within each
+  location.  
+- **`c = FALSE`**: No constraint applied; weights can vary freely both
+  within and across locations.
 
-Both constraints identify the model but have different substantive
+Both options identify the model but have different substantive
 interpretations. Here, we will use weights that sum to 1 for each focal
-location while allowing variation within locations (constraint=1):
+location while allowing variation within locations (`c = TRUE`):
 
 ``` r
 
@@ -420,9 +422,10 @@ mod.bml3 <-
     lnCMEDV ~
       NOX + CRIM + RM + DIS + AGE +
       mm(
-        id(tid_nb, tid),
-        mmc(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
-        mmw(w ~ 1/n^exp(-(b1*DIFF)), c=T)
+        id = id(tid_nb, tid),
+        vars = vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
+        fn = fn(w ~ 1/n^exp(-(b1*DIFF)), c = TRUE),
+        RE = TRUE
       ),
     priors=c("b.w~dnorm(0,1)"), n.iter = 1000, n.burnin = 100, seed=1, monitor = T,
     data = boston_df2
@@ -461,122 +464,192 @@ Ben 2do:
 - Introduce predict() function  
 - Compare predictive performance
 
-### All your friends or just your best friend?
+### Peer Effects in High School Networks: Equal Influence or Reciprocity-Weighted?
 
-A widely used peer effect model in economics is the linear-in-means
-model, which assumes that all peers in a group exert an equal influence
-on an individual. In contrast, sociology often emphasizes the
-best-friend model, which assumes that an individual’s primary influence
-comes from their closest friend. In this example, I use the MMMM to
-empirically test which of these models better fits the data.
+A widely used peer effect model in economics is the **linear-in-means
+model**, which assumes that all peers in a group exert equal influence
+on an individual. An alternative specification allows peer influence to
+vary based on relationship characteristics, such as reciprocity or
+strength of ties. In this example, I use the MMMM to empirically test
+which aggregation mechanism better fits friendship network data.
+
+We use the `faux.highschool` dataset from the `ergm.count` package,
+which contains friendship ties among high school students. For this
+demonstration, we’ll create a simulated outcome variable representing
+academic engagement and test whether peer characteristics have equal
+effects or whether reciprocated friendships carry more weight.
 
 ``` r
 
+library(bml)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(statnet)
 
-data(schoolnets)
+data(faux.mesa.high)
 
-SAS <- function(nodedat, vars=NULL, suffix) {
+# Extract node attributes
+nodedat <- data.frame(
+  student_id = network.vertex.names(faux.highschool),
+  grade = faux.highschool %v% "grade",
+  sex = faux.highschool %v% "sex",
+  race = faux.highschool %v% "race"
+) %>%
+  mutate(student_id = as.numeric(student_id))
 
-  # Helper function to select node features as _from or _to
+# Extract edge list (friendship ties)
+edgedat <- as.data.frame(as.edgelist(faux.highschool)) %>%
+  rename(from = V1, to = V2) %>%
+  mutate(
+    from = as.numeric(as.character(from)),
+    to = as.numeric(as.character(to))
+  )
 
-  if(is.null(vars)) { # Return all variables if no variable-list specified
-    return(
-      nodedat %>%
-        dplyr::rename_with(~paste0(., suffix), everything())
-    )
-  } else {
-    return(
-      nodedat %>%
-        dplyr::select(!!vars) %>%
-        dplyr::rename_with(~paste0(., suffix), everything())
-    )
-  }
-}
-
-# Create school network data
-
-schoolnets <-
-
-  nodedat %>%
-
-  # add friend features
-
-  left_join(
-    edgedat %>%
-      select(youthid_from, youthid_to, rank) %>%
-      left_join(
-        SAS(nodedat, vars=c("youthid", "parent_inc"), suffix="_to"),
-        by=c("youthid_to")
-      ) %>%
-      group_by(youthid_from) %>%
-      mutate(
-        bestie = rank==1,
-        parent_inc_mean = mean(parent_inc_to, na.rm=T),
-      ),
-    by=c("youthid"="youthid_from")
+# Identify reciprocated ties (mutual friendships)
+edgedat <- edgedat %>%
+  mutate(
+    dyad = paste(pmin(from, to), pmax(from, to), sep = "-")
   ) %>%
+  group_by(dyad) %>%
+  mutate(
+    reciprocated = n() == 2 # TRUE if both i->j and j->i exist
+  ) %>%
+  ungroup() %>%
+  select(-dyad)
 
-  # count number of friends
-
-  tidyr::drop_na() %>%
-  add_count(youthid, name="n_friends") %>%
-  filter(n_friends>=1) %>%
-
-  mutate(across(everything(), ~as.numeric(.)))
-
-
-# Naive linear-in-means model
-mod4 <- lm(test_cogn ~ sex + etn + parent_edu + parent_inc + parent_inc_mean, data=schoolnets)
-
-# MMMM comparing mean to max aggregation
-mod.bml4 <-
-  bml(
-    test_cogn ~
-      sex + etn + parent_edu + parent_inc +
-      mm(
-        id(youthid_to, youthid),
-        mmc(parent_inc_to),
-        mmw(w ~ b1*1/n_friends+(1-b1)*bestie, c=T)
-      ),
-    n.iter = 1000, n.burnin = 100, seed=1, monitor = T, priors = c("b.w~dunif(0,1)"),
-    data = schoolnets
+# Simulate an academic engagement outcome for demonstration
+# In practice, this would be measured empirically
+set.seed(123)
+nodedat <- nodedat %>%
+  mutate(
+    ses = rnorm(n()), # Simulated socioeconomic status
+    engagement = 50 + 5 * (grade - 10) + 3 * ses + rnorm(n(), sd = 10)
   )
 
-mod.bml4 %>% summary()
-monetPlot(mod.bml4, parameter="b.w") # posterior distribution of the weight coefficient
+# Create analysis dataset by merging node and edge data
+network_data <- edgedat %>%
+  left_join(
+    nodedat %>% select(student_id, ses, engagement),
+    by = c("from" = "student_id")
+  ) %>%
+  rename(ses_from = ses, engagement_from = engagement) %>%
+  left_join(
+    nodedat %>% select(student_id, grade, sex, race, ses, engagement),
+    by = c("to" = "student_id")
+  ) %>%
+  rename(
+    ses_to = ses,
+    engagement_to = engagement,
+    grade_to = grade,
+    sex_to = sex,
+    race_to = race
+  ) %>%
+  group_by(from) %>%
+  mutate(
+    n_friends = n(),
+    ses_friends_mean = mean(ses_to, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  drop_na()
 
-mod.bml4$w %>% head() # inspect estimated weight matrix
+
+# Model 1: Naive linear-in-means model (OLS)
+mod_lm <- lm(
+  engagement_from ~ grade_to + sex_to + race_to + ses_from + ses_friends_mean,
+  data = network_data
+)
+summary(mod_lm)
+
+# Model 2: MMMM with equal weights (linear-in-means via MM framework)
+mod_equal <- bml(
+  engagement_from ~ 1 +
+    mm(
+      id = id(to, from),
+      vars = vars(ses_to),
+      fn = fn(w ~ 1 / n, c = TRUE),
+      RE = FALSE
+    ),
+  family = "Gaussian",
+  n.iter = 2000,
+  n.burnin = 500,
+  seed = 1,
+  data = network_data
+)
+summary(mod_equal)
+
+# Model 3: MMMM with reciprocity-weighted aggregation
+# Test whether reciprocated friendships carry more weight
+mod_reciprocity <- bml(
+  engagement_from ~ 1 +
+    mm(
+      id = id(to, from),
+      vars = vars(ses_to),
+      fn = fn(w ~ 1 / n^exp(b1 * reciprocated), c = TRUE),
+      RE = FALSE
+    ),
+  family = "Gaussian",
+  priors = c("b.w ~ dnorm(0, 1)"),
+  n.iter = 2000,
+  n.burnin = 500,
+  seed = 1,
+  monitor = TRUE,
+  data = network_data
+)
+summary(mod_reciprocity)
+
+# Visualize the weight function coefficient
+monetPlot(mod_reciprocity, parameter = "b.w")
 ```
+
+**Interpreting the results:**
+
+- If the weight coefficient (`b.w`) is close to 0, reciprocity doesn’t
+  affect peer influence—supporting the linear-in-means model.
+- If `b.w` is significantly positive, reciprocated friendships carry
+  more weight, suggesting that mutual friends have stronger peer
+  effects.
+- The MMMM framework allows us to empirically test these competing
+  mechanisms rather than imposing one a priori.
 
 ``` r
 
+# Compare model fit using DIC
+dic_equal <- mod_equal$DIC
+dic_reciprocity <- mod_reciprocity$DIC
 
-# The results suggest that the linear-in-means model is appropriate: the best friend does not appear to have a greater impact than the other nominated friends as b1=`r mod.bml4$reg.table %>% filter(variable=="b.w") %>% pull(coefficients) %>% round(.,2)`. Since the estimated aggregation is close to linear-in-means, the effect size of `parent_inc_to` does not differ between models:
+cat("DIC (equal weights):", dic_equal, "\n")
+cat("DIC (reciprocity-weighted):", dic_reciprocity, "\n")
+cat("Difference:", dic_equal - dic_reciprocity, "\n")
+
+# Visualize coefficient comparison
+coefs <- bind_rows(
+  mod_equal$reg.table %>%
+    filter(variable == "ses_to") %>%
+    mutate(model = "Equal weights"),
+  mod_reciprocity$reg.table %>%
+    filter(variable == "ses_to") %>%
+    mutate(model = "Reciprocity-weighted")
+)
+
+ggplot(coefs, aes(x = model, y = coefficients)) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = lb, ymax = ub), width = 0.2) +
+  labs(
+    title = "Peer SES Effect on Academic Engagement",
+    subtitle = "Comparing equal vs. reciprocity-weighted aggregation",
+    x = "Model",
+    y = "Coefficient estimate (95% CI)"
+  ) +
+  theme_minimal()
 ```
 
-``` r
+This example demonstrates how the MMMM allows researchers to test
+substantive theories about aggregation mechanisms in network data,
+moving beyond the assumption of equal peer influence.
 
-
-coefs <-
-  mod.bml4$reg.table[,c(1,2,4,5)] %>%
-  filter(!variable %in% c("X0", "sigma.l1", "sigma.l2", "DIC")) %>%
-  mutate(model="MMMM") %>%
-  add_row(
-    data.frame(model="SLM", coefficients=coef(mod4)[-1], confint(mod4, level=0.95)[-1,]) %>%
-      rename(lb=X2.5.., ub=X97.5..) %>%
-      tibble::rownames_to_column("variable") %>%
-      mutate(variable=ifelse(variable=="parent_inc_mean", "parent_inc_to", variable))
-  )
-rownames(coefs) <- NULL
-
-ggplot(coefs, aes(x=variable, y=coefficients, color=model)) +
-  geom_hline(yintercept = 0, color="red") +
-  geom_point(position=position_dodge(width=0.3)) +
-  geom_pointrange(aes(ymin = lb, ymax = ub), position=position_dodge(width=0.3))+
-  labs(title = "Coefficients", x = "Variables", y="", color="Model") +
-  theme(legend.position = "bottom") +
-  coord_flip()
-```
+\`\`\`
 
 ### The effect of political parties’ financial dependency on the survival coalition governments
 

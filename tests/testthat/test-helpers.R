@@ -24,9 +24,9 @@ test_that("id() correctly captures variable names", {
 # ================================================================================================ #
 
 test_that("fix() correctly captures variable and value", {
-  result <- fix(fdep, 1.0)
+  result <- fix(finance, 1.0)
   expect_s3_class(result, "bml_fix")
-  expect_equal(result$var, "fdep")
+  expect_equal(result$var, "finance")
   expect_equal(result$value, 1.0)
 
   # Test with different value
@@ -40,22 +40,22 @@ test_that("fix() correctly captures variable and value", {
 # ================================================================================================ #
 
 test_that("vars() correctly parses simple variables", {
-  result <- vars(fdep + ipd)
+  result <- vars(finance + cohesion)
   expect_s3_class(result, "bml_vars")
-  expect_equal(sort(result$free), sort(c("fdep", "ipd")))
+  expect_equal(sort(result$free), sort(c("finance", "cohesion")))
 
   # Single variable
-  result <- vars(fdep)
-  expect_equal(result$free, "fdep")
+  result <- vars(finance)
+  expect_equal(result$free, "finance")
 })
 
 test_that("vars() correctly handles fix() calls", {
-  result <- vars(fix(fdep, 1.0) + ipd)
+  result <- vars(fix(finance, 1.0) + cohesion)
   expect_s3_class(result, "bml_vars")
   expect_type(result, "list")
-  expect_equal(result$free, "ipd")
+  expect_equal(result$free, "cohesion")
   expect_length(result$fixed, 1)
-  expect_equal(result$fixed[[1]]$var, "fdep")
+  expect_equal(result$fixed[[1]]$var, "finance")
   expect_equal(result$fixed[[1]]$value, 1.0)
 
   # Multiple fixed
@@ -113,33 +113,33 @@ test_that("fn() correctly inserts intercept variable", {
 # ================================================================================================ #
 
 test_that("fn() detects single aggregation function", {
-  result <- fn(w ~ min(fdep))
+  result <- fn(w ~ min(finance))
   expect_s3_class(result, "bml_fn")
   expect_length(result$agg_funcs, 1)
   expect_equal(result$agg_funcs[[1]]$func, "min")
-  expect_equal(result$agg_funcs[[1]]$var, "fdep")
-  expect_equal(result$agg_funcs[[1]]$col_name, "fdep_min")
-  expect_equal(result$vars, "fdep_min")
-  expect_equal(result$agg_vars, "fdep")
+  expect_equal(result$agg_funcs[[1]]$var, "finance")
+  expect_equal(result$agg_funcs[[1]]$col_name, "finance_min")
+  expect_equal(result$vars, "finance_min")
+  expect_equal(result$agg_vars, "finance")
 })
 
 test_that("fn() detects multiple aggregation functions", {
-  result <- fn(w ~ b1 * min(fdep) + (1 - b1) * mean(fdep))
+  result <- fn(w ~ b1 * min(finance) + (1 - b1) * mean(finance))
   expect_s3_class(result, "bml_fn")
   expect_length(result$agg_funcs, 2)
   expect_equal(result$agg_funcs[[1]]$func, "min")
   expect_equal(result$agg_funcs[[2]]$func, "mean")
-  expect_equal(sort(result$vars), sort(c("fdep_min", "fdep_mean")))
-  expect_equal(result$agg_vars, "fdep")  # Only one base variable
+  expect_equal(sort(result$vars), sort(c("finance_min", "finance_mean")))
+  expect_equal(result$agg_vars, "finance")  # Only one base variable
   expect_equal(result$params, "b1")
 })
 
 test_that("fn() correctly transforms formula string for aggregations", {
-  result <- fn(w ~ b1 * min(fdep) + (1 - b1) * mean(fdep))
-  expect_true(grepl("fdep_min", result$string))
-  expect_true(grepl("fdep_mean", result$string))
-  expect_false(grepl("min\\(fdep\\)", result$string))
-  expect_false(grepl("mean\\(fdep\\)", result$string))
+  result <- fn(w ~ b1 * min(finance) + (1 - b1) * mean(finance))
+  expect_true(grepl("finance_min", result$string))
+  expect_true(grepl("finance_mean", result$string))
+  expect_false(grepl("min\\(finance\\)", result$string))
+  expect_false(grepl("mean\\(finance\\)", result$string))
 })
 
 test_that("fn() supports all simple aggregation functions", {
@@ -151,12 +151,12 @@ test_that("fn() supports all simple aggregation functions", {
 })
 
 test_that("fn() handles mix of aggregation and regular variables", {
-  result <- fn(w ~ b0 + b1 * min(fdep) + b2 * tenure)
+  result <- fn(w ~ b0 + b1 * min(finance) + b2 * tenure)
   expect_length(result$agg_funcs, 1)
-  expect_equal(result$agg_funcs[[1]]$var, "fdep")
-  expect_true("fdep_min" %in% result$vars)
+  expect_equal(result$agg_funcs[[1]]$var, "finance")
+  expect_true("finance_min" %in% result$vars)
   expect_true("tenure" %in% result$vars)
-  expect_equal(result$agg_vars, "fdep")
+  expect_equal(result$agg_vars, "finance")
   expect_equal(sort(result$params), sort(c("b0", "b1", "b2")))
 })
 
@@ -258,14 +258,14 @@ test_that("fn() handles mix of median, quantile, and other aggregations", {
 
 test_that("fn() rejects nested aggregation functions", {
   expect_error(
-    fn(w ~ min(max(fdep))),
+    fn(w ~ min(max(finance))),
     "Nested aggregation functions"
   )
 })
 
 test_that("fn() rejects unsupported functions", {
   expect_error(
-    fn(w ~ cumsum(fdep)),
+    fn(w ~ cumsum(finance)),
     "Unsupported function"
   )
 })
@@ -282,21 +282,21 @@ test_that("fn() with no aggregation functions has NULL agg_funcs and agg_vars", 
 
 test_that("mm() requires id specification", {
   expect_error(
-    mm(vars = vars(fdep), fn = fn(w ~ 1/n)),
+    mm(vars = vars(finance), fn = fn(w ~ 1/n)),
     "argument \"id\" is missing"
   )
 })
 
 test_that("mm() requires exactly 2 IDs", {
   expect_error(
-    mm(id = id(cid), vars = vars(fdep), fn = fn(w ~ 1/n)),
+    mm(id = id(cid), vars = vars(finance), fn = fn(w ~ 1/n)),
     "exactly 2 identifiers"
   )
 })
 
 test_that("mm() requires fn specification", {
   expect_error(
-    mm(id = id(pid, gid), vars = vars(fdep)),
+    mm(id = id(pid, gid), vars = vars(finance)),
     "'fn' must be specified using fn"
   )
 })
@@ -318,7 +318,7 @@ test_that("mm() forces RE = TRUE when vars = NULL", {
 test_that("mm() correctly stores all components", {
   result <- mm(
     id = id(pid, gid),
-    vars = vars(fdep + ipd),
+    vars = vars(finance + cohesion),
     fn = fn(w ~ b0 + b1 * tenure, c = FALSE),
     RE = TRUE,
     ar = TRUE
@@ -327,7 +327,7 @@ test_that("mm() correctly stores all components", {
   expect_s3_class(result, "bml_mm")
   expect_equal(as.character(result$id), c("pid", "gid"))
   # vars is a bml_vars object with $free containing the variable names
-  expect_equal(sort(result$vars$free), sort(c("fdep", "ipd")))
+  expect_equal(sort(result$vars$free), sort(c("finance", "cohesion")))
   expect_s3_class(result$fn, "bml_fn")
   expect_true(result$RE)
   expect_true(result$ar)
@@ -361,7 +361,7 @@ test_that("hm() correctly stores all components", {
   result <- hm(
     id = id(cid),
     vars = vars(gdp + democracy),
-    name = cname,
+    name = country,
     type = "RE",
     showFE = FALSE,
     ar = TRUE
@@ -371,7 +371,7 @@ test_that("hm() correctly stores all components", {
   expect_equal(result$id, "cid")
   # vars is a bml_vars object with $free containing the variable names
   expect_equal(sort(result$vars$free), sort(c("gdp", "democracy")))
-  expect_equal(as.character(result$name), "cname")
+  expect_equal(as.character(result$name), "country")
   expect_equal(as.character(result$type), "RE")
   expect_false(result$showFE)
   expect_true(result$ar)
@@ -383,8 +383,8 @@ test_that("hm() handles NULL vars", {
 })
 
 test_that("hm() handles name correctly", {
-  result <- hm(id = id(cid), name = cname)
-  expect_equal(result$name, "cname")
+  result <- hm(id = id(cid), name = country)
+  expect_equal(result$name, "country")
 
   result <- hm(id = id(cid))
   expect_null(result$name)

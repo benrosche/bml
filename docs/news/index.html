@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,9 +22,9 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
     <li><a class="dropdown-item" href="../articles/installation.html">Installation</a></li>
-    <li><a class="dropdown-item" href="../articles/model.html">Model structure</a></li>
+    <li><a class="dropdown-item" href="../articles/model.html">Model Structure</a></li>
     <li><a class="dropdown-item" href="../articles/examples.html">Examples</a></li>
-    <li><a class="dropdown-item" href="../articles/faq.html">faq</a></li>
+    <li><a class="dropdown-item" href="../articles/faq.html">Frequently Asked Questions</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -42,7 +42,56 @@
       <small>Source: <a href="https://github.com/benrosche/bml/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
-  </main></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.0" id="bml-100">bml 1.0.0<a class="anchor" aria-label="anchor" href="#bml-100"></a></h2>
+<div class="section level3">
+<h3 id="major-changes-1-0-0">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-1-0-0"></a></h3>
+<ul><li><p><strong>Package renamed from <code>rmm</code> to <code>bml</code></strong> (Bayesian Multiple-Membership Multilevel Models)</p></li>
+<li>
+<p><strong>New syntax for weight functions:</strong> The <code>ar</code> parameter has been moved from the <code><a href="../reference/fn.html">fn()</a></code> specification to the <code><a href="../reference/mm.html">mm()</a></code> block level for clearer API</p>
+<ul><li>Old: <code>fn(w ~ 1/n, c = TRUE, ar = FALSE)</code>
+</li>
+<li>New: <code>fn(w ~ 1/n, c = TRUE)</code> with <code>ar = FALSE</code> at the <code><a href="../reference/mm.html">mm()</a></code> level</li>
+</ul></li>
+<li><p><strong>Support for multiple mmid groups:</strong> The package now supports models with multiple membership identifiers, allowing more complex membership structures</p></li>
+<li>
+<p><strong>Enhanced documentation:</strong> Comprehensive documentation added for the <code>coalgov</code> dataset including:</p>
+<ul><li>Detailed variable descriptions organized by level (identifiers, government-level, country-level, party-level)</li>
+<li>Statistical summaries for all variables</li>
+<li>Clear explanation of multiple-membership structure</li>
+<li>Updated references and examples</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-1-0-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-0-0"></a></h3>
+<ul><li><p><strong>Flexible weight function parameterization:</strong> Enhanced support for parameterizing weight functions with covariates and group-specific structures</p></li>
+<li><p><strong>Per-group random effects:</strong> Random effects can now be specified separately for different mmid groups</p></li>
+<li><p><strong>Improved JAGS code generation:</strong> Optimized model string generation for better performance with complex multiple-membership structures</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="breaking-changes-1-0-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-0"></a></h3>
+<ul><li><p><strong><code>ar</code> parameter moved:</strong> Existing code using <code>fn(w ~ ..., ar = TRUE)</code> must be updated to place <code>ar</code> in the <code><a href="../reference/mm.html">mm()</a></code> block instead</p></li>
+<li>
+<p><strong>Dataset changes:</strong></p>
+<ul><li>Removed <code>schoolnets</code> dataset (including <code>nodedat</code> and <code>edgedat</code> objects)</li>
+<li>Updated <code>coalgov</code> dataset with enhanced documentation and additional variables</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-0-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-0"></a></h3>
+<ul><li><p>Fixed issues with weight function constraints when using multiple <code><a href="../reference/mm.html">mm()</a></code> blocks</p></li>
+<li><p>Improved handling of group-level indices in JAGS variable creation</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-1-0-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-0"></a></h3>
+<ul><li>Updated vignette examples to use new syntax</li>
+<li>Added comprehensive FAQ section</li>
+<li>Improved installation instructions with CRAN and GitHub options</li>
+<li>Updated references to reflect 2026 publication</li>
+</ul><hr></div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

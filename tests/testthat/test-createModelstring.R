@@ -37,7 +37,7 @@ setup_model <- function(formula, family, data = coalgov, priors = NULL, cox_inte
 
 test_that("createModelstring() generates valid JAGS code for Gaussian model", {
   result <- setup_model(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian"
   )
 
@@ -49,7 +49,7 @@ test_that("createModelstring() generates valid JAGS code for Gaussian model", {
 
 test_that("createModelstring() generates valid JAGS code for Binomial model", {
   result <- setup_model(
-    formula = earlyterm ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Binomial"
   )
 
@@ -59,7 +59,7 @@ test_that("createModelstring() generates valid JAGS code for Binomial model", {
 
 test_that("createModelstring() generates valid JAGS code for Weibull model", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Weibull"
   )
 
@@ -69,7 +69,7 @@ test_that("createModelstring() generates valid JAGS code for Weibull model", {
 
 test_that("createModelstring() generates valid JAGS code for Cox model", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Cox"
   )
 
@@ -80,7 +80,7 @@ test_that("createModelstring() generates valid JAGS code for Cox model", {
 
 test_that("createModelstring() generates valid JAGS code for Cox with intervals", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority,
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority,
     family = "Cox",
     cox_intervals = 10
   )
@@ -94,8 +94,8 @@ test_that("createModelstring() generates valid JAGS code for Cox with intervals"
 
 test_that("createModelstring() includes mm() block code", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE),
     family = "Weibull"
   )
 
@@ -105,8 +105,8 @@ test_that("createModelstring() includes mm() block code", {
 
 test_that("createModelstring() includes mm() random effects", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE),
     family = "Weibull"
   )
 
@@ -117,7 +117,7 @@ test_that("createModelstring() includes mm() random effects", {
 
 test_that("createModelstring() includes hm() random effects", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       hm(id = id(cid), type = "RE"),
     family = "Weibull"
   )
@@ -129,7 +129,7 @@ test_that("createModelstring() includes hm() random effects", {
 
 test_that("createModelstring() includes hm() fixed effects", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       hm(id = id(cid), type = "FE"),
     family = "Weibull"
   )
@@ -140,8 +140,8 @@ test_that("createModelstring() includes hm() fixed effects", {
 
 test_that("createModelstring() includes weight function code", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ b0 + b1 * pseat), RE = FALSE),
     family = "Weibull"
   )
 
@@ -153,8 +153,8 @@ test_that("createModelstring() includes weight function code", {
 
 test_that("createModelstring() includes weight normalization for constrained weights", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = TRUE), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n, c = TRUE), RE = FALSE),
     family = "Weibull"
   )
 
@@ -164,7 +164,7 @@ test_that("createModelstring() includes weight normalization for constrained wei
 
 test_that("createModelstring() includes priors", {
   result <- setup_model(
-    formula = sim.y ~ 1 + majority,
+    formula = event_wkb ~ 1 + majority,
     family = "Gaussian"
   )
 
@@ -176,9 +176,9 @@ test_that("createModelstring() includes priors", {
 
 test_that("createModelstring() handles multiple mm() blocks", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
-      mm(id = id(pid, gid), vars = vars(ipd), fn = fn(w ~ 1/n), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE) +
+      mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
     family = "Weibull"
   )
 
@@ -188,7 +188,7 @@ test_that("createModelstring() handles multiple mm() blocks", {
 
 test_that("createModelstring() handles AR specifications", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
       mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE, ar = TRUE),
     family = "Weibull"
   )
@@ -199,7 +199,7 @@ test_that("createModelstring() handles AR specifications", {
 
 test_that("createModelstring() handles offset from fixed coefficients", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + fix(majority, 1.0),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + fix(majority, 1.0),
     family = "Weibull"
   )
 
@@ -209,8 +209,8 @@ test_that("createModelstring() handles offset from fixed coefficients", {
 
 test_that("createModelstring() produces well-formed JAGS model", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE) +
       hm(id = id(cid), type = "RE"),
     family = "Weibull"
   )
@@ -231,8 +231,8 @@ test_that("createModelstring() produces well-formed JAGS model", {
 
 test_that("createModelstring() uses accumulator pattern for constrained weights with parameters", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel, c = TRUE), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ b0 + b1 * pseat, c = TRUE), RE = FALSE),
     family = "Weibull"
   )
 
@@ -243,19 +243,19 @@ test_that("createModelstring() uses accumulator pattern for constrained weights 
   expect_true(grepl("cum\\.uw\\.1\\[i\\+1\\]\\s*<-\\s*cum\\.uw\\.1\\[i\\]\\s*\\+\\s*uw\\.1\\[i\\]", result$model_string),
               info = "Should have accumulator loop pattern")
 
-  # Should have group sums computed once per group
-  expect_true(grepl("sum\\.uw\\.1\\[j\\]\\s*<-\\s*cum\\.uw\\.1\\[mmi2\\[j\\]\\+1\\]\\s*-\\s*cum\\.uw\\.1\\[mmi1\\[j\\]\\]", result$model_string),
+  # Should have group sums computed once per group (using per-group indices)
+  expect_true(grepl("sum\\.uw\\.1\\[j\\]\\s*<-\\s*cum\\.uw\\.1\\[mmi2\\.1\\[j\\]\\+1\\]\\s*-\\s*cum\\.uw\\.1\\[mmi1\\.1\\[j\\]\\]", result$model_string),
               info = "Should compute group sums using cumulative sum differences")
 
-  # Should use grp.mm for normalization
-  expect_true(grepl("w\\.1\\[i\\]\\s*<-\\s*uw\\.1\\[i\\]\\s*/\\s*sum\\.uw\\.1\\[grp\\.mm\\[i\\]\\]", result$model_string),
-              info = "Should normalize using grp.mm indexing")
+  # Should use grp.mm for normalization (per-group naming)
+  expect_true(grepl("w\\.1\\[i\\]\\s*<-\\s*uw\\.1\\[i\\]\\s*/\\s*sum\\.uw\\.1\\[grp\\.mm\\.1\\[i\\]\\]", result$model_string),
+              info = "Should normalize using grp.mm.1 indexing")
 })
 
 test_that("createModelstring() does NOT use accumulator for unconstrained weights", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel, c = FALSE), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ b0 + b1 * pseat, c = FALSE), RE = FALSE),
     family = "Weibull"
   )
 
@@ -274,8 +274,8 @@ test_that("createModelstring() does NOT use accumulator for unconstrained weight
 
 test_that("createModelstring() does NOT use accumulator when weights are pre-computed", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n, c = TRUE), RE = FALSE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n, c = TRUE), RE = FALSE),
     family = "Weibull"
   )
 
@@ -291,8 +291,8 @@ test_that("createModelstring() does NOT use accumulator when weights are pre-com
 
 test_that("accumulator pattern produces balanced braces", {
   result <- setup_model(
-    formula = Surv(govdur, earlyterm) ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ b0 + b1 * pseatrel, c = TRUE), RE = TRUE),
+    formula = Surv(dur_wkb, event_wkb) ~ 1 + majority +
+      mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ b0 + b1 * pseat, c = TRUE), RE = TRUE),
     family = "Weibull"
   )
 

@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,9 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
     <li><a class="dropdown-item" href="articles/installation.html">Installation</a></li>
-    <li><a class="dropdown-item" href="articles/model.html">Model structure</a></li>
+    <li><a class="dropdown-item" href="articles/model.html">Model Structure</a></li>
     <li><a class="dropdown-item" href="articles/examples.html">Examples</a></li>
-    <li><a class="dropdown-item" href="articles/faq.html">faq</a></li>
+    <li><a class="dropdown-item" href="articles/faq.html">Frequently Asked Questions</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -58,67 +58,95 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="section">
-<img src="reference/figures/rmm-hexagon.png" align="right"><a class="anchor" aria-label="anchor" href="#section"></a>
-</h1></div>
+  <main id="main" class="col-md-9"><p><img src="reference/figures/bml-hexagon.png" align="right" alt="bml package hexagon logo"></p>
 <div class="section level3">
-<h3 id="bayesian-multiple-membership-multilevel-regression-models-with-endogenized-weights">Bayesian multiple membership multilevel regression models with endogenized weights<a class="anchor" aria-label="anchor" href="#bayesian-multiple-membership-multilevel-regression-models-with-endogenized-weights"></a>
+<h3 id="bayesian-multiple-membership-multilevel-models-with-parameterizable-weight-function">Bayesian multiple-membership multilevel models with parameterizable weight function.<a class="anchor" aria-label="anchor" href="#bayesian-multiple-membership-multilevel-models-with-parameterizable-weight-function"></a>
 </h3>
 <!-- badges: start -->
 
-<p><em>I am currently working on getting the package ready for a submission to CRAN.</em></p>
-<p>The rmm package provides an interface to fit Bayesian multiple membership multilevel models with endogenized weights using JAGS from within R for a variety of outcomes (linear, logit, conditional logit, Cox, Weibull).</p>
-<p>Most multilevel analyses examine how lower-level units (e.g. individuals) are affected by their embedding in contextual/aggregate units at a higher level (e.g. neighborhoods) (= macro-micro link). The rmm package uses the multiple membership multilevel model to conceptually reverse this setup. It allows studying how the effect of units at lower levels propagates to a higher level (= micro-macro link).</p>
-<p>Previous studies examining micro-macro links either aggregated or disaggregated the data. Both approaches obstruct the inherent aggregation problem, ignore dependencies among observations, which induces excessive Type-I and Type-II error, and cannot separate micro- from macro-level variance. The generalized multiple membership multilevel model (MMMM) is able to overcome these problems by explicitly modeling the aggregation from micro to macro level by including an aggregation function in the regression model. It is a theoretically and statistically sound solution to the study of micro-macro links with regression analysis.</p>
 </div>
+<div class="section level2">
+<h2 id="bml-bayesian-multiple-membership-multilevel-models-with-endogenous-weights">bml: Bayesian Multiple-Membership Multilevel Models with Endogenous Weights<a class="anchor" aria-label="anchor" href="#bml-bayesian-multiple-membership-multilevel-models-with-endogenous-weights"></a>
+</h2>
+<p><code>bml</code> is an R package for fitting <em>Bayesian multiple-membership multilevel models with endogenous weights</em> (“extended MMMM”) via JAGS. It supports a range of outcome types—including linear, logit, conditional logit, and survival models (Cox and Weibull)—and is designed for settings where researchers want to model how multiple units at a lower level jointly influence outcomes at a higher level.</p>
+<p>In most multilevel analyses, the primary focus is on how higher-level contextual units (e.g., neighborhoods, schools, countries) shape outcomes observed at lower levels (e.g., individuals, students, governments), reflecting a macro-to-micro perspective. bml turns this logic around. Through an extended multiple-membership multilevel model, it allows researchers to explicitly model how the combined influence of many lower-level units propagates “upwards” to a higher-level outcome, enabling the study of micro-to-macro relationships.</p>
+<p>Traditional approaches to micro-macro questions either:</p>
+<ul>
+<li>aggregate lower-level variables to the higher level (risking aggregation bias), or</li>
+<li>disaggregate higher-level outcomes to the lower level (artificially inflating sample size).</li>
+</ul>
+<p>Both strategies obscure the underlying aggregation process, ignore the statistical dependencies present in the data, and prevent the decomposition of variance across levels. In contrast, the extended MMMM implemented in <code>bml</code> explicitly models aggregation through a weight function that may itself depend on parameters and covariates. This approach provides a theoretically grounded and statistically principled framework for studying micro-macro relationships using regression models.</p>
 <div class="section level3">
-<h3 id="with-the-rmm-package-you-can">With the <strong>rmm</strong> package, you can…<a class="anchor" aria-label="anchor" href="#with-the-rmm-package-you-can"></a>
+<h3 id="with-the-bml-package-you-can">With the bml package, you can<a class="anchor" aria-label="anchor" href="#with-the-bml-package-you-can"></a>
 </h3>
 <ul>
-<li><p>explicitly model how the effect of lower level units propagate to a higher level</p></li>
-<li><p>examine the fit of different aggregation functions, such as the min, max, mean, or sum</p></li>
-<li><p>uncover heterogeneity in the effect of lower-level units on higher-level entities</p></li>
-<li><p>control dependencies that arise from a multiple membership (crisscrossing) data structure</p></li>
-<li><p>estimate the (residual) variance at the lower and the higher level</p></li>
+<li><p><strong>Model how lower-level units jointly shape higher-level outcomes:</strong> For example, how political parties shape coalition outcomes, how family members influence household decisions, and how subunits jointly shape organizational performance.</p></li>
+<li><p><strong>Compare and estimate aggregation functions:</strong> Test whether higher-level outcomes depend on the mean, sum, minimum, maximum, or other functions of lower-level features, instead of imposing a predefined aggregation.</p></li>
+<li><p><strong>Endogenize the weight matrix:</strong> Rather than imposing a fixed spatial or network weight matrix, allow connection strengths to be endogenously determined as functions of covariates.</p></li>
+<li><p><strong>Account for complex dependence structures:</strong> Simultaneously accommodate hierarchical, cross-classified, and multiple-membership structures, accounting for dependence patterns missed by conventional models and cluster-robust SEs.</p></li>
+<li><p><strong>Partition variance across levels:</strong> Estimate residual variance at lower and higher levels to see how much heterogeneity is attributable to each level in your data.</p></li>
 </ul>
-<p>This is the data structure that is being modeled:</p>
 </div>
-</div>
-<div class="section level1">
-<h1 id="section-1">
-<img src="reference/figures/rmm-datastructure.png"><a class="anchor" aria-label="anchor" href="#section-1"></a>
-</h1>
-<p>In this example of coalition governments in Israel, political parties are the level-1 units, governments are the level-2 units, and the relationship between parties and governments is the multiple membership structure.</p>
-<p>This is just an example. Multiple membership structures are ubiquitous in the real world. Other applications include:</p>
+<div class="section level3">
+<h3 id="where-can-you-use-bml">Where can you use bml?<a class="anchor" aria-label="anchor" href="#where-can-you-use-bml"></a>
+</h3>
+<p>Multiple-membership structures are common across the social sciences and beyond. The model was developed for coalition government data, but the same structure appears in many other settings, such as:</p>
 <ul>
-<li>MMMM can be used to model <strong>spatial structures</strong>. Level-1 units, in this case, would be the neighborhoods in the influence sphere of the focal neighborhood, and level-2 units would be the focal neighborhoods. The benefit of using MMMM over other spatial regression models is that the weight matrix can be endogenized, which is not currently possible with other methods</li>
-<li>MMMM can be used to model <strong>network structures</strong>. While this possibility has been explored in other work (Tranmer et al. 2014), the MMMM allows to endogenize the weight matrix, which is not currently possible with other multiple membership multilevel software, such as brms or MLWiN.</li>
-<li>more multiple membership structures in the wild: multi-party wars, treaties, international organizations</li>
+<li><p><strong>International relations:</strong> Multi-party conflicts, alliances and treaties, as well as international organizations with overlapping memberships.</p></li>
+<li><p><strong>Multi-level systems:</strong> Subnational units (e.g., regions, states, municipalities) that jointly shape national outcomes and may simultaneously participate in multiple higher-level arrangements.</p></li>
+<li><p><strong>Organization research:</strong> Individuals who shape team- and firm-level outcomes and may simultaneously participate in multiple teams, as well as organizations engaged in joint ventures or other interorganizational collaborations.</p></li>
+<li><p><strong>Spatial research:</strong> Neighborhoods or regions whose outcomes depend on the combined influence of surrounding areas. Here, bml allows the spatial weight matrix to be endogenized rather than imposed ex ante.</p></li>
+<li><p><strong>Network applications:</strong> Actors whose outcomes depend on the combined influence of their network neighbors (e.g., social, collaboration, or communication ties). While similar ideas have been explored in earlier work (e.g., Tranmer et al. 2014), bml extends this by allowing the network weight matrix to be endogenized rather than imposed ex ante.</p></li>
 </ul>
-<p>This is how the <code>rmm()</code> function looks like:</p>
+<p>In all these cases, bml provides tools to model dependence and interdependence: not just correcting standard errors for clustering, but explicitly representing how lower-level units combine to produce higher-level outcomes.</p>
+<p>The following command fits an MMMM to coalition government data, modeling each coalition’s outcome as an equal-weighted combination of member parties’ organizational structure and random effects.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">coalgov</span><span class="op">)</span></span>
-<span><span class="fu">rmm</span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">X_l2</span> <span class="op">+</span> </span>
-<span>      <span class="va">X_l3</span> <span class="op">+</span> <span class="fu"><a href="reference/hm.html">hm</a></span><span class="op">(</span>id<span class="op">=</span><span class="va">id_l3</span>, type<span class="op">=</span><span class="va">RE</span><span class="op">)</span> <span class="op">+</span></span>
-<span>      <span class="fu"><a href="reference/mm.html">mm</a></span><span class="op">(</span><span class="fu"><a href="reference/id.html">id</a></span><span class="op">(</span><span class="va">id_l2</span>, <span class="va">id_l1</span><span class="op">)</span>, <span class="fu">mmc</span><span class="op">(</span><span class="va">X_l1</span><span class="op">)</span>, <span class="fu">mmw</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">X_w</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, </span>
-<span>    family<span class="op">=</span><span class="st">"Gaussian"</span>, data<span class="op">=</span><span class="va">coalgov</span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="developers">Developers<a class="anchor" aria-label="anchor" href="#developers"></a>
-</h3>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="va">Y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span></span>
+<span>    <span class="va">majority</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>      id <span class="op">=</span> <span class="fu"><a href="reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
+<span>      vars <span class="op">=</span> <span class="fu"><a href="reference/vars.html">vars</a></span><span class="op">(</span><span class="va">org_structure</span><span class="op">)</span>,</span>
+<span>      fn <span class="op">=</span> <span class="fu"><a href="reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>      RE <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">coalgov</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Parties (<code>pid</code>) can appear in multiple governments (<code>gid</code>), and the party-level covariate <code>org_structure</code> enters the model through the multiple-membership term <code><a href="reference/mm.html">mm()</a></code>. The weights are set to <code>w ~ 1 / n</code> (equal weights across the n parties in a coalition), and party-specific random effects are included via <code>RE = TRUE</code>.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
+</h2>
+<p>Rosche, B. (2026). A Multilevel Model for Coalition Governments: Uncovering Party-Level Dependencies Within and Between Governments. <em>Political Analysis</em>, forthcoming. <a href="https://osf.io/preprints/socarxiv/4bafr" class="external-link">Preprint</a></p>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>Install the stable version from CRAN:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"bml"</span><span class="op">)</span></span></code></pre></div>
+<p>Or install the development version from GitHub:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"benrosche/bml"</span><span class="op">)</span></span></code></pre></div>
+<p>See the <a href="https://benrosche.github.io/bml/articles/installation.html">installation vignette</a> for detailed instructions including JAGS setup.</p>
+</div>
+<div class="section level2">
+<h2 id="developers">Developers<a class="anchor" aria-label="anchor" href="#developers"></a>
+</h2>
 <p>I welcome contributions to the package! Feel free to submit changes for review or contact me if you have any questions.</p>
 </div>
-<div class="section level3">
-<h3 id="issues-or-feature-requests">Issues or Feature Requests<a class="anchor" aria-label="anchor" href="#issues-or-feature-requests"></a>
-</h3>
-<p>If you would like to log an issue or submit a feature request, please create a new issue or comment on an existing issue on <a href="https://github.com/benrosche/rmm/issues" class="external-link">GitHub Issues</a> on this repo.</p>
+<div class="section level2">
+<h2 id="issues-or-feature-requests">Issues or Feature Requests<a class="anchor" aria-label="anchor" href="#issues-or-feature-requests"></a>
+</h2>
+<p>If you would like to log an issue or submit a feature request, please create a new issue on <a href="https://github.com/benrosche/bml/issues" class="external-link">GitHub Issues</a>.</p>
 </div>
-<div class="section level3">
-<h3 id="changelog">Changelog<a class="anchor" aria-label="anchor" href="#changelog"></a>
-</h3>
-<p>See <a href="https://github.com/benrosche/rmm/news/index.html" class="external-link">NEWS.md</a> for the package changelog.</p>
-<p>More information can be found <a href="http://benrosche.com/projects/rmm/" class="external-link">here</a></p>
-</div>
+<div class="section level2">
+<h2 id="changelog">Changelog<a class="anchor" aria-label="anchor" href="#changelog"></a>
+</h2>
+<p>See <a href="https://benrosche.github.io/bml/news/index.html">NEWS.md</a> for the package changelog.</p>
 </div>
 
   </main><aside class="col-md-3"><div class="links">
@@ -154,7 +182,7 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/benrosche/rmm/actions" class="external-link"><img src="https://github.com/benrosche/rmm/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/benrosche/bml/actions" class="external-link"><img src="https://github.com/benrosche/bml/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
 </ul>
 </div>
 

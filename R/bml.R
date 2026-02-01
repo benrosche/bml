@@ -9,7 +9,7 @@
 #' @details
 #' In addition to hierarchical and cross-classified multilevel models, the \strong{bml} package allows
 #' users to fit Bayesian multiple-membership models. Unlike tools such as
-#' \code{\link[brms]{brms}} or MLwiN (\url{https://www.bristol.ac.uk/cmm/software/mlwin/}),
+#' \code{\link[brms]{brms}} or \href{https://www.bristol.ac.uk/cmm/software/mlwin/}{MLwiN},
 #' \strong{bml} lets users specify and estimate models in which membership weights are parameterized
 #' through flexible formula syntax. This enables a more nuanced examination of how effects from
 #' member-level units aggregate to group level (the micro-macro link).
@@ -17,12 +17,13 @@
 #' The package automatically generates JAGS code to fit the model and processes the output
 #' to facilitate interpretation of model parameters and diagnostics.
 #'
+#' The package and modeling framework are introduced in:
+#' Rosche, B. (2026). \emph{A Multilevel Model for Coalition Governments: Uncovering Party-Level
+#' Dependencies Within and Between Governments}. \emph{Political Analysis}.
+#'
 #' For accessible introductions to multiple-membership models, see Fielding and Goldstein (2006)
 #' and Beretvas (2010). Advanced treatments include Goldstein (2011, Ch. 13),
 #' Rasbash and Browne (2001, 2008), Browne et al. (2001), and Leckie (2013).
-#' The package and modeling framework are introduced in:
-#' Rosche, B. (2025). \emph{A Multilevel Model for Coalition Governments: Uncovering Party-Level
-#' Dependencies Within and Between Governments}. \emph{Political Analysis}.
 #'
 #' @section Formula Components:
 #' \itemize{
@@ -70,8 +71,9 @@
 #' mm(
 #'   id   = id(mmid, mainid),
 #'   vars = vars(X.mm),
-#'   fn   = fn(w ~ 1/n, c = TRUE, ar = FALSE),
-#'   RE   = TRUE
+#'   fn   = fn(w ~ 1/n, c = TRUE),
+#'   RE   = TRUE,
+#'   ar   = FALSE
 #' )
 #' }
 #'
@@ -82,17 +84,25 @@
 #'   \item \code{vars(X.mm)}: Specifies member-level covariates aggregated across memberships.
 #'         Use \code{+} to include multiple variables. Supports interactions (\code{*}, \code{:})
 #'         and transformations (\code{I()}). Set to \code{NULL} for RE-only blocks.
-#'   \item \code{fn(w ~ ..., c, ar)}: Defines the weight function (micro-macro link).
+#'   \item \code{fn(w ~ ..., c)}: Defines the weight function (micro-macro link).
+#'         The \code{c} parameter controls weight normalization: when \code{c = TRUE} (default),
+#'         weights are normalized to sum to 1 within each group
+#'         (\eqn{\tilde{w}_{ik} = w_{ik} / \sum_{k} w_{ik}}).
+#'         Set \code{c = FALSE} for unnormalized weights (e.g., when aggregating sums).
 #'         Note: Does not support interactions or \code{I()} - pre-create transformed variables.
 #'   \item \code{RE}: Logical; if \code{TRUE}, include random effects for this block.
 #'         Automatically \code{TRUE} if \code{vars = NULL}.
+#'   \item \code{ar}: Logical; if \code{TRUE}, member-level random effects evolve as a
+#'         random walk across repeated participations in groups. This captures dynamics
+#'         where a member's unobserved heterogeneity changes over time. Default: \code{FALSE}.
 #' }
 #'
 #' \strong{Multiple mm() blocks:}
-#' You can specify multiple \code{mm()} blocks with different weight functions:
+#' You can specify multiple \code{mm()} blocks with different weight functions.
+#' However, \code{RE = TRUE} can only be specified for one \code{mm()} block.
 #' \preformatted{
 #' mm(id = id(pid, gid), vars = vars(X1), fn = fn(w ~ 1/n), RE = FALSE) +
-#' mm(id = id(pid, gid), vars = vars(X2), fn = fn(w ~ max(n)), RE = FALSE) +
+#' mm(id = id(pid, gid), vars = vars(X2), fn = fn(w ~ tenure), RE = FALSE) +
 #' mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)
 #' }
 #'

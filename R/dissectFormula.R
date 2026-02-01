@@ -104,6 +104,7 @@ dissectFormula <- function(formula, family, data) {
   ), parent = baseenv())
 
   mm_list <- list()
+  mmid_groups <- NULL
 
   if (length(mm_terms) > 0) {
 
@@ -117,19 +118,31 @@ dissectFormula <- function(formula, family, data) {
       )
     })
 
-    # Validate: all mm() blocks must have the same id
-    first_id <- mm_list[[1]]$id
+    # Validate: all mm() blocks must have the same mainid (but can have different mmid)
+    first_mainid <- mm_list[[1]]$id[2]
     for (i in seq_along(mm_list)) {
-      if (!identical(mm_list[[i]]$id, first_id)) {
-        stop("All mm() blocks must have the same id(mmid, mainid). ",
-             "Found: id(", paste(first_id, collapse = ", "), ") and ",
-             "id(", paste(mm_list[[i]]$id, collapse = ", "), ")")
+      if (mm_list[[i]]$id[2] != first_mainid) {
+        stop("All mm() blocks must share the same mainid (second element of id()). ",
+             "Found: mainid='", first_mainid, "' and mainid='", mm_list[[i]]$id[2], "'")
       }
     }
 
+    # Group blocks by mmid for tracking
+    mmid_groups <- list()
+    for (i in seq_along(mm_list)) {
+      mmid_name <- mm_list[[i]]$id[1]
+      mmid_groups[[mmid_name]] <- c(mmid_groups[[mmid_name]], i)
+    }
+
+    # Collect all unique id variable names
+    all_id_vars <- unique(c(
+      sapply(mm_list, function(m) m$id[1]),  # all mmid names
+      first_mainid                            # mainid name
+    ))
+
     # Validate: id variables exist in data
-    if (!all(first_id %in% names(data))) {
-      missing_ids <- first_id[!first_id %in% names(data)]
+    if (!all(all_id_vars %in% names(data))) {
+      missing_ids <- all_id_vars[!all_id_vars %in% names(data)]
       stop("ID variable(s) not found in data: ", paste(missing_ids, collapse = ", "))
     }
 
@@ -194,10 +207,15 @@ dissectFormula <- function(formula, family, data) {
       stop("At least one mm() block must have RE = TRUE or specify vars")
     }
 
-    # Check: at most one mm() block can have RE = TRUE
-    n_re <- sum(sapply(mm_list, function(m) m$RE))
-    if (n_re > 1) {
-      stop("RE = TRUE cannot be specified for more than one mm() block.")
+    # Check: RE = TRUE can be specified for multiple blocks only if they have different mmid
+    # Within blocks sharing the same mmid, only one can have RE = TRUE
+    for (mmid_name in names(mmid_groups)) {
+      block_indices <- mmid_groups[[mmid_name]]
+      n_re_in_group <- sum(sapply(block_indices, function(i) mm_list[[i]]$RE))
+      if (n_re_in_group > 1) {
+        stop("RE = TRUE can only be specified for one mm() block per mmid. ",
+             "Found ", n_re_in_group, " blocks with RE = TRUE sharing mmid='", mmid_name, "'")
+      }
     }
   }
 
@@ -327,6 +345,7 @@ dissectFormula <- function(formula, family, data) {
       mainvars_fixed = if (length(mainvars_fixed) > 0) mainvars_fixed else NULL,
       main_formula   = main_formula,
       mm             = mm_list,
+      mm_groups      = if (length(mm_list) > 0) mmid_groups else NULL,
       hm             = hm_list
     )
   )

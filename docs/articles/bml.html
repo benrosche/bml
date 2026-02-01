@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>bml • bml</title>
+<title>Getting Started with bml • bml</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="bml">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="Getting Started with bml">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,9 +37,9 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
     <li><a class="dropdown-item" href="../articles/installation.html">Installation</a></li>
-    <li><a class="dropdown-item" href="../articles/model.html">Model structure</a></li>
+    <li><a class="dropdown-item" href="../articles/model.html">Model Structure</a></li>
     <li><a class="dropdown-item" href="../articles/examples.html">Examples</a></li>
-    <li><a class="dropdown-item" href="../articles/faq.html">faq</a></li>
+    <li><a class="dropdown-item" href="../articles/faq.html">Frequently Asked Questions</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -62,7 +62,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>bml</h1>
+      <h1>Getting Started with bml</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/benrosche/bml/blob/HEAD/vignettes/bml.Rmd" class="external-link"><code>vignettes/bml.Rmd</code></a></small>
@@ -71,9 +71,200 @@
 
     
     
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>The <code>bml</code> package implements <strong>Bayesian
+Multiple-Membership Multilevel Models with Endogenous Weights</strong>.
+These models are designed for situations where higher-level outcomes
+depend on the combined influence of multiple lower-level units. Instead
+of aggregating lower-level data to higher levels (risking aggregation
+bias) or disaggregating outcomes to lower levels (artificially inflating
+sample size), <code>bml</code> explicitly models how lower-level units
+jointly shape higher-level outcomes.</p>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>Install the stable version from CRAN:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://benrosche.github.io/bml">bml</a></span><span class="op">)</span></span></code></pre></div>
-  </main>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"bml"</span><span class="op">)</span></span></code></pre></div>
+<p>Or install the development version from GitHub:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"benrosche/bml"</span><span class="op">)</span></span></code></pre></div>
+<p>You’ll also need JAGS installed on your system. See the <a href="installation.html">installation vignette</a> for details.</p>
+</div>
+<div class="section level2">
+<h2 id="basic-example">Basic Example<a class="anchor" aria-label="anchor" href="#basic-example"></a>
+</h2>
+<p>Let’s start with a simple example using coalition government data.
+Each coalition (higher-level unit) is composed of multiple political
+parties (lower-level units), and we want to model how party
+characteristics influence coalition outcomes.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://benrosche.github.io/bml">bml</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">coalgov</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Examine the data structure</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">coalgov</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gid"</span>, <span class="st">"pid"</span>, <span class="st">"pname"</span>, <span class="st">"n"</span>, <span class="st">"finance"</span>, <span class="st">"dur_wkb"</span>, <span class="st">"event_wkb"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="understanding-the-data-structure">Understanding the Data Structure<a class="anchor" aria-label="anchor" href="#understanding-the-data-structure"></a>
+</h3>
+<p>The <code>coalgov</code> dataset is in <strong>long format</strong>
+where each row represents a party’s participation in a coalition:</p>
+<ul>
+<li>
+<code>gid</code>: Government (coalition) identifier</li>
+<li>
+<code>pid</code>: Party identifier</li>
+<li>
+<code>n</code>: Number of parties in the coalition</li>
+<li>
+<code>finance</code>: Party’s financial dependence on member
+contributions (standardized)</li>
+<li>
+<code>dur_wkb</code>: Coalition duration in days</li>
+<li>
+<code>event_wkb</code>: Early termination indicator (1 = terminated
+early, 0 = censored)</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="model-1-basic-multiple-membership-model">Model 1: Basic Multiple-Membership Model<a class="anchor" aria-label="anchor" href="#model-1-basic-multiple-membership-model"></a>
+</h3>
+<p>Our first model examines coalition duration as a function of
+party-level characteristics, aggregated using equal weights:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>      id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
+<span>      vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
+<span>      fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>      RE <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">coalgov</span>,</span>
+<span>  n.iter <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  n.burnin <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mod1</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Breaking down the formula:</strong></p>
+<ul>
+<li>
+<code>Surv(dur_wkb, event_wkb)</code>: Survival outcome (duration
+and event indicator)</li>
+<li>
+<code>majority</code>: Government-level covariate (binary
+indicator)</li>
+<li>
+<code><a href="../reference/mm.html">mm()</a></code>: Multiple-membership block containing:
+<ul>
+<li>
+<code>id = id(pid, gid)</code>: Party ID (member) and government ID
+(group)</li>
+<li>
+<code>vars = vars(finance)</code>: Party-level covariate to
+aggregate</li>
+<li>
+<code>fn = fn(w ~ 1/n, c = TRUE)</code>: Weight function (equal
+weights, constrained to sum to 1)</li>
+<li>
+<code>RE = TRUE</code>: Include party-specific random effects</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="model-2-endogenizing-the-weight-function">Model 2: Endogenizing the Weight Function<a class="anchor" aria-label="anchor" href="#model-2-endogenizing-the-weight-function"></a>
+</h3>
+<p>A key feature of <code>bml</code> is the ability to model aggregation
+weights as a function of covariates. Instead of assuming all parties
+have equal influence, we can test whether seat share affects a party’s
+weight in the coalition:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>      id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
+<span>      vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
+<span>      fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">b1</span> <span class="op">*</span> <span class="va">pseat</span><span class="op">)</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>      RE <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
+<span>  priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.w ~ dnorm(0, 1)"</span><span class="op">)</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">coalgov</span>,</span>
+<span>  n.iter <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  n.burnin <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  monitor <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mod2</span><span class="op">)</span></span></code></pre></div>
+<p><strong>New elements:</strong></p>
+<ul>
+<li>The weight function now includes <code>pseat</code> (party seat
+share) with parameter <code>b1</code>
+</li>
+<li>
+<code>priors</code>: Specify prior for the weight function
+parameter</li>
+<li>
+<code>monitor = TRUE</code>: Save MCMC chains for diagnostics</li>
+</ul>
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li>If <code>b1 ≈ 0</code>: Seat share doesn’t affect weights (equal
+influence)</li>
+<li>If <code>b1 &gt; 0</code>: Larger parties have more weight</li>
+<li>If <code>b1 &lt; 0</code>: Smaller parties have more weight</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="visualizing-results">Visualizing Results<a class="anchor" aria-label="anchor" href="#visualizing-results"></a>
+</h3>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Diagnostic plot for weight parameter</span></span>
+<span><span class="fu"><a href="../reference/monetPlot.html">monetPlot</a></span><span class="op">(</span><span class="va">mod2</span>, parameter <span class="op">=</span> <span class="st">"b.w[1]"</span>, label <span class="op">=</span> <span class="st">"Seat share effect"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># MCMC diagnostics</span></span>
+<span><span class="fu"><a href="../reference/mcmcDiag.html">mcmcDiag</a></span><span class="op">(</span><span class="va">mod2</span>, parameters <span class="op">=</span> <span class="st">"b.w"</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="next-steps">Next Steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</h2>
+<ul>
+<li>See the <a href="model.html">Model documentation</a> for
+mathematical details</li>
+<li>Explore <a href="examples.html">Examples</a> for spatial, network,
+and aggregation applications</li>
+<li>Check the <a href="faq.html">FAQ</a> for common questions</li>
+<li>Read the accompanying paper: <a href="https://osf.io/preprints/socarxiv/4bafr" class="external-link">Rosche (2026)</a>
+</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="key-concepts">Key Concepts<a class="anchor" aria-label="anchor" href="#key-concepts"></a>
+</h2>
+<p><strong>Multiple-membership structure:</strong> Higher-level units
+(coalitions) contain multiple lower-level units (parties), and
+lower-level units can appear in multiple higher-level units.</p>
+<p><strong>Weight functions:</strong> Control how lower-level
+characteristics are aggregated. Can be: - Fixed (e.g., equal weights
+<code>w ~ 1/n</code>) - Endogenous (estimated from data, e.g.,
+<code>w ~ 1/n^exp(b1*x)</code>)</p>
+<p><strong>Constraint parameter <code>c</code>:</strong> -
+<code>c = TRUE</code>: Weights sum to 1 within each group -
+<code>c = FALSE</code>: No constraint on weight sums</p>
+<p><strong>Random effects:</strong> Account for unobserved heterogeneity
+at the member level (<code>RE = TRUE</code> in <code><a href="../reference/mm.html">mm()</a></code>) or
+nesting level (<code><a href="../reference/hm.html">hm()</a></code>)</p>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

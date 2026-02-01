@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-<img src="man/figures/bml-hexagon.png" align="right" />
+<img src="man/figures/bml-hexagon.png" align="right" alt="bml package hexagon logo" />
 
 ### Bayesian multiple-membership multilevel models with parameterizable weight function.
 
@@ -21,18 +21,18 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/benrosche/bml/workflows/R-CMD-check/badge.svg)](https://github.com/benrosche/bml/actions)
 <!-- badges: end -->
 
-## bml: Bayesian multiple-membership multilevel models with endogenous weights
+## bml: Bayesian Multiple-Membership Multilevel Models with Endogenous Weights
 
-`bml` is an R package for fitting *Bayesian multiple-membership multilevel models with endogenous weights* ("extended MMMM") via JAGS. It supports a range of outcome types --- including linear, logit, conditional logit, and survival models (Cox and Weibull) --- and is designed for settings where researchers want to model how multiple units at a lower level jointly influence outcomes at a higher level.
+`bml` is an R package for fitting *Bayesian multiple-membership multilevel models with endogenous weights* ("extended MMMM") via JAGS. It supports a range of outcome types—including linear, logit, and survival models (Cox and Weibull)—and is designed for settings where researchers want to model how multiple units at a lower level jointly influence outcomes at a higher level.
 
 In most multilevel analyses, the primary focus is on how higher-level contextual units (e.g., neighborhoods, schools, countries) shape outcomes observed at lower levels (e.g., individuals, students, governments), reflecting a macro-to-micro perspective. bml turns this logic around. Through an extended multiple-membership multilevel model, it allows researchers to explicitly model how the combined influence of many lower-level units propagates "upwards" to a higher-level outcome, enabling the study of micro-to-macro relationships.
 
-Traditional approaches to micro–macro questions either:
+Traditional approaches to micro-macro questions either:
 
 - aggregate lower-level variables to the higher level (risking aggregation bias), or
-- disaggregate higher-level outcomes to the lower level (artifically inflating sample size).
+- disaggregate higher-level outcomes to the lower level (artificially inflating sample size).
 
-Both strategies obscure the underlying aggregation process, ignore the statistical dependencies present in the data, and prevent the decomposition of variance across levels. In contrast, the extended MMMM implemented in bml explicitly models aggregation through a weight function that may itself depend on parameters and covariates. This approach provides a theoretically grounded and statistically principled framework for studying micro–macro relationships using regression models.
+Both strategies obscure the underlying aggregation process, ignore the statistical dependencies present in the data, and prevent the decomposition of variance across levels. In contrast, the extended MMMM implemented in `bml` explicitly models aggregation through a weight function that may itself depend on parameters and covariates. This approach provides a theoretically grounded and statistically principled framework for studying micro-macro relationships using regression models.
 
 ### With the bml package, you can
 
@@ -82,15 +82,34 @@ bml(
 
 Parties (`pid`) can appear in multiple governments (`gid`), and the party-level covariate `org_structure` enters the model through the multiple-membership term `mm()`. The weights are set to `w ~ 1 / n` (equal weights across the n parties in a coalition), and party-specific random effects are included via `RE = TRUE`.
 
-### Learn more
+## Learn more
+
 Rosche, B. (2026). A Multilevel Model for Coalition Governments: Uncovering Party-Level Dependencies Within and Between Governments. *Political Analysis*, forthcoming. [Preprint](https://osf.io/preprints/socarxiv/4bafr)
 
-### Developers
+## Installation
+
+Install the stable version from CRAN:
+
+```r
+install.packages("bml")
+```
+
+Or install the development version from GitHub:
+
+```r
+remotes::install_github("benrosche/bml")
+```
+
+See the [installation vignette](https://benrosche.github.io/bml/articles/installation.html) for detailed instructions including JAGS setup.
+
+## Developers
 
 I welcome contributions to the package! Feel free to submit changes for review or contact me if you have any questions.
 
-### Issues or Feature Requests
-If you would like to log an issue or submit a feature request, please create a new issue or comment on an existing issue on [GitHub Issues](https://github.com/benrosche/bml/issues) on this repo.
+## Issues or Feature Requests
 
-### Changelog
-See [NEWS.md](https://github.com/benrosche/bml/news/index.html) for the package changelog.
+If you would like to log an issue or submit a feature request, please create a new issue on [GitHub Issues](https://github.com/benrosche/bml/issues).
+
+## Changelog
+
+See [NEWS.md](https://benrosche.github.io/bml/news/index.html) for the package changelog.

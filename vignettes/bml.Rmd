@@ -1,8 +1,8 @@
 ---
-title: "bml"
+title: "Getting Started with bml"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{bml}
+  %\VignetteIndexEntry{Getting Started with bml}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -10,10 +10,151 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE
 )
 ```
 
+## Introduction
+
+The `bml` package implements **Bayesian Multiple-Membership Multilevel Models with Endogenous Weights**. These models are designed for situations where higher-level outcomes depend on the combined influence of multiple lower-level units. Instead of aggregating lower-level data to higher levels (risking aggregation bias) or disaggregating outcomes to lower levels (artificially inflating sample size), `bml` explicitly models how lower-level units jointly shape higher-level outcomes.
+
+## Installation
+
+Install the stable version from CRAN:
+
+```{r}
+install.packages("bml")
+```
+
+Or install the development version from GitHub:
+
+```{r}
+remotes::install_github("benrosche/bml")
+```
+
+You'll also need JAGS installed on your system. See the [installation vignette](installation.html) for details.
+
+## Basic Example
+
+Let's start with a simple example using coalition government data. Each coalition (higher-level unit) is composed of multiple political parties (lower-level units), and we want to model how party characteristics influence coalition outcomes.
+
 ```{r setup}
 library(bml)
+data(coalgov)
+
+# Examine the data structure
+head(coalgov[, c("gid", "pid", "pname", "n", "finance", "dur_wkb", "event_wkb")])
 ```
+
+### Understanding the Data Structure
+
+The `coalgov` dataset is in **long format** where each row represents a party's participation in a coalition:
+
+- `gid`: Government (coalition) identifier
+- `pid`: Party identifier
+- `n`: Number of parties in the coalition
+- `finance`: Party's financial dependence on member contributions (standardized)
+- `dur_wkb`: Coalition duration in days
+- `event_wkb`: Early termination indicator (1 = terminated early, 0 = censored)
+
+### Model 1: Basic Multiple-Membership Model
+
+Our first model examines coalition duration as a function of party-level characteristics, aggregated using equal weights:
+
+```{r}
+mod1 <- bml(
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(
+      id = id(pid, gid),
+      vars = vars(finance),
+      fn = fn(w ~ 1/n, c = TRUE),
+      RE = TRUE
+    ),
+  family = "Weibull",
+  data = coalgov,
+  n.iter = 2000,
+  n.burnin = 500,
+  seed = 1
+)
+
+summary(mod1)
+```
+
+**Breaking down the formula:**
+
+- `Surv(dur_wkb, event_wkb)`: Survival outcome (duration and event indicator)
+- `majority`: Government-level covariate (binary indicator)
+- `mm()`: Multiple-membership block containing:
+  - `id = id(pid, gid)`: Party ID (member) and government ID (group)
+  - `vars = vars(finance)`: Party-level covariate to aggregate
+  - `fn = fn(w ~ 1/n, c = TRUE)`: Weight function (equal weights, constrained to sum to 1)
+  - `RE = TRUE`: Include party-specific random effects
+
+### Model 2: Endogenizing the Weight Function
+
+A key feature of `bml` is the ability to model aggregation weights as a function of covariates. Instead of assuming all parties have equal influence, we can test whether seat share affects a party's weight in the coalition:
+
+```{r}
+mod2 <- bml(
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(
+      id = id(pid, gid),
+      vars = vars(finance),
+      fn = fn(w ~ 1 / (1 + (n - 1) * exp(-b1 * pseat)), c = TRUE),
+      RE = TRUE
+    ),
+  family = "Weibull",
+  priors = c("b.w ~ dnorm(0, 1)"),
+  data = coalgov,
+  n.iter = 2000,
+  n.burnin = 500,
+  seed = 1,
+  monitor = TRUE
+)
+
+summary(mod2)
+```
+
+**New elements:**
+
+- The weight function now includes `pseat` (party seat share) with parameter `b1`
+- `priors`: Specify prior for the weight function parameter
+- `monitor = TRUE`: Save MCMC chains for diagnostics
+
+**Interpretation:**
+
+- If `b1 ≈ 0`: Seat share doesn't affect weights (equal influence)
+- If `b1 > 0`: Larger parties have more weight
+- If `b1 < 0`: Smaller parties have more weight
+
+### Visualizing Results
+
+```{r}
+# Diagnostic plot for weight parameter
+monetPlot(mod2, parameter = "b.w[1]", label = "Seat share effect")
+
+# MCMC diagnostics
+mcmcDiag(mod2, parameters = "b.w")
+```
+
+## Next Steps
+
+- See the [Model documentation](model.html) for mathematical details
+- Explore [Examples](examples.html) for spatial, network, and aggregation applications
+- Check the [FAQ](faq.html) for common questions
+- Read the accompanying paper: [Rosche (2026)](https://osf.io/preprints/socarxiv/4bafr)
+
+## Key Concepts
+
+**Multiple-membership structure:** Higher-level units (coalitions) contain multiple lower-level units (parties), and lower-level units can appear in multiple higher-level units.
+
+**Weight functions:** Control how lower-level characteristics are aggregated. Can be:
+- Fixed (e.g., equal weights `w ~ 1/n`)
+- Endogenous (estimated from data, e.g., `w ~ 1/n^exp(b1*x)`)
+
+**Constraint parameter `c`:**
+- `c = TRUE`: Weights sum to 1 within each group
+- `c = FALSE`: No constraint on weight sums
+
+**Random effects:** Account for unobserved heterogeneity at the member level (`RE = TRUE` in `mm()`) or nesting level (`hm()`)

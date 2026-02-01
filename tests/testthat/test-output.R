@@ -17,7 +17,7 @@ create_test_model <- function(monitor = FALSE) {
 
   tryCatch({
     m <- bml(
-      sim.y ~ 1 + majority,
+      event_wkb ~ 1 + majority,
       family = "Gaussian",
       data = test_data,
       n.iter = 500,
@@ -196,8 +196,8 @@ test_that("Full workflow with mm() and output functions works", {
   tryCatch({
     # Fit model with mm block
     m <- bml(
-      Surv(govdur, earlyterm) ~ 1 + majority +
-        mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+      Surv(dur_wkb, event_wkb) ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE),
       family = "Weibull",
       data = test_data,
       n.iter = 500,

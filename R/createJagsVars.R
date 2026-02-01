@@ -21,34 +21,93 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   # Create IDs
   # ========================================================================================== #
 
-  mmid   <- if (has_mm) data %>% dplyr::arrange(mainid, mmid) %>% dplyr::pull(mmid) else c()
   mainid <- maindat %>% dplyr::pull(mainid)
   hmid   <- if (has_hm) maindat %>% dplyr::pull(hmid) else c()
+  n.main <- length(mainid)
 
-  mmn <- if (has_mm) maindat %>% dplyr::pull(mmn) else c()
+  # Get mmid grouping info
+  all_mmid_names <- if (has_mm) attr(mm_blocks, "all_mmid_names") else c()
+  mmid_to_blocks <- if (has_mm) attr(mm_blocks, "mmid_to_blocks") else list()
+  n_mmid_groups <- length(all_mmid_names)
 
-  mmi1 <- if (has_mm) maindat %>% dplyr::pull(mmi1) else c()
-  mmi1.mm <- if (has_mm) rep(mmi1, mmn) else c()
+  # Per-group structures
+  mmid_list   <- list()  # mmid.g vectors
+  mmi1_list   <- list()  # mmi1.g vectors
+  mmi2_list   <- list()  # mmi2.g vectors
+  mmn_list    <- list()  # mmn.g vectors
+  grp.mm_list <- list()  # grp.mm.g vectors
+  n.mm_list   <- list()  # n.mm.g scalars
+  n.umm_list  <- list()  # n.umm.g scalars
 
-  mmi2 <- if (has_mm) maindat %>% dplyr::pull(mmi2) else c()
-  mmi2.mm <- if (has_mm) rep(mmi2, mmn) else c()
+  # AR structures per group
+  n.GPN_list  <- list()
+  n.GPNi_list <- list()
+  n.GPn_list  <- list()
+
+  if (has_mm) {
+    for (g in seq_along(all_mmid_names)) {
+      mmid_col <- paste0("mmid.", g)
+
+      # Get blocks in this group
+      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+
+      # Get block data for this group (use first block's wdat which has mmid, mainid)
+      # We need to get the unique mmid values for this group
+      first_block <- mm_blocks[[block_indices[1]]]
+      block_data <- first_block$wdat %>%
+        dplyr::arrange(mainid, mmid)
+
+      mmid_list[[g]] <- block_data %>% dplyr::pull(mmid)
+      n.mm_list[[g]] <- length(mmid_list[[g]])
+      n.umm_list[[g]] <- length(unique(mmid_list[[g]]))
+
+      # Compute per-mainid counts and indices for this group
+      group_counts <- block_data %>%
+        dplyr::group_by(mainid) %>%
+        dplyr::summarise(mmn = dplyr::n(), .groups = "drop") %>%
+        dplyr::arrange(mainid)
+
+      # Match to main units (some main units may have 0 members in this group)
+      mmn_full <- rep(0, n.main)
+      mmn_full[group_counts$mainid] <- group_counts$mmn
+      mmn_list[[g]] <- mmn_full
+
+      mmi2_list[[g]] <- cumsum(mmn_list[[g]])
+      mmi1_list[[g]] <- mmi2_list[[g]] - mmn_list[[g]] + 1
+
+      # Group mapping for accumulator pattern
+      grp.mm_list[[g]] <- rep(1:n.main, times = mmn_list[[g]])
+
+      # AR structures for this group
+      n.GPN_list[[g]]  <- block_data %>% dplyr::count(mmid) %>% dplyr::pull(n) %>% max()
+      n.GPNi_list[[g]] <- block_data %>% dplyr::count(mmid) %>% dplyr::pull(n)
+      n.GPn_list[[g]]  <- block_data %>% dplyr::group_by(mmid) %>% dplyr::mutate(n = dplyr::row_number()) %>% dplyr::pull(n)
+    }
+  }
+
+  # For backward compatibility, create non-grouped aliases for single-mmid case
+  mmid   <- if (has_mm && n_mmid_groups >= 1) mmid_list[[1]] else c()
+  mmn    <- if (has_mm && n_mmid_groups >= 1) mmn_list[[1]] else c()
+  mmi1   <- if (has_mm && n_mmid_groups >= 1) mmi1_list[[1]] else c()
+  mmi2   <- if (has_mm && n_mmid_groups >= 1) mmi2_list[[1]] else c()
+  mmi1.mm <- if (has_mm && n_mmid_groups >= 1) rep(mmi1, mmn) else c()
+  mmi2.mm <- if (has_mm && n_mmid_groups >= 1) rep(mmi2, mmn) else c()
 
   # ========================================================================================== #
   # Create Ns
   # ========================================================================================== #
 
-  n.mm   <- length(mmid)
-  n.umm  <- length(unique(mmid))
-  n.main <- length(mainid)
+  n.mm   <- if (has_mm && n_mmid_groups >= 1) n.mm_list[[1]] else 0
+  n.umm  <- if (has_mm && n_mmid_groups >= 1) n.umm_list[[1]] else 0
   n.hm   <- if (has_hm) length(unique(hmid)) else 0
 
   # Map mm-level observation to its main group index (for accumulator optimization)
-  grp.mm <- if (has_mm) rep(1:n.main, times = mmn) else c()
+  grp.mm <- if (has_mm && n_mmid_groups >= 1) grp.mm_list[[1]] else c()
 
-  # For autoregressive RE - mm level
-  n.GPN  <- if (has_mm) data %>% dplyr::count(mmid) %>% dplyr::pull(n) %>% max() else c()
-  n.GPNi <- if (has_mm) data %>% dplyr::count(mmid) %>% dplyr::pull(n) else c()
-  n.GPn  <- if (has_mm) data %>% dplyr::group_by(mmid) %>% dplyr::mutate(n = row_number()) %>% dplyr::pull(n) else c()
+  # For autoregressive RE - mm level (backward compatibility)
+  n.GPN  <- if (has_mm && n_mmid_groups >= 1) n.GPN_list[[1]] else c()
+  n.GPNi <- if (has_mm && n_mmid_groups >= 1) n.GPNi_list[[1]] else c()
+  n.GPn  <- if (has_mm && n_mmid_groups >= 1) n.GPn_list[[1]] else c()
 
   # For autoregressive RE - hm level
   n.HMN  <- if (has_hm) maindat %>% dplyr::count(hmid) %>% dplyr::pull(n) %>% max() else c()
@@ -223,10 +282,16 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
 
   jags.params <- c()
 
-  # MM-level parameters
-  if (has_mm_RE) {
-    jags.params <- c(jags.params, "sigma.mm")
-    if (monitor) jags.params <- c(jags.params, "re.mm")
+  # MM-level parameters - per mmid group with RE
+  if (has_mm) {
+    for (g in seq_along(all_mmid_names)) {
+      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+      has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
+      if (has_re_in_group) {
+        jags.params <- c(jags.params, paste0("sigma.mm.", g))
+        if (monitor) jags.params <- c(jags.params, paste0("re.mm.", g))
+      }
+    }
   }
 
   # b.mm for each mm block with variables
@@ -284,7 +349,35 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
 
   # MM-level data
   if (has_mm) {
-    jags.data <- c(jags.data, "mmid", "mmi1", "mmi2", "n.mm", "n.umm", "n.mmblocks")
+    jags.data <- c(jags.data, "n.mmblocks")
+
+    # Per-mmid-group indices
+    for (g in seq_along(all_mmid_names)) {
+      jags.data <- c(jags.data,
+        paste0("mmi1.", g),
+        paste0("mmi2.", g),
+        paste0("n.mm.", g)
+      )
+
+      # Check if any block in this group has RE
+      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+      has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
+      if (has_re_in_group) {
+        jags.data <- c(jags.data, paste0("mmid.", g), paste0("n.umm.", g))
+      }
+
+      # Check if any block in this group has constraint
+      has_constraint_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$fn$constraint))
+      if (has_constraint_in_group) {
+        jags.data <- c(jags.data, paste0("grp.mm.", g))
+      }
+
+      # Check if any block in this group has AR
+      has_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
+      if (has_ar_in_group) {
+        jags.data <- c(jags.data, paste0("n.GPn.", g), paste0("n.GPNi.", g))
+      }
+    }
 
     for (i in seq_along(mm_blocks)) {
       block <- mm_blocks[[i]]
@@ -297,11 +390,6 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
       # X.w for this block
       if (n.Xw[[i]] > 0) {
         jags.data <- c(jags.data, paste0("X.w.", i))
-      }
-
-      # Accumulator pattern uses grp.mm (not mmi1.mm/mmi2.mm)
-      if (block$fn$constraint) {
-        jags.data <- c(jags.data, "grp.mm")
       }
     }
 
@@ -520,15 +608,34 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
 
   # MM-level data
   if (has_mm) {
-    jags.data.list$mmi1 <- mmi1
-    jags.data.list$mmi2 <- mmi2
-    jags.data.list$n.mm <- n.mm
-    # n.mmblocks not passed to JAGS (unused in model; available in R via Ns$n.mmblocks)
+    # Per-mmid-group indices
+    for (g in seq_along(all_mmid_names)) {
+      jags.data.list[[paste0("mmi1.", g)]] <- mmi1_list[[g]]
+      jags.data.list[[paste0("mmi2.", g)]] <- mmi2_list[[g]]
+      jags.data.list[[paste0("n.mm.", g)]] <- n.mm_list[[g]]
 
-    # Only pass mmid and n.umm if we have random effects
-    if (has_mm_RE) {
-      jags.data.list$mmid <- mmid
-      jags.data.list$n.umm <- n.umm
+      # Check if any block in this group has RE
+      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+      has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
+      if (has_re_in_group) {
+        jags.data.list[[paste0("mmid.", g)]] <- mmid_list[[g]]
+        jags.data.list[[paste0("n.umm.", g)]] <- n.umm_list[[g]]
+      }
+
+      # Check if any block in this group has constraint (computed in JAGS)
+      needs_constraint_in_group <- any(sapply(block_indices, function(i) {
+        mm_blocks[[i]]$fn$constraint && !w.is.precomp[[i]]
+      }))
+      if (needs_constraint_in_group) {
+        jags.data.list[[paste0("grp.mm.", g)]] <- grp.mm_list[[g]]
+      }
+
+      # Check if any block in this group has AR
+      has_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
+      if (has_ar_in_group) {
+        jags.data.list[[paste0("n.GPn.", g)]] <- n.GPn_list[[g]]
+        jags.data.list[[paste0("n.GPNi.", g)]] <- n.GPNi_list[[g]]
+      }
     }
 
     # Per-block data
@@ -555,25 +662,6 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
         # Weights have parameters - pass X.w for computation in JAGS
         jags.data.list[[paste0("X.w.", i)]] <- X.w[[i]]
       }
-    }
-
-    # Constraint indices (only needed when weights are computed in JAGS)
-    needs_constraint_indices <- FALSE
-    for (i in seq_along(mm_blocks)) {
-      if (mm_blocks[[i]]$fn$constraint && !w.is.precomp[[i]]) {
-        needs_constraint_indices <- TRUE
-        break
-      }
-    }
-    if (needs_constraint_indices) {
-      # Accumulator pattern only needs grp.mm (not mmi1.mm/mmi2.mm)
-      jags.data.list$grp.mm <- grp.mm
-    }
-
-    # AR data
-    if (any(sapply(mm_blocks, function(b) b$ar))) {
-      jags.data.list$n.GPn <- n.GPn
-      jags.data.list$n.GPNi <- n.GPNi
     }
   }
 
@@ -612,7 +700,10 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
       ids = list(
         mmid = mmid, mainid = mainid, hmid = hmid,
         mmi1 = mmi1, mmi1.mm = mmi1.mm,
-        mmi2 = mmi2, mmi2.mm = mmi2.mm
+        mmi2 = mmi2, mmi2.mm = mmi2.mm,
+        # Per-group structures
+        mmid_list = mmid_list, mmi1_list = mmi1_list, mmi2_list = mmi2_list,
+        mmn_list = mmn_list, grp.mm_list = grp.mm_list
       ),
       Ns = list(
         n.mm = n.mm, mmn = mmn, n.umm = n.umm,
@@ -621,7 +712,12 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
         n.Xmm.fix = n.Xmm.fix, n.Xmain.fix = n.Xmain.fix, n.Xhm.fix = n.Xhm.fix,
         n.mmblocks = n.mmblocks,
         n.GPN = n.GPN, n.GPNi = n.GPNi, n.GPn = n.GPn,
-        n.HMN = n.HMN, n.HMNi = n.HMNi, n.HMn = n.HMn
+        n.HMN = n.HMN, n.HMNi = n.HMNi, n.HMn = n.HMn,
+        # Per-group counts
+        n.mm_list = n.mm_list, n.umm_list = n.umm_list,
+        n.GPN_list = n.GPN_list, n.GPNi_list = n.GPNi_list, n.GPn_list = n.GPn_list,
+        n_mmid_groups = n_mmid_groups,
+        all_mmid_names = all_mmid_names, mmid_to_blocks = mmid_to_blocks
       ),
       Xs = list(
         X.mm = X.mm, X.main = X.main, X.hm = X.hm, X.w = X.w,

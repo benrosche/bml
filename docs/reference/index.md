@@ -6,22 +6,23 @@
   Multiple-Membership Multilevel Models with Parameterizable Weight
   Functions Using JAGS
 - [`coalgov`](https://benrosche.github.io/bml/reference/coalgov.md) :
-  Coalition governments in comparative perspective (1944-2013)
-- [`fn()`](https://benrosche.github.io/bml/reference/fn.md) : Specify
-  weight function
-- [`hm()`](https://benrosche.github.io/bml/reference/hm.md) :
-  Hierarchical membership specification
-- [`id()`](https://benrosche.github.io/bml/reference/id.md) : Specify ID
-  variables
+  Coalition Governments in Western Democracies (1944-2014)
+- [`fix()`](https://benrosche.github.io/bml/reference/fix.md) : Fix a
+  coefficient to a known value
+- [`fn()`](https://benrosche.github.io/bml/reference/fn.md) : Specify a
+  weight function for multiple-membership models
+- [`hm()`](https://benrosche.github.io/bml/reference/hm.md) : Define a
+  hierarchical nesting structure
+- [`id()`](https://benrosche.github.io/bml/reference/id.md) : Specify
+  identifier variables for multiple-membership and hierarchical
+  structures
 - [`mcmcDiag()`](https://benrosche.github.io/bml/reference/mcmcDiag.md)
   : Summarize MCMC convergence diagnostics
-- [`mm()`](https://benrosche.github.io/bml/reference/mm.md) : Multiple
-  membership specification
+- [`mm()`](https://benrosche.github.io/bml/reference/mm.md) : Define a
+  multiple-membership structure
 - [`monetPlot()`](https://benrosche.github.io/bml/reference/monetPlot.md)
-  : Create monetPlots for your bml results.
-- [`schoolnets`](https://benrosche.github.io/bml/reference/schoolnets.md)
-  : CILS4EU
+  : Visualize posterior distributions with density and trace plots
 - [`summary(`*`<bml>`*`)`](https://benrosche.github.io/bml/reference/summary.bml.md)
-  : summary() method for an bml object
+  : Summarize a fitted bml model
 - [`vars()`](https://benrosche.github.io/bml/reference/vars.md) :
-  Specify variables
+  Specify covariates for multiple-membership or hierarchical models
