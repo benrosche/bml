@@ -56,27 +56,111 @@ Returns `NULL` if no variables are specified.
 ``` r
 # Simple variable specification (formula-style with +)
 vars(income + education)
-#> Error in vars(income + education): could not find function "vars"
+#> $formula
+#> ~0 + income + education
+#> <environment: 0x0000022d917c07b0>
+#> 
+#> $free
+#> [1] "income"    "education"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
 
 # Single variable
 vars(income)
-#> Error in vars(income): could not find function "vars"
+#> $formula
+#> ~0 + income
+#> <environment: 0x0000022d918677b0>
+#> 
+#> $free
+#> [1] "income"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
 
 # Interactions
 vars(income * education)  # expands to income + education + income:education
-#> Error in vars(income * education): could not find function "vars"
+#> $formula
+#> ~0 + income * education
+#> <environment: 0x0000022d918b8b30>
+#> 
+#> $free
+#> [1] "income"    "education"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
 vars(income:education)    # interaction only
-#> Error in vars(income:education): could not find function "vars"
+#> $formula
+#> ~0 + income:education
+#> <environment: 0x0000022d91982000>
+#> 
+#> $free
+#> [1] "income"    "education"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
 
 # Transformations
 vars(I(income^2))         # squared term
-#> Error in vars(I(income^2)): could not find function "vars"
+#> $formula
+#> ~0 + I(income^2)
+#> <environment: 0x0000022d91b66118>
+#> 
+#> $free
+#> [1] "income"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
 vars(income + I(income^2)) # linear and squared
-#> Error in vars(income + I(income^2)): could not find function "vars"
+#> $formula
+#> ~0 + income + I(income^2)
+#> <environment: 0x0000022d91cd7bd8>
+#> 
+#> $free
+#> [1] "income"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
 
 # Mix free and fixed variables
 vars(fix(exposure, 1.0) + income + education)
-#> Error in vars(fix(exposure, 1) + income + education): could not find function "vars"
+#> $formula
+#> ~0 + income + education
+#> <environment: 0x0000022d91d8e238>
+#> 
+#> $free
+#> [1] "income"    "education"
+#> 
+#> $fixed
+#> $fixed[[1]]
+#> $fixed[[1]]$var
+#> [1] "exposure"
+#> 
+#> $fixed[[1]]$value
+#> [1] 1
+#> 
+#> 
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
 
 # Use in mm() specification
 if (FALSE) { # \dontrun{

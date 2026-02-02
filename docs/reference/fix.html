@@ -89,11 +89,36 @@ data to JAGS.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Fix a coefficient to 1.0 (standard offset)</span></span></span>
 <span class="r-in"><span><span class="fu">fix</span><span class="op">(</span><span class="va">exposure</span>, <span class="fl">1.0</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in edit.default(function() {}, title = subx, ...):</span> invalid argument to edit()</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $var</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "exposure"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fix"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use within vars() for multiple-membership models</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="fu">fix</span><span class="op">(</span><span class="va">population</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> <span class="va">education</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(fix(population, 0.5) + income + education):</span> could not find function "vars"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ~0 + income + education</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d91175fc8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $free</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "income"    "education"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $fixed</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $fixed[[1]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $fixed[[1]]$var</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "population"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $fixed[[1]]$value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_vars"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

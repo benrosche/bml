@@ -113,7 +113,60 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile + ipd), fn = fn(w ~ 1/n,     c = TRUE), RE = FALSE): could not find function "mm"
+#> $id
+#> [1] "pid" "gid"
+#> 
+#> $vars
+#> $formula
+#> ~0 + rile + ipd
+#> <environment: 0x0000022d83c2aac0>
+#> 
+#> $free
+#> [1] "rile" "ipd" 
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
+#> 
+#> $fn
+#> $formula
+#> w ~ 1/n
+#> <environment: 0x0000022d83d0a778>
+#> 
+#> $string
+#> [1] "1/n"
+#> 
+#> $vars
+#> [1] "n"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
+#> 
+#> $RE
+#> [1] FALSE
+#> 
+#> $ar
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "bml_mm"
 
 # Random effects only (no variables)
 mm(
@@ -122,7 +175,49 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = TRUE  # Automatically TRUE when vars = NULL
 )
-#> Error in mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE),     RE = TRUE): could not find function "mm"
+#> $id
+#> [1] "pid" "gid"
+#> 
+#> $vars
+#> NULL
+#> 
+#> $fn
+#> $formula
+#> w ~ 1/n
+#> <environment: 0x0000022d83d0a778>
+#> 
+#> $string
+#> [1] "1/n"
+#> 
+#> $vars
+#> [1] "n"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
+#> 
+#> $RE
+#> [1] TRUE
+#> 
+#> $ar
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "bml_mm"
 
 # Flexible weights with parameter
 mm(
@@ -131,7 +226,60 @@ mm(
   fn = fn(w ~ b0 + b1 * tenure, c = TRUE),
   RE = TRUE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(party_strength), fn = fn(w ~     b0 + b1 * tenure, c = TRUE), RE = TRUE): could not find function "mm"
+#> $id
+#> [1] "pid" "gid"
+#> 
+#> $vars
+#> $formula
+#> ~0 + party_strength
+#> <environment: 0x0000022d8ef63e08>
+#> 
+#> $free
+#> [1] "party_strength"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
+#> 
+#> $fn
+#> $formula
+#> w ~ b0 + b1 * tenure
+#> <environment: 0x0000022d83d0a778>
+#> 
+#> $string
+#> [1] "b0 * X0 + b1 * tenure"
+#> 
+#> $vars
+#> [1] "X0"     "tenure"
+#> 
+#> $vars_p
+#> [1] "X0"     "tenure"
+#> 
+#> $params
+#> [1] "b0" "b1"
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
+#> 
+#> $RE
+#> [1] TRUE
+#> 
+#> $ar
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "bml_mm"
 
 # Autoregressive random effects
 mm(
@@ -141,7 +289,49 @@ mm(
   RE = TRUE,
   ar = TRUE  # Random effects evolve over participations
 )
-#> Error in mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE),     RE = TRUE, ar = TRUE): could not find function "mm"
+#> $id
+#> [1] "pid" "gid"
+#> 
+#> $vars
+#> NULL
+#> 
+#> $fn
+#> $formula
+#> w ~ 1/n
+#> <environment: 0x0000022d83d0a778>
+#> 
+#> $string
+#> [1] "1/n"
+#> 
+#> $vars
+#> [1] "n"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
+#> 
+#> $RE
+#> [1] TRUE
+#> 
+#> $ar
+#> [1] TRUE
+#> 
+#> attr(,"class")
+#> [1] "bml_mm"
 
 # Interactions and transformations in vars
 mm(
@@ -150,7 +340,60 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile * ipd), fn = fn(w ~ 1/n,     c = TRUE), RE = FALSE): could not find function "mm"
+#> $id
+#> [1] "pid" "gid"
+#> 
+#> $vars
+#> $formula
+#> ~0 + rile * ipd
+#> <environment: 0x0000022d9023a9e0>
+#> 
+#> $free
+#> [1] "rile" "ipd" 
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
+#> 
+#> $fn
+#> $formula
+#> w ~ 1/n
+#> <environment: 0x0000022d83d0a778>
+#> 
+#> $string
+#> [1] "1/n"
+#> 
+#> $vars
+#> [1] "n"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
+#> 
+#> $RE
+#> [1] FALSE
+#> 
+#> $ar
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "bml_mm"
 
 mm(
   id = id(pid, gid),
@@ -158,5 +401,58 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile + I(rile^2)), fn = fn(w ~     1/n, c = TRUE), RE = FALSE): could not find function "mm"
+#> $id
+#> [1] "pid" "gid"
+#> 
+#> $vars
+#> $formula
+#> ~0 + rile + I(rile^2)
+#> <environment: 0x0000022d903621f8>
+#> 
+#> $free
+#> [1] "rile"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
+#> 
+#> $fn
+#> $formula
+#> w ~ 1/n
+#> <environment: 0x0000022d83d0a778>
+#> 
+#> $string
+#> [1] "1/n"
+#> 
+#> $vars
+#> [1] "n"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
+#> 
+#> $RE
+#> [1] FALSE
+#> 
+#> $ar
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "bml_mm"
 ```

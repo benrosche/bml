@@ -235,54 +235,41 @@ data(coalgov)
 
 # Explore structure
 head(coalgov)
-#>   pid                          pname gid        gname cid  cname     gstart
-#> 1   2 Social Democratic Labour Party   1 Erlander III   1 Sweden 1951-09-30
-#> 2   6                 Agrarian Party   1 Erlander III   1 Sweden 1951-09-30
-#> 3   2 Social Democratic Labour Party   2  Erlander IV   1 Sweden 1952-09-21
-#> 4   6                 Agrarian Party   2  Erlander IV   1 Sweden 1952-09-21
-#> 5   2 Social Democratic Labour Party   3   Erlander V   1 Sweden 1956-09-26
-#> 6   6                 Agrarian Party   3   Erlander V   1 Sweden 1956-09-26
-#>         gend n prime pfam  rile  ipd  fdep   pseatrel majority mwc    hetero
-#> 1 1952-09-21 2     1    3 -33.4 0.25 20.20  0.5774648        0   1 0.4899342
-#> 2 1952-09-21 2     0    8  -4.9 0.00  1.57 -0.5774648        0   1 0.4899342
-#> 3 1956-09-26 2     1    3 -28.3 0.25 20.20  0.6176471        0   1 0.6312770
-#> 4 1956-09-26 2     0    8   1.2 0.00  1.57 -0.6176471        0   1 0.6312770
-#> 5 1957-10-30 2     1    3 -44.2 0.25 20.20  0.6960000        0   1 0.7930250
-#> 6 1957-10-30 2     0    8   1.8 0.00  1.57 -0.6960000        0   1 0.7930250
-#>   investiture pmpower earlyterm govdur govmaxdur     sim.w    sim.y
-#> 1           1       3         0    357       357 0.3259120 24.68602
-#> 2           1       3         0    357       357 0.3176115 24.68602
-#> 3           1       3         0   1466      1466 0.3265548 24.39541
-#> 4           1       3         0   1466      1466 0.3187646 24.39541
-#> 5           1       3         1    399      1451 0.3272454 23.49619
-#> 6           1       3         1    399      1451 0.3196340 23.49619
-#>         sim.st sim.e
-#> 1 2.415099e-10     1
-#> 2 2.772016e-09     1
-#> 3 5.427893e-10     1
-#> 4 1.918542e-10     1
-#> 5 1.208620e-09     1
-#> 6 9.948775e-10     1
+#> # A tibble: 6 × 21
+#>     gid   pid pname   pseat prime   rile cohesion finance Nmembers   cid country
+#>   <int> <dbl> <chr>   <dbl> <lgl>  <dbl>    <dbl>   <dbl>    <dbl> <dbl> <chr>  
+#> 1     3 11320 Socia… 0.295  TRUE  -1.58     0.670  -0.929   -0.105    11 SWE    
+#> 2     3 11810 Agrar… 0.0789 FALSE -0.228   -0.205  -0.983   -0.264    11 SWE    
+#> 3     4 11320 Socia… 0.289  TRUE  -1.58     0.670  -0.929   -0.105    11 SWE    
+#> 4     4 11810 Agrar… 0.0684 FALSE -0.228   -0.205  -0.983   -0.264    11 SWE    
+#> 5     5 11320 Socia… 0.279  TRUE  -1.58     0.670  -0.929   -0.105    11 SWE    
+#> 6     5 11810 Agrar… 0.0500 FALSE -0.228   -0.205  -0.983   -0.264    11 SWE    
+#> # ℹ 10 more variables: pelection <date>, n <dbl>, dur_wkb <dbl>,
+#> #   event_wkb <dbl>, comp_early <dbl>, comp_replace <dbl>, majority <dbl>,
+#> #   mwc <dbl>, rile_SD <dbl>, investiture <dbl>
 table(coalgov$country)
-#> < table of extent 0 >
+#> 
+#> AUS AUT BEL BGR CHE CZE DEU DNK ESP EST FIN FRA GBR GRC HRV HUN IRL ISR ITA JPN 
+#>  46  45 150   7 289  31  57  76   4  27 186 182   2  13  21  19  34 252 196  58 
+#> LTU LVA NLD NOR POL PRT ROU SVK SWE 
+#>  41  72  74  40  42  10  43  32  28 
 
 # Government statistics
 length(unique(coalgov$gid))
-#> [1] 402
+#> [1] 628
 mean(coalgov$event_wkb, na.rm = TRUE)
-#> Warning: argument is not numeric or logical: returning NA
-#> [1] NA
+#> [1] 0.3957631
 summary(coalgov$dur_wkb)
-#> Length  Class   Mode 
-#>      0   NULL   NULL 
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>     7.0   236.0   370.0   526.8   724.0  1840.0 
 
 # Party participation patterns
 table(table(coalgov$pid))
 #> 
 #>  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 
-#> 47 27 18 23  8  8  8  7  9  3  5  2  1  2  1  2  2  1  1  3  1  1  3  1  3  1 
-#> 27 29 32 35 40 
-#>  1  1  2  1  1 
+#> 71 61 38 36 15  8  9  9 10  5  7  4  1  2  1  3  2  1  1  4  1  2  3  1  3  1 
+#> 27 29 32 33 35 39 40 41 66 71 72 
+#>  1  1  2  1  1  1  1  1  1  1  2 
 
 if (FALSE) { # \dontrun{
 # Model: government duration as function of majority status and party characteristics

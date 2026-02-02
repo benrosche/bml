@@ -125,33 +125,339 @@ multiple classification (MMMC) models. *Statistical Modelling*, 1(2),
 ``` r
 # Equal weights (standard multiple-membership)
 fn(w ~ 1/n, c = TRUE)
-#> Error in fn(w ~ 1/n, c = TRUE): could not find function "fn"
+#> $formula
+#> w ~ 1/n
+#> <environment: 0x0000022d9249c9a8>
+#> 
+#> $string
+#> [1] "1/n"
+#> 
+#> $vars
+#> [1] "n"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
 
 # Tenure-based weights (proportional to time served)
 fn(w ~ tenure, c = TRUE)
-#> Error in fn(w ~ tenure, c = TRUE): could not find function "fn"
+#> $formula
+#> w ~ tenure
+#> <environment: 0x0000022d9249c9a8>
+#> 
+#> $string
+#> [1] "tenure"
+#> 
+#> $vars
+#> [1] "tenure"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
 
 # Flexible parameterized weights
 fn(w ~ b0 + b1 * seniority, c = TRUE)
-#> Error in fn(w ~ b0 + b1 * seniority, c = TRUE): could not find function "fn"
+#> $formula
+#> w ~ b0 + b1 * seniority
+#> <environment: 0x0000022d9249c9a8>
+#> 
+#> $string
+#> [1] "b0 * X0 + b1 * seniority"
+#> 
+#> $vars
+#> [1] "X0"        "seniority"
+#> 
+#> $vars_p
+#> [1] "X0"        "seniority"
+#> 
+#> $params
+#> [1] "b0" "b1"
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
 
 # Unconstrained weights
 fn(w ~ importance, c = FALSE)
-#> Error in fn(w ~ importance, c = FALSE): could not find function "fn"
+#> $formula
+#> w ~ importance
+#> <environment: 0x0000022d9249c9a8>
+#> 
+#> $string
+#> [1] "importance"
+#> 
+#> $vars
+#> [1] "importance"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] FALSE
+#> 
+#> $agg_funcs
+#> NULL
+#> 
+#> $agg_vars
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
 
 # Weights based on group aggregates
 fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE)
-#> Error in fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE): could not find function "fn"
+#> $formula
+#> w ~ b1 * min(tenure) + (1 - b1) * mean(tenure)
+#> <environment: 0x0000022d9249c9a8>
+#> 
+#> $string
+#> [1] "b1 * tenure_min + (1 - b1) * tenure_mean"
+#> 
+#> $vars
+#> [1] "tenure_min"  "tenure_mean"
+#> 
+#> $vars_p
+#> [1] "tenure_min"
+#> 
+#> $params
+#> [1] "b1"
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> $agg_funcs[[1]]
+#> $agg_funcs[[1]]$original
+#> [1] "min(tenure)"
+#> 
+#> $agg_funcs[[1]]$func
+#> [1] "min"
+#> 
+#> $agg_funcs[[1]]$var
+#> [1] "tenure"
+#> 
+#> $agg_funcs[[1]]$prob
+#> NULL
+#> 
+#> $agg_funcs[[1]]$col_name
+#> [1] "tenure_min"
+#> 
+#> 
+#> $agg_funcs[[2]]
+#> $agg_funcs[[2]]$original
+#> [1] "mean(tenure)"
+#> 
+#> $agg_funcs[[2]]$func
+#> [1] "mean"
+#> 
+#> $agg_funcs[[2]]$var
+#> [1] "tenure"
+#> 
+#> $agg_funcs[[2]]$prob
+#> NULL
+#> 
+#> $agg_funcs[[2]]$col_name
+#> [1] "tenure_mean"
+#> 
+#> 
+#> 
+#> $agg_vars
+#> [1] "tenure"
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
 
 # Combining individual and aggregate measures
 fn(w ~ b0 + b1 * (tenure / max(tenure)), c = TRUE)
-#> Error in fn(w ~ b0 + b1 * (tenure/max(tenure)), c = TRUE): could not find function "fn"
+#> $formula
+#> w ~ b0 + b1 * (tenure/max(tenure))
+#> <environment: 0x0000022d9249c9a8>
+#> 
+#> $string
+#> [1] "b0 * X0 + b1 * (tenure/tenure_max)"
+#> 
+#> $vars
+#> [1] "X0"         "tenure"     "tenure_max"
+#> 
+#> $vars_p
+#> [1] "X0"
+#> 
+#> $params
+#> [1] "b0" "b1"
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> $agg_funcs[[1]]
+#> $agg_funcs[[1]]$original
+#> [1] "max(tenure)"
+#> 
+#> $agg_funcs[[1]]$func
+#> [1] "max"
+#> 
+#> $agg_funcs[[1]]$var
+#> [1] "tenure"
+#> 
+#> $agg_funcs[[1]]$prob
+#> NULL
+#> 
+#> $agg_funcs[[1]]$col_name
+#> [1] "tenure_max"
+#> 
+#> 
+#> 
+#> $agg_vars
+#> [1] "tenure"
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
 
 # Using median for robust central tendency
 fn(w ~ tenure / median(tenure), c = TRUE)
-#> Error in fn(w ~ tenure/median(tenure), c = TRUE): could not find function "fn"
+#> $formula
+#> w ~ tenure/median(tenure)
+#> <environment: 0x0000022d9249c9a8>
+#> 
+#> $string
+#> [1] "tenure/tenure_median"
+#> 
+#> $vars
+#> [1] "tenure"        "tenure_median"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> $agg_funcs[[1]]
+#> $agg_funcs[[1]]$original
+#> [1] "median(tenure)"
+#> 
+#> $agg_funcs[[1]]$func
+#> [1] "median"
+#> 
+#> $agg_funcs[[1]]$var
+#> [1] "tenure"
+#> 
+#> $agg_funcs[[1]]$prob
+#> NULL
+#> 
+#> $agg_funcs[[1]]$col_name
+#> [1] "tenure_median"
+#> 
+#> 
+#> 
+#> $agg_vars
+#> [1] "tenure"
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
 
 # Using quantiles for percentile-based weights
 fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE)
-#> Error in fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE): could not find function "fn"
+#> $formula
+#> w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25)
+#> <environment: 0x0000022d9249c9a8>
+#> 
+#> $string
+#> [1] "tenure_q75 - tenure_q25"
+#> 
+#> $vars
+#> [1] "tenure_q75" "tenure_q25"
+#> 
+#> $vars_p
+#> character(0)
+#> 
+#> $params
+#> character(0)
+#> 
+#> $constraint
+#> [1] TRUE
+#> 
+#> $agg_funcs
+#> $agg_funcs[[1]]
+#> $agg_funcs[[1]]$original
+#> [1] "quantile(tenure, 0.75)"
+#> 
+#> $agg_funcs[[1]]$func
+#> [1] "quantile"
+#> 
+#> $agg_funcs[[1]]$var
+#> [1] "tenure"
+#> 
+#> $agg_funcs[[1]]$prob
+#> [1] 0.75
+#> 
+#> $agg_funcs[[1]]$col_name
+#> [1] "tenure_q75"
+#> 
+#> 
+#> $agg_funcs[[2]]
+#> $agg_funcs[[2]]$original
+#> [1] "quantile(tenure, 0.25)"
+#> 
+#> $agg_funcs[[2]]$func
+#> [1] "quantile"
+#> 
+#> $agg_funcs[[2]]$var
+#> [1] "tenure"
+#> 
+#> $agg_funcs[[2]]$prob
+#> [1] 0.25
+#> 
+#> $agg_funcs[[2]]$col_name
+#> [1] "tenure_q25"
+#> 
+#> 
+#> 
+#> $agg_vars
+#> [1] "tenure"
+#> 
+#> attr(,"class")
+#> [1] "bml_fn"
 ```

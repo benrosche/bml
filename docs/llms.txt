@@ -1,15 +1,15 @@
-![bml package hexagon logo](reference/figures/bml-hexagon.png)
+  
 
-### Bayesian multiple-membership multilevel models with parameterizable weight function.
+![bml package hexagon logo](reference/figures/bml-hexagon.png)
 
 ## bml: Bayesian Multiple-Membership Multilevel Models with Endogenous Weights
 
 `bml` is an R package for fitting *Bayesian multiple-membership
 multilevel models with endogenous weights* (“extended MMMM”) via JAGS.
-It supports a range of outcome types—including linear, logit,
-conditional logit, and survival models (Cox and Weibull)—and is designed
-for settings where researchers want to model how multiple units at a
-lower level jointly influence outcomes at a higher level.
+It supports a range of outcome types—including linear, logit, and
+survival models (Cox and Weibull)—and is designed for settings where
+researchers want to model how multiple units at a lower level jointly
+influence outcomes at a higher level.
 
 In most multilevel analyses, the primary focus is on how higher-level
 contextual units (e.g., neighborhoods, schools, countries) shape

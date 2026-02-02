@@ -102,7 +102,37 @@ hm(
   name = cname,
   type = "RE"
 )
-#> Error in hm(id = id(cid), vars = vars(gdp + democracy), name = cname,     type = "RE"): could not find function "hm"
+#> $id
+#> [1] "cid"
+#> 
+#> $vars
+#> $formula
+#> ~0 + gdp + democracy
+#> <environment: 0x0000022d90960c08>
+#> 
+#> $free
+#> [1] "gdp"       "democracy"
+#> 
+#> $fixed
+#> NULL
+#> 
+#> attr(,"class")
+#> [1] "bml_vars"
+#> 
+#> $name
+#> [1] "cname"
+#> 
+#> $type
+#> [1] "RE"
+#> 
+#> $showFE
+#> [1] FALSE
+#> 
+#> $ar
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "bml_hm"
 
 # Random intercepts only
 hm(
@@ -110,7 +140,26 @@ hm(
   vars = NULL,
   type = "RE"
 )
-#> Error in hm(id = id(cid), vars = NULL, type = "RE"): could not find function "hm"
+#> $id
+#> [1] "cid"
+#> 
+#> $vars
+#> NULL
+#> 
+#> $name
+#> NULL
+#> 
+#> $type
+#> [1] "RE"
+#> 
+#> $showFE
+#> [1] FALSE
+#> 
+#> $ar
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "bml_hm"
 
 # Fixed effects
 hm(
@@ -120,7 +169,26 @@ hm(
   type = "FE",
   showFE = TRUE  # Show estimates for each country
 )
-#> Error in hm(id = id(cid), vars = NULL, name = cname, type = "FE", showFE = TRUE): could not find function "hm"
+#> $id
+#> [1] "cid"
+#> 
+#> $vars
+#> NULL
+#> 
+#> $name
+#> [1] "cname"
+#> 
+#> $type
+#> [1] "FE"
+#> 
+#> $showFE
+#> [1] TRUE
+#> 
+#> $ar
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "bml_hm"
 
 # Autoregressive random effects
 hm(
@@ -129,5 +197,24 @@ hm(
   type = "RE",
   ar = TRUE  # Effects evolve over time
 )
-#> Error in hm(id = id(cid), vars = NULL, type = "RE", ar = TRUE): could not find function "hm"
+#> $id
+#> [1] "cid"
+#> 
+#> $vars
+#> NULL
+#> 
+#> $name
+#> NULL
+#> 
+#> $type
+#> [1] "RE"
+#> 
+#> $showFE
+#> [1] FALSE
+#> 
+#> $ar
+#> [1] TRUE
+#> 
+#> attr(,"class")
+#> [1] "bml_hm"
 ```
