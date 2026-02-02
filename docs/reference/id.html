@@ -90,15 +90,11 @@ IDs) to group-level units (e.g., government IDs). In hierarchical models,
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Multiple-membership: parties (pid) within governments (gid)</span></span></span>
 <span class="r-in"><span><span class="fu">id</span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "pid" "gid"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_id"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in id(pid, gid):</span> could not find function "id"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Hierarchical: governments within countries</span></span></span>
 <span class="r-in"><span><span class="fu">id</span><span class="op">(</span><span class="va">cid</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "cid"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_id"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in id(cid):</span> could not find function "id"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

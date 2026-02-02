@@ -135,341 +135,35 @@ multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Equal weights (standard multiple-membership)</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> w ~ 1/n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d9249c9a8&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "1/n"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "n"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $params</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $constraint</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fn"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ 1/n, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Tenure-based weights (proportional to time served)</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">tenure</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> w ~ tenure</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d9249c9a8&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $params</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $constraint</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fn"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ tenure, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Flexible parameterized weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">seniority</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> w ~ b0 + b1 * seniority</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d9249c9a8&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "b0 * X0 + b1 * seniority"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "X0"        "seniority"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "X0"        "seniority"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $params</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "b0" "b1"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $constraint</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fn"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b0 + b1 * seniority, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Unconstrained weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">importance</span>, c <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> w ~ importance</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d9249c9a8&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "importance"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "importance"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $params</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $constraint</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fn"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ importance, c = FALSE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Weights based on group aggregates</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> w ~ b1 * min(tenure) + (1 - b1) * mean(tenure)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d9249c9a8&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "b1 * tenure_min + (1 - b1) * tenure_mean"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_min"  "tenure_mean"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_min"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $params</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "b1"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $constraint</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$original</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "min(tenure)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$func</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "min"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$var</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$prob</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$col_name</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_min"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$original</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "mean(tenure)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$func</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "mean"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$var</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$prob</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$col_name</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_mean"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fn"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Combining individual and aggregate measures</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="op">(</span><span class="va">tenure</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> w ~ b0 + b1 * (tenure/max(tenure))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d9249c9a8&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "b0 * X0 + b1 * (tenure/tenure_max)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "X0"         "tenure"     "tenure_max"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "X0"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $params</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "b0" "b1"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $constraint</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$original</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "max(tenure)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$func</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "max"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$var</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$prob</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$col_name</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_max"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fn"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b0 + b1 * (tenure/max(tenure)), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using median for robust central tendency</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">tenure</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> w ~ tenure/median(tenure)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d9249c9a8&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure/tenure_median"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"        "tenure_median"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $params</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $constraint</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$original</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "median(tenure)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$func</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "median"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$var</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$prob</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$col_name</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_median"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fn"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ tenure/median(tenure), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using quantiles for percentile-based weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">tenure</span>, <span class="fl">0.75</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">tenure</span>, <span class="fl">0.25</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $formula</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000022d9249c9a8&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_q75 - tenure_q25"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_q75" "tenure_q25"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $vars_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $params</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $constraint</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$original</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "quantile(tenure, 0.75)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$func</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "quantile"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$var</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$prob</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.75</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[1]]$col_name</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_q75"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$original</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "quantile(tenure, 0.25)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$func</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "quantile"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$var</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$prob</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.25</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_funcs[[2]]$col_name</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure_q25"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $agg_vars</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "tenure"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bml_fn"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

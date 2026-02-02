@@ -43,13 +43,9 @@ A `bml_id` object containing the variable names as character strings.
 ``` r
 # Multiple-membership: parties (pid) within governments (gid)
 id(pid, gid)
-#> [1] "pid" "gid"
-#> attr(,"class")
-#> [1] "bml_id"
+#> Error in id(pid, gid): could not find function "id"
 
 # Hierarchical: governments within countries
 id(cid)
-#> [1] "cid"
-#> attr(,"class")
-#> [1] "bml_id"
+#> Error in id(cid): could not find function "id"
 ```

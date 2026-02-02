@@ -38,34 +38,9 @@ A `bml_fix` object that can be used within
 ``` r
 # Fix a coefficient to 1.0 (standard offset)
 fix(exposure, 1.0)
-#> $var
-#> [1] "exposure"
-#> 
-#> $value
-#> [1] 1
-#> 
-#> attr(,"class")
-#> [1] "bml_fix"
+#> Error in edit.default(function() {}, title = subx, ...): invalid argument to edit()
 
 # Use within vars() for multiple-membership models
 vars(fix(population, 0.5) + income + education)
-#> $formula
-#> ~0 + income + education
-#> <environment: 0x0000022d91175fc8>
-#> 
-#> $free
-#> [1] "income"    "education"
-#> 
-#> $fixed
-#> $fixed[[1]]
-#> $fixed[[1]]$var
-#> [1] "population"
-#> 
-#> $fixed[[1]]$value
-#> [1] 0.5
-#> 
-#> 
-#> 
-#> attr(,"class")
-#> [1] "bml_vars"
+#> Error in vars(fix(population, 0.5) + income + education): could not find function "vars"
 ```
