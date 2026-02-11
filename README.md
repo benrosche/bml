@@ -28,12 +28,7 @@ it allows researchers to explicitly model how the combined influence of
 many lower-level units propagates “upwards” to a higher-level outcome,
 enabling the study of micro-to-macro relationships.
 
-Traditional approaches to micro-macro questions either:
-
-- aggregate lower-level variables to the higher level (risking
-  aggregation bias), or
-- disaggregate higher-level outcomes to the lower level (artificially
-  inflating sample size).
+Traditional approaches to micro-macro questions either (i) aggregate lower-level variables to the higher level (risking aggregation bias), or (ii) disaggregate higher-level outcomes to the lower level (artificially inflating sample size).
 
 Both strategies obscure the underlying aggregation process, ignore the
 statistical dependencies present in the data, and prevent the

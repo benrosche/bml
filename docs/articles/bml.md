@@ -2,13 +2,14 @@
 
 ## Introduction
 
-The `bml` package implements **Bayesian Multiple-Membership Multilevel
-Models with Endogenous Weights**. These models are designed for
-situations where higher-level outcomes depend on the combined influence
-of multiple lower-level units. Instead of aggregating lower-level data
-to higher levels (risking aggregation bias) or disaggregating outcomes
-to lower levels (artificially inflating sample size), `bml` explicitly
-models how lower-level units jointly shape higher-level outcomes.
+The `bml` package implements *Bayesian Multiple-Membership Multilevel
+Models with Parameterizable Weight Functions*. These models are designed
+for situations where higher-level outcomes depend on the combined
+influence of multiple lower-level units. Instead of aggregating
+lower-level data to higher levels (risking aggregation bias) or
+disaggregating outcomes to lower levels (artificially inflating sample
+size), `bml` explicitly models how lower-level units jointly shape
+higher-level outcomes.
 
 ## Installation
 
@@ -17,13 +18,6 @@ Install the stable version from CRAN:
 ``` r
 
 install.packages("bml")
-```
-
-Or install the development version from GitHub:
-
-``` r
-
-remotes::install_github("benrosche/bml")
 ```
 
 You’ll also need JAGS installed on your system. See the [installation
@@ -98,7 +92,7 @@ summary(mod1)
     constrained to sum to 1)
   - `RE = TRUE`: Include party-specific random effects
 
-### Model 2: Endogenizing the Weight Function
+### Model 2: Parameterizing the Weight Function
 
 A key feature of `bml` is the ability to model aggregation weights as a
 function of covariates. Instead of assuming all parties have equal
@@ -108,18 +102,17 @@ the coalition:
 ``` r
 
 mod2 <- bml(
-  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+  Surv(dur_wkb, event_wkb) ~ 1 +
+    majority +
     mm(
       id = id(pid, gid),
       vars = vars(finance),
-      fn = fn(w ~ 1 / (1 + (n - 1) * exp(-b1 * pseat)), c = TRUE),
+      fn = fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * pseat))), c = TRUE),
       RE = TRUE
     ),
   family = "Weibull",
-  priors = c("b.w ~ dnorm(0, 1)"),
+  priors = c("b.w ~ dnorm(0, 1)"), # prior on the weight parameters
   data = coalgov,
-  n.iter = 2000,
-  n.burnin = 500,
   seed = 1,
   monitor = TRUE
 )
@@ -148,7 +141,7 @@ summary(mod2)
 monetPlot(mod2, parameter = "b.w[1]", label = "Seat share effect")
 
 # MCMC diagnostics
-mcmcDiag(mod2, parameters = "b.w")
+mcmcDiag(mod2, parameters = "b.w[1]")
 ```
 
 ## Next Steps
@@ -166,18 +159,18 @@ mcmcDiag(mod2, parameters = "b.w")
 
 ## Key Concepts
 
-**Multiple-membership structure:** Higher-level units (coalitions)
-contain multiple lower-level units (parties), and lower-level units can
-appear in multiple higher-level units.
-
-**Weight functions:** Control how lower-level characteristics are
-aggregated. Can be: - Fixed (e.g., equal weights `w ~ 1/n`) - Endogenous
-(estimated from data, e.g., `w ~ 1/n^exp(b1*x)`)
-
-**Constraint parameter `c`:** - `c = TRUE`: Weights sum to 1 within each
-group - `c = FALSE`: No constraint on weight sums
-
-**Random effects:** Account for unobserved heterogeneity at the member
-level (`RE = TRUE` in
-[`mm()`](https://benrosche.github.io/bml/reference/mm.md)) or nesting
-level ([`hm()`](https://benrosche.github.io/bml/reference/hm.md))
+- **Multiple-membership structure:** Higher-level units (coalitions)
+  contain multiple lower-level units (parties), and lower-level units
+  can appear in multiple higher-level units.
+- **Weight functions:** Control how lower-level characteristics are
+  aggregated. Can be:
+  - Fixed (e.g., equal weights `w ~ 1/n`)
+  - Endogenous (estimated from data, e.g., `w ~ 1/n^exp(b1*x)`)
+- **Constraint parameter `c`:**
+  - `c = TRUE`: Weights sum to 1 within each group
+  - `c = FALSE`: No constraint on weight sums
+- **Random effects:** Account for unobserved heterogeneity at the member
+  level (`RE = TRUE` in
+  [`mm()`](https://benrosche.github.io/bml/reference/mm.md)) or nesting
+  level (`type = "RE"` in
+  [`hm()`](https://benrosche.github.io/bml/reference/hm.md))

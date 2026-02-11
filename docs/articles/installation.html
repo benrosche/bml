@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Installation • bml</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,32 +117,21 @@ it.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="verify-the-installation">3. Verify the installation<a class="anchor" aria-label="anchor" href="#verify-the-installation"></a>
-</h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://benrosche.github.io/bml">bml</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">"bml"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Optional: confirm that rjags is linked against JAGS</span></span>
-<span><span class="fu">rjags</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rjags/man/jags.version.html" class="external-link">jags.version</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
 <h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
 </h2>
-<p><strong><code>Error: (converted from warning) ...</code> while
-installing</strong></p>
-<p>If <a href="https://remotes.r-lib.org" class="external-link">remotes</a> treats an installation warning as an error
-on your machine, you can opt out:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<ul>
+<li>
+<p><code>Error: (converted from warning) ...</code> while
+installing. <a href="https://remotes.r-lib.org" class="external-link">remotes</a> treats an installation warning as an
+error on your machine. You can opt out:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>R_REMOTES_NO_ERRORS_FROM_WARNINGS <span class="op">=</span> <span class="st">"true"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"benrosche/bml"</span><span class="op">)</span></span></code></pre></div>
-<p><strong>JAGS not found / <code>rjags</code> fails to
-load</strong></p>
-<ul>
-<li>Make sure JAGS is installed (not just the R packages), then restart
-R.</li>
-<li>On Windows, confirm you installed the 64-bit JAGS build if you are
-using 64-bit R.</li>
+</li>
+<li><p>JAGS not found / <code>rjags</code> fails to load: Make sure JAGS
+is installed (not just the R packages), then restart R. On Windows,
+confirm you installed the 64-bit JAGS build if you are using 64-bit
+R.</p></li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

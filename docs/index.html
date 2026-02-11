@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>bml • bml</title>
-<script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -22,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,11 +73,7 @@
 
 <p><code>bml</code> is an R package for fitting <em>Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions</em> (“extended MMMM”) via JAGS. It supports a range of outcome types—including linear, logit, and survival models (Cox and Weibull)—and is designed for settings where researchers want to model how multiple units at a lower level jointly influence outcomes at a higher level.</p>
 <p>In most multilevel analyses, the primary focus is on how higher-level contextual units (e.g., neighborhoods, schools, countries) shape outcomes observed at lower levels (e.g., individuals, students, governments), reflecting a macro-to-micro perspective. bml turns this logic around. Through an extended multiple-membership multilevel model, it allows researchers to explicitly model how the combined influence of many lower-level units propagates “upwards” to a higher-level outcome, enabling the study of micro-to-macro relationships.</p>
-<p>Traditional approaches to micro-macro questions either:</p>
-<ul>
-<li>aggregate lower-level variables to the higher level (risking aggregation bias), or</li>
-<li>disaggregate higher-level outcomes to the lower level (artificially inflating sample size).</li>
-</ul>
+<p>Traditional approaches to micro-macro questions either (i) aggregate lower-level variables to the higher level (risking aggregation bias), or (ii) disaggregate higher-level outcomes to the lower level (artificially inflating sample size).</p>
 <p>Both strategies obscure the underlying aggregation process, ignore the statistical dependencies present in the data, and prevent the decomposition of variance across levels. In contrast, the extended MMMM implemented in <code>bml</code> explicitly models aggregation through a weight function that may itself depend on parameters and covariates. This approach provides a theoretically grounded and statistically principled framework for studying micro-macro relationships using regression models.</p>
 <div class="section level3">
 <h3 id="with-the-bml-package-you-can">With the bml package, you can<a class="anchor" aria-label="anchor" href="#with-the-bml-package-you-can"></a>

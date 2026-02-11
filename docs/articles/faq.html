@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Frequently Asked Questions • bml</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,10 +83,10 @@ conventional multilevel model?<a class="anchor" aria-label="anchor" href="#whats
 </h2>
 <p>In a conventional hierarchical multilevel model, each lower-level
 unit belongs to exactly one higher-level unit (e.g., students nested in
-schools). In a <strong>multiple-membership model (MMMM)</strong>,
-lower-level units can belong to multiple higher-level units
-simultaneously, or alternatively, higher-level outcomes can be
-influenced by multiple lower-level units.</p>
+schools). In a <em>multiple-membership model (MMMM)</em>, lower-level
+units can belong to multiple higher-level units simultaneously, or
+alternatively, higher-level outcomes can be influenced by multiple
+lower-level units.</p>
 <p>For example:</p>
 <ul>
 <li>
@@ -100,13 +106,11 @@ model how multiple units jointly shape higher-level outcomes.</p>
 <h2 id="whats-the-difference-between-a-conventional-mmmm-and-the-extended-mmmm-implemented-in-bml">2. What’s the difference between a conventional MMMM and the
 extended MMMM implemented in <code>bml</code>?<a class="anchor" aria-label="anchor" href="#whats-the-difference-between-a-conventional-mmmm-and-the-extended-mmmm-implemented-in-bml"></a>
 </h2>
-<p>The <strong>conventional MMMM</strong> (as implemented in MLwiN,
-brms, or other software) uses <strong>fixed, pre-specified
-weights</strong> to aggregate lower-level effects. For instance, you
-might use equal weights (1/n) or weights based on time spent in each
-context.</p>
-<p>The <strong>extended MMMM</strong> in <code>bml</code> allows you
-to:</p>
+<p>The <em>conventional MMMM</em> (as implemented in MLwiN, brms, or
+other software) uses <em>fixed, pre-specified weights</em> to aggregate
+lower-level effects. For instance, you might use equal weights (1/n) or
+weights based on time spent in each context.</p>
+<p>The <em>extended MMMM</em> in <code>bml</code> allows you to:</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Parameterize the weight function:</strong> Instead of
 fixing weights, you can specify a functional form for weights (e.g.,
@@ -120,8 +124,8 @@ spatial or network weights externally, let the data determine connection
 strengths as functions of covariates.</p></li>
 </ol>
 <p>This flexibility enables researchers to explicitly model the
-<strong>micro-to-macro link</strong> — how lower-level characteristics
-aggregate to produce higher-level outcomes.</p>
+<em>micro-to-macro link</em> — how lower-level characteristics aggregate
+to produce higher-level outcomes.</p>
 </div>
 <div class="section level2">
 <h2 id="when-should-i-use-bml-instead-of-other-multilevel-modeling-packages">3. When should I use <code>bml</code> instead of other multilevel
@@ -133,21 +137,20 @@ modeling packages?<a class="anchor" aria-label="anchor" href="#when-should-i-use
 Higher-level outcomes depend on multiple lower-level units (e.g.,
 coalitions composed of parties, teams composed of individuals,
 neighborhoods influenced by surrounding areas).</p></li>
-<li><p><strong>You want to model the aggregation process:</strong>
-Rather than assuming a fixed aggregation (e.g., simple average), you
-want to test and estimate how lower-level effects combine.</p></li>
 <li><p><strong>You need flexible weight functions:</strong> Your theory
 suggests weights should depend on covariates, group size, or other
 features, not be fixed in advance.</p></li>
-<li><p><strong>You’re studying micro-to-macro relationships:</strong>
-Your research question focuses on how lower-level units jointly shape
-higher-level outcomes, rather than how higher-level contexts shape
-lower-level outcomes.</p></li>
+<li><p><strong>You’re studying aggregation processes / micro-to-macro
+relationships:</strong> Your research question focuses on how
+lower-level units jointly shape higher-level outcomes, rather than how
+higher-level contexts shape lower-level outcomes. Rather than assuming a
+fixed aggregation (e.g., simple average), you want to test and estimate
+how lower-level effects combine.</p></li>
 </ul>
 <p>For standard hierarchical models without multiple membership,
 packages like <code>lme4</code>, <code>brms</code>, or
-<code>MCMCglmm</code> may be more efficient. For conventional MMMMs with
-fixed weights, <code>brms</code> or MLwiN are excellent
+<code>MCMCglmm</code> will be more efficient. For conventional MMMMs
+with fixed weights, <code>brms</code> or MLwiN are excellent
 alternatives.</p>
 </div>
 <div class="section level2">
@@ -163,20 +166,16 @@ regression</li>
 <li>
 <strong>Binary outcomes:</strong> Logit (logistic) regression</li>
 <li>
-<strong>Categorical outcomes:</strong> Conditional logit
-(multinomial logit) regression</li>
-<li>
 <strong>Survival/duration outcomes:</strong>
 <ul>
 <li>Cox proportional hazards model</li>
 <li>Weibull accelerated failure time (AFT) model</li>
-<li>Support for competing risks analysis</li>
 </ul>
 </li>
 </ul>
 <p>You can also specify hierarchical random effects (<code><a href="../reference/hm.html">hm()</a></code>
 blocks) in addition to multiple-membership structures, allowing for
-complex cross-classified and nested designs.</p>
+hierarchically nested and cross-classified designs.</p>
 </div>
 <div class="section level2">
 <h2 id="how-do-i-specify-the-weight-function-and-what-are-the-c-and-ar-parameters">5. How do I specify the weight function, and what are the

@@ -1,7 +1,7 @@
 Package: bml
 Type: Package
 Title: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions
-Version: 1.0.0
+Version: 0.9.0
 Author: Benjamin Rosche
 Maintainer: Benjamin Rosche <benrosche@nyu.edu>
 Description: The bml package provides an interface for fitting Bayesian multiple-membership multilevel models with parameterizable weight functions using JAGS.

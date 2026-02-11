@@ -6,7 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Model Structure • bml</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,22 +84,18 @@
 <strong>multiple-membership multilevel models (MMMM)</strong> with
 <strong>parameterizable weight functions</strong>. These models are
 designed for data structures where:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Lower-level units (members)</strong> can belong to
-<strong>multiple higher-level units (groups)</strong>
-</li>
-<li>
-<strong>Groups</strong> are composed of <strong>multiple
-members</strong>
-</li>
+<ul>
+<li>Lower-level units (members) can belong to multiple higher-level
+units (groups)</li>
+<li>Groups are composed of multiple members</li>
 <li>Group outcomes depend on the combined influence of their constituent
 members</li>
-</ol>
+</ul>
 <p>This structure is common across many empirical settings: political
 parties participating in multiple coalition governments, individuals
 participating in multiple teams, spatial units influenced by multiple
-neighbors, or actors embedded in multiple networks.</p>
+neighbors, or students in peer networks, where each student is
+influenced by multiple peers.</p>
 <p>The key innovation of the extended MMMM is that it allows researchers
 to <strong>model rather than impose</strong> the aggregation mechanism
 through which member-level effects combine to influence group-level
@@ -105,46 +107,33 @@ outcomes.</p>
 <p>Let:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">i = 1, \ldots, N</annotation></semantics></math>
-index <strong>groups</strong> (the primary unit of analysis)</li>
+<span class="math inline">\(i = 1, \ldots, N\)</span> index
+<strong>groups</strong> (the primary unit of analysis)</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">k = 1, \ldots, K</annotation></semantics></math>
-index <strong>members</strong> (lower-level units)</li>
+<span class="math inline">\(k = 1, \ldots, K\)</span> index
+<strong>members</strong> (lower-level units)</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>J</mi></mrow><annotation encoding="application/x-tex">j = 1, \ldots, J</annotation></semantics></math>
-index <strong>nesting units</strong> (higher-level contexts)</li>
+<span class="math inline">\(j = 1, \ldots, J\)</span> index
+<strong>nesting units</strong> (higher-level contexts)</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">p[i]</annotation></semantics></math>
-denote the set of members belonging to group
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
+<span class="math inline">\(p[i]\)</span> denote the set of members
+belonging to group <span class="math inline">\(i\)</span>
 </li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>n</mi><mi>i</mi></msub><mo>=</mo><mo stretchy="false" form="prefix">|</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo><mo stretchy="false" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">n_i = |p[i]|</annotation></semantics></math>
-denote the number of members in group
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
+<span class="math inline">\(n_i = |p[i]|\)</span> denote the number
+of members in group <span class="math inline">\(i\)</span>
 </li>
 </ul>
 <p><strong>Example (Coalition Governments):</strong> Groups are
-governments
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>),
-members are political parties
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>),
-and nesting units are countries
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>).
-The function
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">p[i]</annotation></semantics></math>
-returns all parties in government
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>,
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>n</mi><mi>i</mi></msub><annotation encoding="application/x-tex">n_i</annotation></semantics></math>
-is coalition size.</p>
-<p>The outcome
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>y</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">y_i^{(g)}</annotation></semantics></math>
-is measured at the group level, where superscript
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(g)</annotation></semantics></math>
-denotes the level of measurement. In what follows, we present the model
-for Gaussian (normal) outcomes, though the framework extends to other
-distributions (see Extensions section).</p>
+governments (<span class="math inline">\(i\)</span>), members are
+political parties (<span class="math inline">\(k\)</span>), and nesting
+units are countries (<span class="math inline">\(j\)</span>). The
+function <span class="math inline">\(p[i]\)</span> returns all parties
+in government <span class="math inline">\(i\)</span>, and <span class="math inline">\(n_i\)</span> is coalition size.</p>
+<p>The outcome <span class="math inline">\(y_i^{(g)}\)</span> is
+measured at the group level, where superscript <span class="math inline">\((g)\)</span> denotes the level of measurement. In
+what follows, we present the model for Gaussian (normal) outcomes,
+though the framework extends to other distributions (see below).</p>
 </div>
 <div class="section level2">
 <h2 id="the-extended-multiple-membership-multilevel-model">The Extended Multiple-Membership Multilevel Model<a class="anchor" aria-label="anchor" href="#the-extended-multiple-membership-multilevel-model"></a>
@@ -152,28 +141,25 @@ distributions (see Extensions section).</p>
 <div class="section level3">
 <h3 id="full-model-specification">Full Model Specification<a class="anchor" aria-label="anchor" href="#full-model-specification"></a>
 </h3>
-<p>The extended MMMM decomposes a group-level outcome into three
-components corresponding to the levels at which explanatory factors
-operate:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>y</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>θ</mi><mrow><mi>j</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">\begin{equation}
-y_i^{(g)} = \theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)} \tag{1}
-\end{equation}</annotation></semantics></math></p>
+<p>The extended MMMM decomposes the group-level outcome into three
+additive components, each corresponding to a level at which explanatory
+factors operate:</p>
+<p><span class="math display">\[\begin{equation}
+y_i^{(g)} = \theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)}
+\tag{1}
+\end{equation}\]</span></p>
 <p>where:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\theta_i^{(g)}</annotation></semantics></math>
-is the <strong>group-level effect</strong>
-</li>
+<span class="math inline">\(\theta_i^{(g)}\)</span> denotes the
+group-level effect associated with government <span class="math inline">\(i\)</span>.</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>θ</mi><mrow><mi>j</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\theta_{j[i]}^{(c)}</annotation></semantics></math>
-is the <strong>nesting-level effect</strong> (for nesting unit
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
-containing group
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>)</li>
+<span class="math inline">\(\theta_{j[i]}^{(c)}\)</span> denotes the
+hierarchical nesting-level effect associated with country <span class="math inline">\(j[i]\)</span>.</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\theta_i^{(p)}</annotation></semantics></math>
-is the <strong>aggregated member-level effect</strong>
-</li>
+<span class="math inline">\(\theta_i^{(p)}\)</span> denotes the
+aggregated member-level effect, summarizing party-level contributions
+within government <span class="math inline">\(i\)</span>.</li>
 </ul>
 <p>Each component includes both systematic effects (observed covariates)
 and random effects (unobserved heterogeneity).</p>
@@ -183,57 +169,60 @@ and random effects (unobserved heterogeneity).</p>
 </h3>
 <p>The group-level effect models the direct influence of group-level
 covariates and group-specific unobserved factors:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>u</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mspace width="1.0em"></mspace><msubsup><mi>u</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mover><mo>∼</mo><mtext mathvariant="normal">iid</mtext></mover><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
-\theta_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} + u_i^{(g)}, \quad u_i^{(g)} \overset{\text{iid}}{\sim} N(0, \sigma_{u^{(g)}}^2) \tag{2}
-\end{equation}</annotation></semantics></math></p>
+<p><span class="math display">\[\begin{equation}
+\theta_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} +
+u_i^{(g)}, \quad u_i^{(g)} \overset{\text{iid}}{\sim} N(0,
+\sigma_{u^{(g)}}^2) \tag{2}
+\end{equation}\]</span></p>
 <p>where:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>𝐱</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mo stretchy="false" form="prefix">[</mo><mn>1</mn><mo>,</mo><msubsup><mi>x</mi><mrow><mn>1</mn><mi>i</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mi>…</mi><mo>,</mo><msubsup><mi>x</mi><mrow><mi>G</mi><mi>i</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\mathbf{x}_i^{(g)} = [1, x_{1i}^{(g)}, \ldots, x_{Gi}^{(g)}]</annotation></semantics></math>
-is a vector of group-level covariates</li>
+<span class="math inline">\(\mathbf{x}_i^{(g)} = [1, x_{1i}^{(g)},
+\ldots, x_{Gi}^{(g)}]\)</span> is a vector of group-level
+covariates</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>=</mo><mo stretchy="false" form="prefix">[</mo><msubsup><mi>β</mi><mn>0</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msubsup><mi>β</mi><mn>1</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mi>…</mi><mo>,</mo><msubsup><mi>β</mi><mi>G</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(g)} = [\beta_0^{(g)}, \beta_1^{(g)}, \ldots, \beta_G^{(g)}]</annotation></semantics></math>
-are the corresponding regression coefficients</li>
+<span class="math inline">\(\boldsymbol{\beta}^{(g)} =
+[\beta_0^{(g)}, \beta_1^{(g)}, \ldots, \beta_G^{(g)}]\)</span> are the
+corresponding regression coefficients</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>u</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">u_i^{(g)}</annotation></semantics></math>
-are independently and identically distributed (i.i.d.) random
-effects</li>
+<span class="math inline">\(u_i^{(g)}\)</span> are independently and
+identically distributed (i.i.d.) random effects</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_{u^{(g)}}^2</annotation></semantics></math>
-captures unobserved heterogeneity at the group level</li>
+<span class="math inline">\(\sigma_{u^{(g)}}^2\)</span> captures
+unobserved heterogeneity at the group level</li>
 </ul>
-<p><strong>Example:</strong> For government survival,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>𝐱</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\mathbf{x}_i^{(g)}</annotation></semantics></math>
-might include majority status, ideological heterogeneity, or economic
-conditions.</p>
+<p><strong>Example:</strong> For government survival, <span class="math inline">\(\mathbf{x}_i^{(g)}\)</span> might include majority
+status, ideological heterogeneity, or economic conditions.</p>
 </div>
 <div class="section level3">
-<h3 id="nesting-level-effect">Nesting-Level Effect<a class="anchor" aria-label="anchor" href="#nesting-level-effect"></a>
+<h3 id="hierarchical-nesting-level-effect">Hierarchical Nesting-Level Effect<a class="anchor" aria-label="anchor" href="#hierarchical-nesting-level-effect"></a>
 </h3>
 <p>When groups are nested within higher-level contexts, the
 nesting-level effect accounts for hierarchical dependencies:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>θ</mi><mi>j</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mi>j</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>u</mi><mi>j</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mspace width="1.0em"></mspace><msubsup><mi>u</mi><mi>j</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mover><mo>∼</mo><mtext mathvariant="normal">iid</mtext></mover><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
-\theta_j^{(c)} = \boldsymbol{\beta}^{(c)} \cdot \mathbf{x}_j^{(c)} + u_j^{(c)}, \quad u_j^{(c)} \overset{\text{iid}}{\sim} N(0, \sigma_{u^{(c)}}^2) \tag{3}
-\end{equation}</annotation></semantics></math></p>
+<p><span class="math display">\[\begin{equation}
+\theta_j^{(c)} = \boldsymbol{\beta}^{(c)} \cdot \mathbf{x}_j^{(c)} +
+u_j^{(c)}, \quad u_j^{(c)} \overset{\text{iid}}{\sim} N(0,
+\sigma_{u^{(c)}}^2) \tag{3}
+\end{equation}\]</span></p>
 <p>where:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>𝐱</mi><mi>j</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mo stretchy="false" form="prefix">[</mo><msubsup><mi>x</mi><mrow><mn>1</mn><mi>j</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mi>…</mi><mo>,</mo><msubsup><mi>x</mi><mrow><mi>C</mi><mi>j</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\mathbf{x}_j^{(c)} = [x_{1j}^{(c)}, \ldots, x_{Cj}^{(c)}]</annotation></semantics></math>
-are nesting-level covariates</li>
+<span class="math inline">\(\mathbf{x}_j^{(c)} = [x_{1j}^{(c)},
+\ldots, x_{Cj}^{(c)}]\)</span> are nesting-level covariates</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>=</mo><mo stretchy="false" form="prefix">[</mo><msubsup><mi>β</mi><mn>1</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mi>…</mi><mo>,</mo><msubsup><mi>β</mi><mi>C</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(c)} = [\beta_1^{(c)}, \ldots, \beta_C^{(c)}]</annotation></semantics></math>
-are the corresponding coefficients</li>
+<span class="math inline">\(\boldsymbol{\beta}^{(c)} =
+[\beta_1^{(c)}, \ldots, \beta_C^{(c)}]\)</span> are the corresponding
+coefficients</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>u</mi><mi>j</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">u_j^{(c)}</annotation></semantics></math>
-are i.i.d. random effects</li>
+<span class="math inline">\(u_j^{(c)}\)</span> are i.i.d. random
+effects</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_{u^{(c)}}^2</annotation></semantics></math>
-captures unobserved heterogeneity at the nesting level</li>
+<span class="math inline">\(\sigma_{u^{(c)}}^2\)</span> captures
+unobserved heterogeneity at the nesting level</li>
 </ul>
-<p>Including
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>u</mi><mi>j</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">u_j^{(c)}</annotation></semantics></math>
-allows groups within the same nesting unit to be more similar than
-groups across nesting units, even after conditioning on observed
+<p>Including <span class="math inline">\(u_j^{(c)}\)</span> allows
+groups within the same nesting unit to be more similar than groups
+across nesting units, even after conditioning on observed
 covariates.</p>
 <p><strong>Example:</strong> Governments are nested within countries.
 Country-level variables might include electoral system or investiture
@@ -241,7 +230,7 @@ requirements. The random effect captures country-specific factors
 affecting all governments in that country.</p>
 <p><strong>Note:</strong> Multiple <code><a href="../reference/hm.html">hm()</a></code> blocks can be
 specified to accommodate cross-classified structures (e.g., groups
-nested within multiple non-hierarchical contexts).</p>
+nested within multiple hierarchical contexts).</p>
 </div>
 <div class="section level3">
 <h3 id="aggregated-member-level-effect">Aggregated Member-Level Effect<a class="anchor" aria-label="anchor" href="#aggregated-member-level-effect"></a>
@@ -249,69 +238,58 @@ nested within multiple non-hierarchical contexts).</p>
 <p>The core innovation of the extended MMMM is modeling how member-level
 effects aggregate to influence group outcomes. Individual member effects
 are first specified, then aggregated via a weighted sum:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation}
-\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik} \left( \boldsymbol{\beta}^{(p)} \cdot \mathbf{x}_{ik}^{(p)} + u_k^{(p)} \right) \tag{4}
-\end{equation}</annotation></semantics></math></p>
+<p><span class="math display">\[\begin{equation}
+\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik} \left(
+\boldsymbol{\beta}^{(p)} \cdot \mathbf{x}_{ik}^{(p)} + u_k^{(p)} \right)
+\tag{4}
+\end{equation}\]</span></p>
 <p>This can be decomposed into systematic and random components:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><munder><munder><mrow><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup></mrow><mo accent="true">⏟</mo></munder><mtext mathvariant="normal">Systematic component</mtext></munder><mo>+</mo><munder><munder><mrow><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup></mrow><mo accent="true">⏟</mo></munder><mtext mathvariant="normal">Random component</mtext></munder><mo>,</mo><mspace width="1.0em"></mspace><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mover><mo>∼</mo><mtext mathvariant="normal">iid</mtext></mover><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
-\theta_i^{(p)} = \underbrace{\boldsymbol{\beta}^{(p)} \sum_{k \in p[i]} w_{ik} \mathbf{x}_{ik}^{(p)}}_{\text{Systematic component}} + \underbrace{\sum_{k \in p[i]} w_{ik} u_k^{(p)}}_{\text{Random component}}, \quad u_k^{(p)} \overset{\text{iid}}{\sim} N(0, \sigma_{u^{(p)}}^2) \tag{5}
-\end{equation}</annotation></semantics></math></p>
+<p><span class="math display">\[\begin{equation}
+\theta_i^{(p)} = \underbrace{\boldsymbol{\beta}^{(p)} \sum_{k \in p[i]}
+w_{ik} \mathbf{x}_{ik}^{(p)}}_{\text{Systematic component}} +
+\underbrace{\sum_{k \in p[i]} w_{ik} u_k^{(p)}}_{\text{Random
+component}}, \quad u_k^{(p)} \overset{\text{iid}}{\sim} N(0,
+\sigma_{u^{(p)}}^2) \tag{5}
+\end{equation}\]</span></p>
 <p>where:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mo stretchy="false" form="prefix">[</mo><msubsup><mi>x</mi><mrow><mn>1</mn><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mi>…</mi><mo>,</mo><msubsup><mi>x</mi><mrow><mi>P</mi><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\mathbf{x}_{ik}^{(p)} = [x_{1ik}^{(p)}, \ldots, x_{Pik}^{(p)}]</annotation></semantics></math>
-are member-level covariates</li>
+<span class="math inline">\(\mathbf{x}_{ik}^{(p)} = [x_{1ik}^{(p)},
+\ldots, x_{Pik}^{(p)}]\)</span> are member-level covariates</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>=</mo><mo stretchy="false" form="prefix">[</mo><msubsup><mi>β</mi><mn>1</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mi>…</mi><mo>,</mo><msubsup><mi>β</mi><mi>P</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(p)} = [\beta_1^{(p)}, \ldots, \beta_P^{(p)}]</annotation></semantics></math>
-are structural regression coefficients measuring the effect of member
-attributes on group outcomes</li>
+<span class="math inline">\(\boldsymbol{\beta}^{(p)} =
+[\beta_1^{(p)}, \ldots, \beta_P^{(p)}]\)</span> are structural
+regression coefficients measuring the effect of member attributes on
+group outcomes</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><annotation encoding="application/x-tex">w_{ik}</annotation></semantics></math>
-are <strong>aggregation weights</strong> determining how member
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>’s
-contribution enters group
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>’s
-outcome</li>
+<span class="math inline">\(w_{ik}\)</span> are <strong>aggregation
+weights</strong> determining how member <span class="math inline">\(k\)</span>’s contribution enters group <span class="math inline">\(i\)</span>’s outcome</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">u_k^{(p)}</annotation></semantics></math>
-are i.i.d. member-specific random effects</li>
+<span class="math inline">\(u_k^{(p)}\)</span> are i.i.d.
+member-specific random effects</li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_{u^{(p)}}^2</annotation></semantics></math>
-captures unobserved heterogeneity at the member level</li>
+<span class="math inline">\(\sigma_{u^{(p)}}^2\)</span> captures
+unobserved heterogeneity at the member level</li>
 </ul>
-<p><strong>Interpretation of Weights:</strong> The weights
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><annotation encoding="application/x-tex">w_{ik}</annotation></semantics></math>
-define the <strong>micro-macro link</strong>—how individual member
-characteristics combine to produce group-level outcomes. Since the
-structural effect
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(p)}</annotation></semantics></math>
-is constant, the weights serve to aggregate the member-level covariate
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\mathbf{x}_{ik}^{(p)}</annotation></semantics></math>
-into a group-level construct
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></msub><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">\sum_{k \in p[i]} w_{ik} \mathbf{x}_{ik}^{(p)}</annotation></semantics></math>.</p>
+<p><strong>Interpretation of Weights:</strong> The weights <span class="math inline">\(w_{ik}\)</span> define the <strong>micro-macro
+link</strong> — how individual member characteristics combine to produce
+group-level attributes. Since the structural effect <span class="math inline">\(\boldsymbol{\beta}^{(p)}\)</span> is constant, the
+weights serve to aggregate the member-level covariate <span class="math inline">\(\mathbf{x}_{ik}^{(p)}\)</span> into a group-level
+construct <span class="math inline">\(\sum_{k \in p[i]} w_{ik}
+\mathbf{x}_{ik}^{(p)}\)</span>.</p>
 <p><strong>Covariance Structure:</strong> Including member-specific
-random effects
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">u_k^{(p)}</annotation></semantics></math>
-induces covariance among groups sharing members. The covariance between
-groups
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>i</mi><mo>′</mo></msup><annotation encoding="application/x-tex">i'</annotation></semantics></math>
-is:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Cov</mtext><mo stretchy="false" form="prefix">(</mo><msubsup><mi>y</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msubsup><mi>y</mi><msup><mi>i</mi><mo>′</mo></msup><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><munder><mo>∑</mo><mi>k</mi></munder><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><msub><mi>w</mi><mrow><msup><mi>i</mi><mo>′</mo></msup><mi>k</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\begin{equation}
-\text{Cov}(y_i^{(g)}, y_{i'}^{(g)}) = \sigma_{u^{(p)}}^2 \sum_k w_{ik} w_{i'k}
-\end{equation}</annotation></semantics></math></p>
+random effects <span class="math inline">\(u_k^{(p)}\)</span> induces
+covariance among groups sharing members. The covariance between groups
+<span class="math inline">\(i\)</span> and <span class="math inline">\(i'\)</span> is:</p>
+<p><span class="math display">\[\begin{equation}
+\text{Cov}(y_i^{(g)}, y_{i'}^{(g)}) = \sigma_{u^{(p)}}^2 \sum_k
+w_{ik} w_{i'k} \tag{6}
+\end{equation}\]</span></p>
 <p>This increases with the degree of member overlap and accounts for
 dependencies across groups involving recurring members.</p>
-<p><strong>Example:</strong> In coalition governments,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\mathbf{x}_{ik}^{(p)}</annotation></semantics></math>
-might include party cohesion or organizational structure. The random
-effect
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">u_k^{(p)}</annotation></semantics></math>
-captures party-specific unobserved factors that affect all governments
-in which party
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-participates.</p>
+<p><strong>Example:</strong> In coalition governments, <span class="math inline">\(\mathbf{x}_{ik}^{(p)}\)</span> might include party
+cohesion or organizational structure. The random effect <span class="math inline">\(u_k^{(p)}\)</span> captures party-specific
+unobserved factors that affect all governments in which party <span class="math inline">\(k\)</span> participates.</p>
 </div>
 </div>
 <div class="section level2">
@@ -323,12 +301,12 @@ participates.</p>
 <p>The <strong>conventional MMMM</strong> requires weights to be
 specified <em>a priori</em>. The most common choice is equal weighting
 (arithmetic mean):</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>=</mo><mfrac><mn>1</mn><msub><mi>n</mi><mi>i</mi></msub></mfrac></mrow><annotation encoding="application/x-tex">\begin{equation}
-w_{ik} = \frac{1}{n_i} \tag{6}
-\end{equation}</annotation></semantics></math></p>
+<p><span class="math display">\[\begin{equation}
+w_{ik} = \frac{1}{n_i} \tag{7}
+\end{equation}\]</span></p>
 <p>This assumes all members contribute equally to group outcomes,
 regardless of their attributes or context.</p>
-<p><strong>Limitations:</strong> Equal weighting is often theoretically
+<p><strong>Limitations:</strong> Equal weighting can be theoretically
 implausible. In coalition governments, for instance, larger parties,
 parties holding the prime ministership, or ideologically central parties
 may exert disproportionate influence. In spatial analysis, nearby
@@ -336,80 +314,67 @@ neighbors may matter more than distant ones. Imposing equal weights when
 they vary in practice introduces <strong>aggregation bias</strong>.</p>
 </div>
 <div class="section level3">
-<h3 id="extended-mmmm-endogenizing-weights">Extended MMMM: Endogenizing Weights<a class="anchor" aria-label="anchor" href="#extended-mmmm-endogenizing-weights"></a>
+<h3 id="extended-mmmm-parameterizing-weights">Extended MMMM: Parameterizing Weights<a class="anchor" aria-label="anchor" href="#extended-mmmm-parameterizing-weights"></a>
 </h3>
 <p>The <strong>extended MMMM</strong> allows weights to be modeled as
-functions of covariates and estimated parameters:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo stretchy="false" form="prefix">(</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msub><mi>n</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>n</mi><mi>i</mi></msub><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mrow><mi mathvariant="normal">exp</mi><mo>⁡</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>−</mi><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">\begin{equation}
-w_{ik}(\mathbf{x}_{ik}^{(w)}, n_i) = \frac{1}{1 + (n_i - 1) \exp\left(-\boldsymbol{\beta}^{(w)} \cdot \mathbf{x}_{ik}^{(w)}\right)} \tag{7}
-\end{equation}</annotation></semantics></math></p>
-<p>subject to the normalization constraint
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></msub><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sum_{k \in p[i]} w_{ik} = 1</annotation></semantics></math>
-for all
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>.</p>
+functions of covariates and estimated parameters. For example,</p>
+<p><span class="math display">\[\begin{equation}
+w_{ik}(\mathbf{x}_{ik}^{(w)}, n_i) = \frac{1}{1 + (n_i - 1)
+\exp\left(-\boldsymbol{\beta}^{(w)} \cdot \mathbf{x}_{ik}^{(w)}\right)}
+\tag{8}
+\end{equation}\]</span></p>
+<p>subject to the normalization constraint <span class="math inline">\(\sum_{k \in p[i]} w_{ik} = 1\)</span> for all
+<span class="math inline">\(i\)</span>.</p>
+<p>In <code>bml</code>, this is specified via:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">x2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>where:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mo stretchy="false" form="prefix">[</mo><mn>1</mn><mo>,</mo><msubsup><mi>x</mi><mrow><mn>1</mn><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mi>…</mi><mo>,</mo><msubsup><mi>x</mi><mrow><mi>W</mi><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\mathbf{x}_{ik}^{(w)} = [1, x_{1ik}^{(w)}, \ldots, x_{Wik}^{(w)}]</annotation></semantics></math>
-are <strong>weight covariates</strong>
+<span class="math inline">\(\mathbf{x}_{ik}^{(w)} = [1,
+x_{1ik}^{(w)}, \ldots, x_{Wik}^{(w)}]\)</span> are <strong>weight
+covariates</strong>
 </li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>=</mo><mo stretchy="false" form="prefix">[</mo><msubsup><mi>β</mi><mn>0</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msubsup><mi>β</mi><mn>1</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mi>…</mi><mo>,</mo><msubsup><mi>β</mi><mi>W</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(w)} = [\beta_0^{(w)}, \beta_1^{(w)}, \ldots, \beta_W^{(w)}]</annotation></semantics></math>
-are <strong>weight function parameters</strong> to be estimated</li>
+<span class="math inline">\(\boldsymbol{\beta}^{(w)} =
+[\beta_0^{(w)}, \beta_1^{(w)}, \ldots, \beta_W^{(w)}]\)</span> are
+<strong>weight function parameters</strong> to be estimated</li>
 </ul>
-<p><strong>Functional Form:</strong> Equation (7) generalizes the
-logistic function by centering it at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><msub><mi>n</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">1/n_i</annotation></semantics></math>
-when
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(w)} \cdot \mathbf{x}_{ik}^{(w)} = 0</annotation></semantics></math>.
-This sets equal weighting as the baseline: absent systematic
-differences, each member receives weight
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><msub><mi>n</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">1/n_i</annotation></semantics></math>.
-When
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>≠</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(w)} \neq 0</annotation></semantics></math>,
-weights deviate from this baseline, reflecting heterogeneous member
+<p><strong>Functional Form:</strong> Equation (8) generalizes the
+logistic function by centering it at <span class="math inline">\(1/n_i\)</span> when <span class="math inline">\(\boldsymbol{\beta}^{(w)} \cdot
+\mathbf{x}_{ik}^{(w)} = 0\)</span>. This sets equal weighting as the
+baseline: absent systematic differences, each member receives weight
+<span class="math inline">\(1/n_i\)</span>. When <span class="math inline">\(\boldsymbol{\beta}^{(w)} \neq 0\)</span>, weights
+deviate from this baseline, reflecting heterogeneous member
 influence.</p>
 <p><strong>Properties:</strong></p>
 <ul>
-<li>Bounded:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>∈</mo><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">w_{ik} \in [0, 1]</annotation></semantics></math>
+<li>Bounded: <span class="math inline">\(w_{ik} \in [0, 1]\)</span>
 </li>
-<li>Baseline-centered: When
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(w)} = 0</annotation></semantics></math>,
-weights reduce to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>=</mo><mn>1</mn><mi>/</mi><msub><mi>n</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">w_{ik} = 1/n_i</annotation></semantics></math>
+<li>Baseline-centered: When <span class="math inline">\(\boldsymbol{\beta}^{(w)} = 0\)</span>, weights
+reduce to <span class="math inline">\(w_{ik} = 1/n_i\)</span>
 </li>
 <li>Monotonic: Weights increase/decrease smoothly with the linear
 predictor</li>
-<li>Normalized: Constraint ensures
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mi>k</mi></msub><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sum_k w_{ik} = 1</annotation></semantics></math>
-(unless normalization is disabled)</li>
+<li>Normalized: Constraint ensures <span class="math inline">\(\sum_k
+w_{ik} = 1\)</span> (unless normalization is not desired)</li>
 </ul>
-<p><strong>Interpretation of Weight Parameters:</strong> While
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(p)}</annotation></semantics></math>
-measure <em>structural effects</em> of member attributes on group
-outcomes,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><annotation encoding="application/x-tex">\boldsymbol{\beta}^{(w)}</annotation></semantics></math>
-measure <em>aggregation effects</em>—how member attributes determine
-their relative importance in the weighted sum. Together, they reveal
-both <em>what</em> matters (structural effects) and <em>how much</em>
+<p><strong>Interpretation of Weight Parameters:</strong> While <span class="math inline">\(\boldsymbol{\beta}^{(p)}\)</span> measure
+<em>structural effects</em> of member attributes on group outcomes,
+<span class="math inline">\(\boldsymbol{\beta}^{(w)}\)</span> measure
+<em>aggregation effects</em>—how member attributes determine their
+relative importance in the weighted sum. Together, they reveal both
+<em>what</em> matters (structural effects) and <em>how much</em>
 different members’ characteristics matter (aggregation effects).</p>
-<p><strong>Example:</strong> Let
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>x</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">x_{ik}^{(p)}</annotation></semantics></math>
-= party cohesion and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>x</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">x_{ik}^{(w)}</annotation></semantics></math>
-= indicator for holding the prime ministership in a government survival
-model.</p>
+<p><strong>Example:</strong> Let <span class="math inline">\(x_{ik}^{(p)}\)</span> = party cohesion and <span class="math inline">\(x_{ik}^{(w)}\)</span> = indicator for holding the
+prime ministership in a government survival model.</p>
 <ul>
-<li>If
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>β</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta^{(w)} = 0</annotation></semantics></math>:
-Prime minister’s cohesion matters as much as coalition partners’
-cohesion (equal weights)</li>
-<li>If
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>β</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta^{(w)} &gt; 0</annotation></semantics></math>:
-Prime minister’s cohesion carries more weight</li>
-<li>If
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>β</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>&lt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta^{(w)} &lt; 0</annotation></semantics></math>:
+<li>If <span class="math inline">\(\beta^{(w)} = 0\)</span>: Prime
+minister’s cohesion matters as much as coalition partners’ cohesion
+(equal weights)</li>
+<li>If <span class="math inline">\(\beta^{(w)} &gt; 0\)</span>: Prime
+minister’s cohesion carries more weight</li>
+<li>If <span class="math inline">\(\beta^{(w)} &lt; 0\)</span>:
 Coalition partners’ cohesion carries more weight</li>
 </ul>
 </div>
@@ -417,69 +382,137 @@ Coalition partners’ cohesion carries more weight</li>
 <h3 id="testing-alternative-aggregation-mechanisms">Testing Alternative Aggregation Mechanisms<a class="anchor" aria-label="anchor" href="#testing-alternative-aggregation-mechanisms"></a>
 </h3>
 <p>Weight function regression enables empirical tests of substantive
-hypotheses about aggregation:</p>
+hypotheses about aggregation. Group-level functions such as
+<code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min()</a></code>, <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max()</a></code>, <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code>, and
+<code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code> can be incorporated directly into weight formulas,
+and standard mathematical transformations are supported. For
+example:</p>
 <p><strong>1. Mean vs. Extremes:</strong> Does the group outcome depend
 on the average member attribute or on extreme values
 (minimum/maximum)?</p>
-<p>Create indicator variables for
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">argmin</mtext><mi>k</mi></msub><mo stretchy="false" form="prefix">(</mo><msubsup><mi>x</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\text{argmin}_k(x_{ik}^{(p)})</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">argmax</mtext><mi>k</mi></msub><mo stretchy="false" form="prefix">(</mo><msubsup><mi>x</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\text{argmax}_k(x_{ik}^{(p)})</annotation></semantics></math>
-and include them in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\mathbf{x}_{ik}^{(w)}</annotation></semantics></math>.
-If aggregation is better captured by extremes, the corresponding
-member’s weight will approach 1.</p>
+<p><span class="math display">\[w_{ik} = \beta_1^{(w)} \cdot
+x_{ik}^{(w)} + (1 - \beta_1^{(w)}) \cdot \mathbb{1}\left[x_{ik}^{(w)} =
+\min_k x_{ik}^{(w)}\right]\]</span></p>
+<p>In <code>bml</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span></span>
+<span>  <span class="va">w</span> <span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="va">x</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  c <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The parameter <span class="math inline">\(\beta_1^{(w)}\)</span>
+controls the mixture between aggregation mechanisms. When <span class="math inline">\(\beta_1^{(w)} = 1\)</span>, weights are
+proportional to <span class="math inline">\(x_{ik}^{(w)}\)</span>
+(mean-like aggregation); when <span class="math inline">\(\beta_1^{(w)}
+= 0\)</span>, all weight is assigned to the member with the minimum
+value. Intermediate values yield a convex combination of both. Replacing
+min() with max() tests whether the highest-valued member dominates. To
+preserve this interpretation, <span class="math inline">\(\beta_1^{(w)}\)</span> should be constrained to
+<span class="math inline">\([0,1]\)</span>, e.g., via priors =
+list(“b1~dunif(0,1)”).</p>
 <p><strong>2. Mean vs. Sum:</strong> Are member effects
-<em>contextual</em> (mean aggregation:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mi>k</mi></msub><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sum_k w_{ik} = 1</annotation></semantics></math>)
-or <em>autonomous</em> (sum aggregation:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mi>k</mi></msub><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>=</mo><msub><mi>n</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\sum_k w_{ik} = n_i</annotation></semantics></math>)?</p>
-<p>Disable normalization (<code>c = FALSE</code> in <code><a href="../reference/fn.html">fn()</a></code>).
-The intercept
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>β</mi><mn>0</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\beta_0^{(w)}</annotation></semantics></math>
-then reveals the aggregation form: -
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>β</mi><mn>0</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>≈</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta_0^{(w)} \approx 0</annotation></semantics></math>:
-Mean aggregation -
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>β</mi><mn>0</mn><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>≫</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta_0^{(w)} \gg 0</annotation></semantics></math>:
-Sum aggregation</p>
-<p>Under mean aggregation, a one-unit change in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>x</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">x_{ik}^{(p)}</annotation></semantics></math>
-affects the outcome by
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>β</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><annotation encoding="application/x-tex">\beta^{(p)}</annotation></semantics></math>
-only if <em>all</em> members change. Under sum aggregation, a one-unit
-change by a <em>single</em> member already produces an effect of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>β</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><annotation encoding="application/x-tex">\beta^{(p)}</annotation></semantics></math>.</p>
+<em>contextual</em> (mean aggregation: <span class="math inline">\(\sum_k w_{ik} = 1\)</span>) or <em>autonomous</em>
+(sum aggregation: <span class="math inline">\(\sum_k w_{ik} =
+n_i\)</span>)?</p>
+<p><span class="math display">\[w_{ik} = \frac{1}{1 + (n_i - 1)
+\exp\left(-\beta_0^{(w)}\right)}\]</span></p>
+<p>In <code>bml</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span></span>
+<span>  <span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">b0</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  c <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>When <span class="math inline">\(\beta_0^{(w)} \approx 0\)</span>,
+the weight evaluates to <span class="math inline">\(1/n_i\)</span>,
+yielding mean aggregation (<span class="math inline">\(\sum_k w_{ik} =
+1\)</span>). As <span class="math inline">\(\beta_0^{(w)}\)</span> grows
+large, the weight approaches 1 for each member, yielding sum aggregation
+(<span class="math inline">\(\sum_k w_{ik} = n_i\)</span>). Under mean
+aggregation, a one-unit change in <span class="math inline">\(x_{ik}^{(p)}\)</span> affects the outcome by <span class="math inline">\(\beta^{(p)}\)</span> only if <em>all</em> members
+change. Under sum aggregation, a one-unit change by a <em>single</em>
+member already produces an effect of <span class="math inline">\(\beta^{(p)}\)</span>.</p>
 <p><strong>3. Asymmetric Influence:</strong> Do certain members (e.g.,
 larger, more central, more powerful) carry disproportionate weight?</p>
-<p>Include member attributes hypothesized to determine influence (e.g.,
-size, centrality, power) in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">\mathbf{x}_{ik}^{(w)}</annotation></semantics></math>.</p>
+<p><span class="math display">\[w_{ik} = \frac{1}{1 + (n_i - 1)
+\exp\left(-\beta_0^{(w)}\right)} + \beta_1^{(w)} x_{1ik}^{(w)} +
+\beta_2^{(w)} x_{2ik}^{(w)}\]</span></p>
+<p>In <code>bml</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span></span>
+<span>  <span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">x2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> ,</span>
+<span>  c <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This weight function tests whether member attributes <span class="math inline">\(x_1, x_2\)</span> (e.g., size, organization,
+power) generate disproportionate influence via <span class="math inline">\(\beta_1^{(w)}, \beta_2^{(w)}\)</span>.</p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="generalized-outcomes">Generalized Outcomes<a class="anchor" aria-label="anchor" href="#generalized-outcomes"></a>
+</h2>
+<p>The model structure extends to non-Gaussian outcomes via generalized
+linear and survival models:</p>
+<p><strong>Binomial (Logistic Regression):</strong></p>
+<p><span class="math display">\[\begin{equation}
+\text{logit}\left(P(y_i^{(g)} = 1)\right) = \theta_i^{(g)} +
+\theta_{j[i]}^{(c)} + \theta_i^{(p)} \tag{9}
+\end{equation}\]</span></p>
+<p>In <code>bml</code>, specify <code>family = "Binomial"</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, family <span class="op">=</span> <span class="st">"Binomial"</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Weibull Survival Model:</strong></p>
+<p><span class="math display">\[\begin{equation}
+\log(t_i) = \theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)} +
+\sigma \epsilon_i \tag{10}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(t_i\)</span> is survival time,
+<span class="math inline">\(\epsilon_i\)</span> follows an extreme value
+distribution, and <span class="math inline">\(\sigma\)</span> is the
+scale parameter related to the Weibull shape parameter.</p>
+<p>In <code>bml</code>, specify <code>family = "Weibull"</code> with a
+<code>Surv()</code> outcome:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="fu">Surv</span><span class="op">(</span><span class="va">time</span>, <span class="va">event</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, family <span class="op">=</span> <span class="st">"Weibull"</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Cox Proportional Hazards Model:</strong></p>
+<p><span class="math display">\[\begin{equation}
+h(t_i) = h_0(t) \exp\left(\theta_i^{(g)} + \theta_{j[i]}^{(c)} +
+\theta_i^{(p)}\right) \tag{11}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(h_0(t)\)</span> is the baseline
+hazard function, estimated non-parametrically or as a piecewise constant
+function.</p>
+<p>In <code>bml</code>, specify <code>family = "Cox"</code>. The
+optional <code>cox_intervals</code> argument controls the number of
+intervals for the piecewise constant baseline hazard:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="fu">Surv</span><span class="op">(</span><span class="va">time</span>, <span class="va">event</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, family <span class="op">=</span> <span class="st">"Cox"</span>, cox_intervals <span class="op">=</span> <span class="fl">10</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></code></pre></div>
+<p>All outcome types support the full multilevel and multiple-membership
+structure, including parameterizable weight functions.</p>
 </div>
 <div class="section level2">
 <h2 id="variance-decomposition-and-intraclass-correlation">Variance Decomposition and Intraclass Correlation<a class="anchor" aria-label="anchor" href="#variance-decomposition-and-intraclass-correlation"></a>
 </h2>
 <p>The multilevel structure partitions total variance into group-level,
 nesting-level, and member-level components:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Var</mtext><mo stretchy="false" form="prefix">(</mo><msubsup><mi>y</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mn>2</mn></msubsup></mrow><annotation encoding="application/x-tex">\begin{equation}
-\text{Var}(y_i^{(g)}) = \sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \sum_{k \in p[i]} w_{ik}^2
-\end{equation}</annotation></semantics></math></p>
+<p><span class="math display">\[\begin{equation}
+\text{Var}(y_i^{(g)}) = \sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 +
+\sigma_{u^{(p)}}^2 \sum_{k \in p[i]} w_{ik}^2 \tag{12}
+\end{equation}\]</span></p>
 <p><strong>Intraclass Correlation Coefficients (ICC):</strong></p>
 <p>The proportion of variance attributable to each level quantifies the
 importance of group-level, nesting-level, and member-level unobserved
 factors:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msup><mi>ρ</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mfrac><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mrow><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mi>𝔼</mi><mo stretchy="false" form="prefix">[</mo><munder><mo>∑</mo><mi>k</mi></munder><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mn>2</mn></msubsup><mo stretchy="false" form="postfix">]</mo></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msup><mi>ρ</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mfrac><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mrow><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mi>𝔼</mi><mo stretchy="false" form="prefix">[</mo><munder><mo>∑</mo><mi>k</mi></munder><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mn>2</mn></msubsup><mo stretchy="false" form="postfix">]</mo></mrow></mfrac></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msup><mi>ρ</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mfrac><mrow><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mi>𝔼</mi><mo stretchy="false" form="prefix">[</mo><munder><mo>∑</mo><mi>k</mi></munder><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mn>2</mn></msubsup><mo stretchy="false" form="postfix">]</mo></mrow><mrow><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mi>𝔼</mi><mo stretchy="false" form="prefix">[</mo><munder><mo>∑</mo><mi>k</mi></munder><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mn>2</mn></msubsup><mo stretchy="false" form="postfix">]</mo></mrow></mfrac></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{align}
-\rho^{(g)} &amp;= \frac{\sigma_{u^{(g)}}^2}{\sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k w_{ik}^2]} \\
-\rho^{(c)} &amp;= \frac{\sigma_{u^{(c)}}^2}{\sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k w_{ik}^2]} \\
-\rho^{(p)} &amp;= \frac{\sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k w_{ik}^2]}{\sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k w_{ik}^2]}
-\end{align}</annotation></semantics></math></p>
-<p>When weights are equal
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>=</mo><mn>1</mn><mi>/</mi><msub><mi>n</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">w_{ik} = 1/n_i</annotation></semantics></math>),
-the member-level variance component simplifies to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mi>/</mi><mover><mi>n</mi><mo accent="true">‾</mo></mover></mrow><annotation encoding="application/x-tex">\sigma_{u^{(p)}}^2 / \bar{n}</annotation></semantics></math>
-where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>n</mi><mo accent="true">‾</mo></mover><annotation encoding="application/x-tex">\bar{n}</annotation></semantics></math>
-is average group size.</p>
+<p><span class="math display">\[\begin{align}
+\rho^{(g)} &amp;= \frac{\sigma_{u^{(g)}}^2}{\sigma_{u^{(g)}}^2 +
+\sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k w_{ik}^2]}
+\tag{13} \\
+\rho^{(c)} &amp;= \frac{\sigma_{u^{(c)}}^2}{\sigma_{u^{(g)}}^2 +
+\sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k w_{ik}^2]}
+\tag{14} \\
+\rho^{(p)} &amp;= \frac{\sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k
+w_{ik}^2]}{\sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2
+\mathbb{E}[\sum_k w_{ik}^2]} \tag{15}
+\end{align}\]</span></p>
+<p>When weights are equal (<span class="math inline">\(w_{ik} =
+1/n_i\)</span>), the member-level variance component simplifies to <span class="math inline">\(\sigma_{u^{(p)}}^2 / \bar{n}\)</span> where <span class="math inline">\(\bar{n}\)</span> is average group size.</p>
 </div>
 <div class="section level2">
 <h2 id="extensions">Extensions<a class="anchor" aria-label="anchor" href="#extensions"></a>
@@ -490,17 +523,18 @@ is average group size.</p>
 <p>The <code>bml</code> package allows multiple <code><a href="../reference/mm.html">mm()</a></code> blocks
 with distinct aggregation mechanisms. This is useful when different
 member-level covariates aggregate through different processes:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><munderover><mo>∑</mo><mrow><mi>b</mi><mo>=</mo><mn>1</mn></mrow><mi>B</mi></munderover><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>b</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>,</mo><mi>b</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>,</mo><mi>b</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>,</mo><mi>b</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation}
-\theta_i^{(p)} = \sum_{b=1}^B \sum_{k \in p[i]} w_{ik}^{(b)} \left( \boldsymbol{\beta}^{(p,b)} \cdot \mathbf{x}_{ik}^{(p,b)} + u_k^{(p,b)} \right)
-\end{equation}</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math>
-indexes MM blocks, each with its own weight function
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>b</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mi>f</mi><mo stretchy="false" form="prefix">(</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo>,</mo><mi>b</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msub><mi>n</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">w_{ik}^{(b)} = f(\mathbf{x}_{ik}^{(w,b)}, n_i)</annotation></semantics></math>.</p>
+<p><span class="math display">\[\begin{equation}
+\theta_i^{(p)} = \sum_{b=1}^B \sum_{k \in p[i]} w_{ik}^{(b)} \left(
+\boldsymbol{\beta}^{(p,b)} \cdot \mathbf{x}_{ik}^{(p,b)} + u_k^{(p,b)}
+\right) \tag{16}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(b\)</span> indexes MM blocks, each
+with its own weight function <span class="math inline">\(w_{ik}^{(b)} =
+f(\mathbf{x}_{ik}^{(w,b)}, n_i)\)</span>.</p>
 <p><strong>Example:</strong> Model both observed party characteristics
 (with estimated weights) and party random effects (with equal
 weights):</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">b</span><span class="op">*</span><span class="va">primeminister</span><span class="op">)</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Important:</strong> Only one <code><a href="../reference/mm.html">mm()</a></code> block can have
@@ -512,30 +546,25 @@ weights):</p>
 <p>Member random effects may evolve over time rather than remain
 constant. The <code>ar = TRUE</code> option specifies a random walk
 process:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>u</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>∼</mo><mrow><mo stretchy="true" form="prefix">{</mo><mtable><mtr><mtd columnalign="left" style="text-align: left"><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo stretchy="false" form="postfix">)</mo></mtd><mtd columnalign="left" style="text-align: left"><mrow><mtext mathvariant="normal">if </mtext><mspace width="0.333em"></mspace></mrow><mi>g</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo>,</mo><mi>k</mi><mo stretchy="false" form="postfix">]</mo><mo>=</mo><mi>∅</mi></mtd></mtr><mtr><mtd columnalign="left" style="text-align: left"><mi>N</mi><mo stretchy="false" form="prefix">(</mo><msubsup><mi>u</mi><mrow><mi>g</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo>,</mo><mi>k</mi><mo stretchy="false" form="postfix">]</mo><mo>,</mo><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><mo stretchy="false" form="postfix">)</mo></mtd><mtd columnalign="left" style="text-align: left"><mrow><mtext mathvariant="normal">if </mtext><mspace width="0.333em"></mspace></mrow><mi>g</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo>,</mo><mi>k</mi><mo stretchy="false" form="postfix">]</mo><mo>≠</mo><mi>∅</mi></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex">\begin{equation}
+<p><span class="math display">\[\begin{equation}
 u_{ik}^{(p)} \sim \begin{cases}
 N(0, \sigma_{u^{(p)}}^2) &amp; \text{if } g[i,k] = \emptyset \\
-N(u_{g[i,k],k}^{(p)}, \sigma_{u^{(p)}}^2) &amp; \text{if } g[i,k] \neq \emptyset
-\end{cases}
-\end{equation}</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo>,</mo><mi>k</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">g[i,k]</annotation></semantics></math>
-returns the most recent previous group in which member
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-participated. For
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo>,</mo><mi>k</mi><mo stretchy="false" form="postfix">]</mo><mo>=</mo><mi>∅</mi></mrow><annotation encoding="application/x-tex">g[i,k] = \emptyset</annotation></semantics></math>
-(first participation), the effect is drawn from the prior.</p>
+N(u_{g[i,k],k}^{(p)}, \sigma_{u^{(p)}}^2) &amp; \text{if } g[i,k] \neq
+\emptyset
+\end{cases} \tag{17}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(g[i,k]\)</span> returns the most
+recent previous group in which member <span class="math inline">\(k\)</span> participated. For <span class="math inline">\(g[i,k] = \emptyset\)</span> (first participation),
+the effect is drawn from the prior.</p>
 <p><strong>Interpretation:</strong> Autoregressive effects capture
 dynamics where a member’s unobserved heterogeneity changes across
-successive group participations. The variance
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><msup><mi>u</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_{u^{(p)}}^2</annotation></semantics></math>
-now represents the <em>innovation variance</em> governing temporal
-change.</p>
+successive group participations. The variance <span class="math inline">\(\sigma_{u^{(p)}}^2\)</span> now represents the
+<em>innovation variance</em> governing temporal change.</p>
 <p><strong>Example:</strong> A party’s propensity to destabilize
 governments may evolve as its leadership, organization, or electoral
 fortunes change.</p>
 <p><strong>Usage:</strong></p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span>, ar <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -544,47 +573,22 @@ fortunes change.</p>
 <p>When analyzing group outcomes influenced by both members and
 non-members (e.g., coalition and opposition parties), separate
 <code><a href="../reference/mm.html">mm()</a></code> blocks can model their distinct contributions:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><munder><mo>∑</mo><mrow><mi>k</mi><mo>∉</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msubsup><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>o</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>o</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>o</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>o</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation}
-\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik}^{(g)} \left( \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_{ik}^{(g)} + u_k^{(g)} \right) + \sum_{k \notin p[i]} w_{ik}^{(o)} \left( \boldsymbol{\beta}^{(o)} \cdot \mathbf{x}_{ik}^{(o)} + u_k^{(o)} \right)
-\end{equation}</annotation></semantics></math></p>
-<p>where superscripts
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(g)</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>o</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(o)</annotation></semantics></math>
-denote member and non-member effects, respectively. This allows both
-groups to have different structural effects and different aggregation
-mechanisms.</p>
-</div>
-<div class="section level3">
-<h3 id="generalized-outcomes">Generalized Outcomes<a class="anchor" aria-label="anchor" href="#generalized-outcomes"></a>
-</h3>
-<p>The model structure extends to non-Gaussian outcomes via generalized
-linear and survival models:</p>
-<p><strong>Binomial (Logistic Regression):</strong></p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">logit</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>P</mi><mo stretchy="false" form="prefix">(</mo><msubsup><mi>y</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>θ</mi><mrow><mi>j</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">\begin{equation}
-\text{logit}\left(P(y_i^{(g)} = 1)\right) = \theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)}
-\end{equation}</annotation></semantics></math></p>
-<p><strong>Weibull Survival Model:</strong></p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>t</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>θ</mi><mrow><mi>j</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><mi>σ</mi><msub><mi>ϵ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\begin{equation}
-\log(t_i) = \theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)} + \sigma \epsilon_i
-\end{equation}</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>t</mi><mi>i</mi></msub><annotation encoding="application/x-tex">t_i</annotation></semantics></math>
-is survival time,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ϵ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\epsilon_i</annotation></semantics></math>
-follows an extreme value distribution, and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math>
-is the scale parameter related to the Weibull shape parameter.</p>
-<p><strong>Cox Proportional Hazards Model:</strong></p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>t</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mi>h</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo><mrow><mi mathvariant="normal">exp</mi><mo>⁡</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>θ</mi><mrow><mi>j</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>θ</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\begin{equation}
-h(t_i) = h_0(t) \exp\left(\theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)}\right)
-\end{equation}</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>h</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">h_0(t)</annotation></semantics></math>
-is the baseline hazard function, estimated non-parametrically or as a
-piecewise constant function.</p>
-<p>All outcome types support the full multilevel and multiple-membership
-structure, including parameterizable weight functions.</p>
+<p><span class="math display">\[\begin{equation}
+\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik}^{(g)} \left(
+\boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_{ik}^{(g)} + u_k^{(g)} \right)
++ \sum_{k \notin p[i]} w_{ik}^{(o)} \left( \boldsymbol{\beta}^{(o)}
+\cdot \mathbf{x}_{ik}^{(o)} + u_k^{(o)} \right) \tag{18}
+\end{equation}\]</span></p>
+<p>where superscripts <span class="math inline">\((g)\)</span> and <span class="math inline">\((o)\)</span> denote member and non-member effects,
+respectively. This allows both groups to have different structural
+effects and different aggregation mechanisms.</p>
+<p>In <code>bml</code>, this is specified using two <code><a href="../reference/mm.html">mm()</a></code>
+blocks — one for members (<span class="math inline">\(k \in
+p[i]\)</span>) and one for non-members (<span class="math inline">\(k
+\notin p[i]\)</span>):</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -592,13 +596,14 @@ structure, including parameterizable weight functions.</p>
 </h2>
 <p>The <strong>conventional MMMM</strong> (as implemented in
 <code>brms</code> or <code>MLwiN</code>) is a special case:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>y</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mover><mi>𝐱</mi><mo accent="true">‾</mo></mover><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>u</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">\begin{equation}
-y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} + \boldsymbol{\beta}^{(p)} \cdot \bar{\mathbf{x}}_{i}^{(p)} + \sum_{k \in p[i]} w_{ik} u_k^{(p)} + u_i^{(g)} \tag{Conventional MMMM}
-\end{equation}</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mover><mi>𝐱</mi><mo accent="true">‾</mo></mover><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><msub><mo>∑</mo><mi>k</mi></msub><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">\bar{\mathbf{x}}_{i}^{(p)} = \sum_k w_{ik} \mathbf{x}_{ik}^{(p)}</annotation></semantics></math>
-is pre-aggregated using <em>imposed</em> weights
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><annotation encoding="application/x-tex">w_{ik}</annotation></semantics></math>.</p>
+<p><span class="math display">\[\begin{equation}
+y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} +
+\boldsymbol{\beta}^{(p)} \cdot \bar{\mathbf{x}}_{i}^{(p)} + \sum_{k \in
+p[i]} w_{ik} u_k^{(p)} + u_i^{(g)} \tag{Conventional MMMM}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(\bar{\mathbf{x}}_{i}^{(p)} = \sum_k
+w_{ik} \mathbf{x}_{ik}^{(p)}\)</span> is pre-aggregated using
+<em>imposed</em> weights <span class="math inline">\(w_{ik}\)</span>.</p>
 <p>The <strong>extended MMMM</strong> generalizes this by:</p>
 <ol style="list-style-type: decimal">
 <li>
@@ -611,9 +616,12 @@ with estimable parameters</li>
 <strong>Enabling multiple aggregation mechanisms</strong> via
 multiple <code><a href="../reference/mm.html">mm()</a></code> blocks</li>
 </ol>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>y</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>=</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><munder><mo>∑</mo><mrow><mi>k</mi><mo>∈</mo><mi>p</mi><mo stretchy="false" form="prefix">[</mo><mi>i</mi><mo stretchy="false" form="postfix">]</mo></mrow></munder><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>𝛃</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo>⋅</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>+</mo><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msubsup><mi>u</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><mspace width="1.0em"></mspace><msub><mi>w</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><mo>=</mo><mi>f</mi><mo stretchy="false" form="prefix">(</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mi>k</mi></mrow><mrow><mo stretchy="false" form="prefix">(</mo><mi>w</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>,</mo><msub><mi>n</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\begin{equation}
-y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} + \sum_{k \in p[i]} w_{ik} \left( \boldsymbol{\beta}^{(p)} \cdot \mathbf{x}_{ik}^{(p)} + u_k^{(p)} \right) + u_i^{(g)}, \quad w_{ik} = f(\mathbf{x}_{ik}^{(w)}, n_i) \tag{Extended MMMM}
-\end{equation}</annotation></semantics></math></p>
+<p><span class="math display">\[\begin{equation}
+y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} + \sum_{k
+\in p[i]} w_{ik} \left( \boldsymbol{\beta}^{(p)} \cdot
+\mathbf{x}_{ik}^{(p)} + u_k^{(p)} \right) + u_i^{(g)}, \quad w_{ik} =
+f(\mathbf{x}_{ik}^{(w)}, n_i) \tag{Extended MMMM}
+\end{equation}\]</span></p>
 </div>
 <div class="section level2">
 <h2 id="model-assumptions">Model Assumptions<a class="anchor" aria-label="anchor" href="#model-assumptions"></a>
@@ -621,16 +629,16 @@ y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} + \sum_{k \in p[i]
 <p>The extended MMMM assumes:</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Independence of random components</strong> across levels:
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>u</mi><mi>i</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>g</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>⟂</mo><msubsup><mi>u</mi><mi>j</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>c</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo>⟂</mo><msubsup><mi>u</mi><mi>k</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup></mrow><annotation encoding="application/x-tex">u_i^{(g)} \perp u_j^{(c)} \perp u_k^{(p)}</annotation></semantics></math>.
-If violated, variance estimates may be biased. More complex covariance
-structures can be accommodated if needed.</p></li>
+<span class="math inline">\(u_i^{(g)} \perp u_j^{(c)} \perp
+u_k^{(p)}\)</span>. If violated, variance estimates may be biased. More
+complex covariance structures can be accommodated if needed.</p></li>
 <li><p><strong>Random effects are uncorrelated with covariates</strong>
-(random effects assumption). Including within-cluster means of
+(random effects assumption). However, including within-cluster means of
 covariates or using within-between specifications isolates
 within-cluster effects, yielding identical point estimates to fixed
 effect models.</p></li>
 <li><p><strong>Correct functional form</strong> for weight function. The
-logistic-type function in Equation (7) is flexible, but other forms can
+logistic-type function in Equation (8) is flexible, but other forms can
 be specified using the <code><a href="../reference/fn.html">fn()</a></code> syntax.</p></li>
 <li><p><strong>Proper model specification:</strong> Misspecifying a
 weight covariate as a structural covariate (or vice versa) yields null
@@ -658,20 +666,9 @@ JAGS with automated prior specification, convergence diagnostics, and
 post-estimation tools.</p>
 </div>
 <div class="section level2">
-<h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+<h2 id="further-information">Further Information<a class="anchor" aria-label="anchor" href="#further-information"></a>
 </h2>
-<p>The extended MMMM provides a flexible framework for analyzing group
-outcomes when:</p>
-<ul>
-<li>Groups are composed of multiple members</li>
-<li>Members participate in multiple groups</li>
-<li>The aggregation of member-level effects to group-level outcomes is
-theoretically uncertain</li>
-</ul>
-<p>By modeling rather than imposing aggregation weights, researchers can
-test substantive hypotheses about micro-macro linkages, avoid
-aggregation bias, and account for complex dependence structures in
-multilevel data.</p>
+<p>A comprehensive presentation of the model is provided in <a href="https://osf.io/preprints/socarxiv/4bafr" class="external-link">Rosche (2026)</a>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -6,6 +6,7 @@ url: https://benrosche.github.io/bml/
 template:
   bootstrap: 5
   bootswatch: flatly
+  math-rendering: mathjax
 articles:
   - title: Articles
     navbar: Articles
