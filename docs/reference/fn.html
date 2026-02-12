@@ -122,54 +122,77 @@ the 75th percentile relative to the maximum within each group.</p>
 used in weight formulas:</p><ul><li><p><code>exp</code>, <code>log</code>, <code>log10</code>, <code>sqrt</code>, <code>abs</code>, <code>pow</code></p></li>
 <li><p><code>sin</code>, <code>cos</code>, <code>tan</code>, <code>asin</code>, <code>acos</code>, <code>atan</code></p></li>
 <li><p><code>sinh</code>, <code>cosh</code>, <code>tanh</code></p></li>
+<li><p><code>logit</code>, <code>ilogit</code>, <code>probit</code>, <code>iprobit</code>, <code>cloglog</code>, <code>icloglog</code></p></li>
 <li><p><code>round</code>, <code>trunc</code>, <code>floor</code>, <code>ceiling</code></p></li>
 </ul><p>Example: <code>fn(w ~ 1 / (1 + (n - 1) * exp(-(b1 * x))))</code> uses an exponential
-decay function where weights depend on member characteristics. See Rosche (2026)
-for more details on parameterized weight functions.</p>
+decay function where weights depend on member characteristics.</p>
+<p><strong>Ensuring Numerical Stability:</strong></p>
+<p>Weight functions with estimated parameters (<code>b0</code>, <code>b1</code>, ...) must
+produce bounded, positive values across all plausible parameter values.
+Unbounded weight functions can cause the MCMC sampler to crash
+(e.g., <code>"Error in node w.1[...]: Invalid parent values"</code>).
+During sampling, weight parameters can take on extreme values, and if the
+weight function is not bounded, this will destabilize the likelihood.</p>
+<p>Recommendations:</p><ul><li><p><strong>Use bounded weight functions.</strong> Two options:</p><ul><li><p><code>ilogit()</code>: Bounds weights between 0 and 1 with a zero-point
+        at 0.5: <code>fn(w ~ ilogit(b0 + b1 * x), c = TRUE)</code></p></li>
+<li><p><strong>Generalized logistic</strong> (Rosche, 2026): Bounds weights between
+        0 and 1 with a zero-point at \(1/n\) (equal weights), so deviations
+        from equal weighting are estimated as a function of covariates:
+        <code>fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x))), c = TRUE)</code></p></li>
+</ul></li>
+<li><p><strong>Use <code>c = TRUE</code></strong> (weight normalization) to prevent weights
+    from growing without bound</p></li>
+<li><p><strong>Standardize covariates</strong> in the weight function. Variables with
+    large ranges (e.g., income in thousands) can cause <code>b * x</code> to overflow</p></li>
+<li><p><strong>Use informative priors</strong> for weight parameters via the
+    <code>priors</code> argument in <code><a href="bml.html">bml</a></code> (e.g.,
+    <code>priors = list("b.w.1[1] ~ dnorm(0, 1)")</code>)</p></li>
+<li><p><strong>Avoid unbounded functions</strong> like <code>exp(b * x)</code> without
+    normalization (<code>c = TRUE</code>) or wrapping (e.g., inside <code>ilogit()</code>)</p></li>
+</ul><p>Weight parameters are initialized at 0 by default to ensure numerically stable
+starting values. See <code><a href="../articles/faq.html">vignette("faq")</a></code> (Question 7) for detailed
+troubleshooting of numerical issues.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Browne, W. J., Goldstein, H., &amp; Rasbash, J. (2001). Multiple membership
+    <p>Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
+Micro-Macro Link. <em>Political Analysis</em>.</p>
+<p>Browne, W. J., Goldstein, H., &amp; Rasbash, J. (2001). Multiple membership
 multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103-124.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="mm.html">mm</a></code>, <code><a href="bml.html">bml</a></code></p></div>
+    <div class="dont-index"><p><code><a href="mm.html">mm</a></code>, <code><a href="bml.html">bml</a></code>, <code><a href="../articles/model.html">vignette("model")</a></code> for
+  the model structure, <code><a href="../articles/faq.html">vignette("faq")</a></code> for troubleshooting</p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Equal weights (standard multiple-membership)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Equal weights (standard multiple-membership)</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ 1/n, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Tenure-based weights (proportional to time served)</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">tenure</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ tenure, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Flexible parameterized weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">seniority</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b0 + b1 * seniority, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Unconstrained weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">importance</span>, c <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ importance, c = FALSE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Weights based on group aggregates</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Combining individual and aggregate measures</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="op">(</span><span class="va">tenure</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b0 + b1 * (tenure/max(tenure)), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using median for robust central tendency</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">tenure</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ tenure/median(tenure), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using quantiles for percentile-based weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">tenure</span>, <span class="fl">0.75</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">tenure</span>, <span class="fl">0.25</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE):</span> could not find function "fn"</span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -178,7 +201,7 @@ multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -66,16 +66,16 @@ contributions.
 
 The contribution from mm block \\k\\ to group \\j\\ is:
 
-\$\$\text{mm}\_{kj} = \sum\_{i \in group_j} w\_{ki}
-(\mathbf{x}\_{ki}'\boldsymbol{\beta}\_k + \alpha\_{ki})\$\$
+\$\$\mathrm{mm}\_{kj} = \sum\_{i \in group_j} w\_{ki} (x\_{ki}'
+\beta_k + \alpha\_{ki})\$\$
 
 where:
 
 - \\w\_{ki}\\: Weight for member \\i\\ in group \\j\\ (from `fn`)
 
-- \\\mathbf{x}\_{ki}\\: Member-level covariates (from `vars`)
+- \\x\_{ki}\\: Member-level covariates (from `vars`)
 
-- \\\boldsymbol{\beta}\_k\\: Regression coefficients (estimated)
+- \\\beta_k\\: Regression coefficients (estimated)
 
 - \\\alpha\_{ki}\\: Member-level random effect (if `RE = TRUE`)
 
@@ -86,6 +86,9 @@ variables, or random effect specifications. This allows modeling
 different aggregation mechanisms simultaneously.
 
 ## References
+
+Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
+Micro-Macro Link. *Political Analysis*.
 
 Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
 multiple classification (MMMC) models. *Statistical Modelling*, 1(2),
@@ -106,6 +109,7 @@ Research Report RR791, Department for Education and Skills.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # Equal weights with variables
 mm(
   id = id(pid, gid),
@@ -113,7 +117,6 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile + ipd), fn = fn(w ~ 1/n,     c = TRUE), RE = FALSE): could not find function "mm"
 
 # Random effects only (no variables)
 mm(
@@ -122,16 +125,14 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = TRUE  # Automatically TRUE when vars = NULL
 )
-#> Error in mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE),     RE = TRUE): could not find function "mm"
 
 # Flexible weights with parameter
 mm(
   id = id(pid, gid),
-  vars = vars(party_strength),
-  fn = fn(w ~ b0 + b1 * tenure, c = TRUE),
+  vars = vars(org_structure),
+  fn = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
   RE = TRUE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(party_strength), fn = fn(w ~     b0 + b1 * tenure, c = TRUE), RE = TRUE): could not find function "mm"
 
 # Autoregressive random effects
 mm(
@@ -141,7 +142,6 @@ mm(
   RE = TRUE,
   ar = TRUE  # Random effects evolve over participations
 )
-#> Error in mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE),     RE = TRUE, ar = TRUE): could not find function "mm"
 
 # Interactions and transformations in vars
 mm(
@@ -150,7 +150,6 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile * ipd), fn = fn(w ~ 1/n,     c = TRUE), RE = FALSE): could not find function "mm"
 
 mm(
   id = id(pid, gid),
@@ -158,5 +157,5 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile + I(rile^2)), fn = fn(w ~     1/n, c = TRUE), RE = FALSE): could not find function "mm"
+} # }
 ```

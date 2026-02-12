@@ -93,13 +93,13 @@ data to JAGS.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Fix a coefficient to 1.0 (standard offset)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Fix a coefficient to 1.0 (standard offset)</span></span></span>
 <span class="r-in"><span><span class="fu">fix</span><span class="op">(</span><span class="va">exposure</span>, <span class="fl">1.0</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in edit.default(function() {}, title = subx, ...):</span> invalid argument to edit()</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use within vars() for multiple-membership models</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="fu">fix</span><span class="op">(</span><span class="va">population</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> <span class="va">education</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(fix(population, 0.5) + income + education):</span> could not find function "vars"</span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -108,7 +108,7 @@ data to JAGS.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

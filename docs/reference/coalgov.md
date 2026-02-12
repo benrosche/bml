@@ -14,7 +14,7 @@ coalgov
 
 ## Format
 
-A tibble with 2,077 rows and 21 variables. Each row represents a party's
+A tibble with 2,077 rows and 18 variables. Each row represents a party's
 participation in a specific coalition government. The sample contains
 628 governments formed by 312 unique parties across 29 countries.
 
@@ -38,7 +38,7 @@ participation in a specific coalition government. The sample contains
   [`hm()`](https://benrosche.github.io/bml/reference/hm.md)
   specification). Range: \[11, 96\]
 
-- country:
+- cname:
 
   Three-letter country code (ISO 3166-1 alpha-3)
 
@@ -48,7 +48,7 @@ participation in a specific coalition government. The sample contains
 
 **Government-level variables:**
 
-- pelection:
+- election:
 
   Date of the preceding election that led to the government's formation.
   Range: \[1939-04-02, 2014-12-14\]
@@ -72,19 +72,6 @@ participation in a specific coalition government. The sample contains
   intervention) more than one year before the official end of term; 0 =
   censored (regular elections, other reasons, or termination within one
   year of scheduled elections). Range: \[0, 1\], mean: 0.39
-
-- comp_early:
-
-  Early election indicator for competing risks analysis: 1 = government
-  terminated by calling early elections, 0 = otherwise. Sourced from
-  WKB. Range: \[0, 1\], mean: 0.04
-
-- comp_replace:
-
-  Nonelectoral replacement indicator for competing risks analysis: 1 =
-  government terminated by nonelectoral replacement (cabinet reshuffle
-  without elections), 0 = otherwise. Sourced from WKB. Range: \[0, 1\],
-  mean: 0.36
 
 - majority:
 
@@ -118,8 +105,9 @@ participation in a specific coalition government. The sample contains
 
 - pseat:
 
-  Party's proportional seat share within the coalition. Range: \[0.00,
-  73.00\], mean: 0.22
+  Party's relative seat share within the coalition, computed as
+  `pseat / sum(pseat)` within each government. Sums to 1 within each
+  coalition. Range: \[0.00, 1.00\], mean: 0.33
 
 - prime:
 
@@ -204,9 +192,6 @@ Romania, Slovakia, Spain, Sweden, Switzerland, and United Kingdom.
   endings) and exclude terminations within one year of scheduled
   elections
 
-- `comp_early` and `comp_replace` enable competing risks analysis
-  distinguishing between termination mechanisms
-
 - Party-level variables (`cohesion`, `finance`, `Nmembers`) are
   standardized (mean = 0) for analysis
 
@@ -233,56 +218,103 @@ examples using this dataset
 ``` r
 data(coalgov)
 
-# Explore structure
-head(coalgov)
-#>   pid                          pname gid        gname cid  cname     gstart
-#> 1   2 Social Democratic Labour Party   1 Erlander III   1 Sweden 1951-09-30
-#> 2   6                 Agrarian Party   1 Erlander III   1 Sweden 1951-09-30
-#> 3   2 Social Democratic Labour Party   2  Erlander IV   1 Sweden 1952-09-21
-#> 4   6                 Agrarian Party   2  Erlander IV   1 Sweden 1952-09-21
-#> 5   2 Social Democratic Labour Party   3   Erlander V   1 Sweden 1956-09-26
-#> 6   6                 Agrarian Party   3   Erlander V   1 Sweden 1956-09-26
-#>         gend n prime pfam  rile  ipd  fdep   pseatrel majority mwc    hetero
-#> 1 1952-09-21 2     1    3 -33.4 0.25 20.20  0.5774648        0   1 0.4899342
-#> 2 1952-09-21 2     0    8  -4.9 0.00  1.57 -0.5774648        0   1 0.4899342
-#> 3 1956-09-26 2     1    3 -28.3 0.25 20.20  0.6176471        0   1 0.6312770
-#> 4 1956-09-26 2     0    8   1.2 0.00  1.57 -0.6176471        0   1 0.6312770
-#> 5 1957-10-30 2     1    3 -44.2 0.25 20.20  0.6960000        0   1 0.7930250
-#> 6 1957-10-30 2     0    8   1.8 0.00  1.57 -0.6960000        0   1 0.7930250
-#>   investiture pmpower earlyterm govdur govmaxdur     sim.w    sim.y
-#> 1           1       3         0    357       357 0.3259120 24.68602
-#> 2           1       3         0    357       357 0.3176115 24.68602
-#> 3           1       3         0   1466      1466 0.3265548 24.39541
-#> 4           1       3         0   1466      1466 0.3187646 24.39541
-#> 5           1       3         1    399      1451 0.3272454 23.49619
-#> 6           1       3         1    399      1451 0.3196340 23.49619
-#>         sim.st sim.e
-#> 1 2.415099e-10     1
-#> 2 2.772016e-09     1
-#> 3 5.427893e-10     1
-#> 4 1.918542e-10     1
-#> 5 1.208620e-09     1
-#> 6 9.948775e-10     1
-table(coalgov$country)
-#> < table of extent 0 >
-
-# Government statistics
-length(unique(coalgov$gid))
-#> [1] 402
-mean(coalgov$event_wkb, na.rm = TRUE)
-#> Warning: argument is not numeric or logical: returning NA
-#> [1] NA
-summary(coalgov$dur_wkb)
-#> Length  Class   Mode 
-#>      0   NULL   NULL 
-
-# Party participation patterns
-table(table(coalgov$pid))
+# Explore data structure
+str(coalgov)
+#> 'data.frame':    1288 obs. of  27 variables:
+#>  $ pid        : num  2 6 2 6 2 6 3 5 6 3 ...
+#>   ..- attr(*, "label")= chr "Unique party ID"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ pname      : chr  "Social Democratic Labour Party" "Agrarian Party" "Social Democratic Labour Party" "Agrarian Party" ...
+#>   ..- attr(*, "label")= chr "Party name"
+#>   ..- attr(*, "format.stata")= chr "%-50s"
+#>  $ gid        : num  1 1 2 2 3 3 4 4 4 5 ...
+#>   ..- attr(*, "label")= chr "Unique government ID"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ gname      : chr  "Erlander III" "Erlander III" "Erlander IV" "Erlander IV" ...
+#>   ..- attr(*, "label")= chr "Government name"
+#>   ..- attr(*, "format.stata")= chr "%21s"
+#>  $ cid        : num  1 1 1 1 1 1 1 1 1 1 ...
+#>   ..- attr(*, "label")= chr "Unique country ID"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ cname      : chr  "Sweden" "Sweden" "Sweden" "Sweden" ...
+#>   ..- attr(*, "label")= chr "Country name"
+#>   ..- attr(*, "format.stata")= chr "%26s"
+#>  $ gstart     : Date, format: "1951-09-30" "1951-09-30" ...
+#>  $ gend       : Date, format: "1952-09-21" "1952-09-21" ...
+#>  $ n          : num  2 2 2 2 2 2 3 3 3 3 ...
+#>   ..- attr(*, "label")= chr "# government parties"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ prime      : num  1 0 1 0 1 0 0 0 1 0 ...
+#>   ..- attr(*, "label")= chr "Prime minister party"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ pfam       : hvn_lbll [1:1288] 3, 8, 3, 8, 3, 8, 4, 6, 8, 4, 6, 8, 4, 8, 4, 5, 6, 8...
+#>    ..@ label       : chr "Party family"
+#>    ..@ format.stata: chr "%13.0g"
+#>    ..@ labels      : Named num  1 2 3 4 5 6 7 8 9 10
+#>    .. ..- attr(*, "names")= chr [1:10] "ecologist" "communist" "socdem" "liberal" ...
+#>  $ rile       : num  -33.4 -4.9 -28.3 1.2 -44.2 1.8 -2.1 2.2 -18.2 -15.2 ...
+#>   ..- attr(*, "label")= chr "Right-left position"
+#>   ..- attr(*, "format.stata")= chr "%5.2f"
+#>  $ ipd        : num  0.25 0 0.25 0 0.25 0 0 0 0 0 ...
+#>   ..- attr(*, "label")= chr "Intra-party democracy"
+#>   ..- attr(*, "format.stata")= chr "%10.0g"
+#>  $ fdep       : num  20.2 1.57 20.2 1.57 20.2 ...
+#>   ..- attr(*, "label")= chr "Financial dependency"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ pseatrel   : num  0.577 -0.577 0.618 -0.618 0.696 ...
+#>   ..- attr(*, "label")= chr "Party's relative seat share within coalition"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ majority   : num  0 0 0 0 0 0 1 1 1 1 ...
+#>   ..- attr(*, "label")= chr "Majority government"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ mwc        : num  1 1 1 1 1 1 1 1 1 1 ...
+#>   ..- attr(*, "label")= chr "Minimal winning coalition"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ hetero     : num  0.49 0.49 0.631 0.631 0.793 ...
+#>   ..- attr(*, "label")= chr "SD(rile) of goverment / SD(rile) of parliament"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ investiture: num  1 1 1 1 1 1 1 1 1 1 ...
+#>   ..- attr(*, "label")= chr "Investiture vote"
+#>   ..- attr(*, "format.stata")= chr "%10.0g"
+#>  $ pmpower    : num  3 3 3 3 3 3 3 3 3 3 ...
+#>   ..- attr(*, "label")= chr "Prime ministerial powers"
+#>   ..- attr(*, "format.stata")= chr "%10.0g"
+#>  $ earlyterm  : num  0 0 0 0 1 1 1 1 1 1 ...
+#>   ..- attr(*, "label")= chr "Discretionary early termination"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ govdur     : num  357 357 1466 1466 399 ...
+#>   ..- attr(*, "label")= chr "Government duration"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ govmaxdur  : num  357 357 1466 1466 1451 ...
+#>   ..- attr(*, "label")= chr "Maximum possible government duration"
+#>  $ sim.w      : num  0.326 0.318 0.327 0.319 0.327 ...
+#>   ..- attr(*, "label")= chr "Simulated weights"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ sim.y      : num  24.7 24.7 24.4 24.4 23.5 ...
+#>   ..- attr(*, "label")= chr "Simulated linear outcome"
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ sim.st     : num  2.42e-10 2.77e-09 5.43e-10 1.92e-10 1.21e-09 ...
+#>   ..- attr(*, "label")= chr "Simulated survival time"
+#>  $ sim.e      : num  1 1 1 1 1 1 1 1 1 1 ...
+#>   ..- attr(*, "label")= chr "Simulated event status"
+table(coalgov$cname)
 #> 
-#>  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 
-#> 47 27 18 23  8  8  8  7  9  3  5  2  1  2  1  2  2  1  1  3  1  1  3  1  3  1 
-#> 27 29 32 35 40 
-#>  1  1  2  1  1 
+#>      Australia        Austria        Belgium Czech Republic        Denmark 
+#>             46             45            150             31             76 
+#>         France        Germany        Hungary        Ireland         Israel 
+#>            182             57             19             34            252 
+#>          Italy    Netherlands         Norway         Poland       Portugal 
+#>            196             74             40             42             10 
+#>          Spain         Sweden United Kingdom 
+#>              4             28              2 
+
+# Number of unique units
+length(unique(coalgov$gid))   # Governments
+#> [1] 402
+length(unique(coalgov$pid))   # Parties
+#> [1] 194
+length(unique(coalgov$cid))   # Countries
+#> [1] 18
 
 if (FALSE) { # \dontrun{
 # Model: government duration as function of majority status and party characteristics

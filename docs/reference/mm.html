@@ -114,10 +114,10 @@ Multiple-membership models relax this assumption, allowing groups to be composed
 of multiple members, with flexible weighting of member contributions.</p>
 <p><strong>Model Structure:</strong></p>
 <p>The contribution from mm block \(k\) to group \(j\) is:</p>
-<p>$$\text{mm}_{kj} = \sum_{i \in group_j} w_{ki} (\mathbf{x}_{ki}'\boldsymbol{\beta}_k + \alpha_{ki})$$</p>
+<p>$$\mathrm{mm}_{kj} = \sum_{i \in group_j} w_{ki} (x_{ki}' \beta_k + \alpha_{ki})$$</p>
 <p>where:</p><ul><li><p>\(w_{ki}\): Weight for member \(i\) in group \(j\) (from <code>fn</code>)</p></li>
-<li><p>\(\mathbf{x}_{ki}\): Member-level covariates (from <code>vars</code>)</p></li>
-<li><p>\(\boldsymbol{\beta}_k\): Regression coefficients (estimated)</p></li>
+<li><p>\(x_{ki}\): Member-level covariates (from <code>vars</code>)</p></li>
+<li><p>\(\beta_k\): Regression coefficients (estimated)</p></li>
 <li><p>\(\alpha_{ki}\): Member-level random effect (if <code>RE = TRUE</code>)</p></li>
 </ul><p><strong>Multiple mm() Blocks:</strong></p>
 <p>You can specify multiple <code>mm()</code> blocks with different weight functions,
@@ -126,7 +126,9 @@ aggregation mechanisms simultaneously.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Browne, W. J., Goldstein, H., &amp; Rasbash, J. (2001). Multiple membership
+    <p>Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
+Micro-Macro Link. <em>Political Analysis</em>.</p>
+<p>Browne, W. J., Goldstein, H., &amp; Rasbash, J. (2001). Multiple membership
 multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103-124.</p>
 <p>Fielding, A., &amp; Goldstein, H. (2006). <em>Cross-classified and multiple
 membership structures in multilevel models: An introduction and review</em>.
@@ -140,14 +142,14 @@ Research Report RR791, Department for Education and Skills.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Equal weights with variables</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Equal weights with variables</span></span></span>
 <span class="r-in"><span><span class="fu">mm</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">rile</span> <span class="op">+</span> <span class="va">ipd</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  RE <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mm(id = id(pid, gid), vars = vars(rile + ipd), fn = fn(w ~ 1/n,     c = TRUE), RE = FALSE):</span> could not find function "mm"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Random effects only (no variables)</span></span></span>
 <span class="r-in"><span><span class="fu">mm</span><span class="op">(</span></span></span>
@@ -156,16 +158,14 @@ Research Report RR791, Department for Education and Skills.</p>
 <span class="r-in"><span>  fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  RE <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># Automatically TRUE when vars = NULL</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE),     RE = TRUE):</span> could not find function "mm"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Flexible weights with parameter</span></span></span>
 <span class="r-in"><span><span class="fu">mm</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">party_strength</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">tenure</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">org_structure</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fu">ilogit</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">pseat</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  RE <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mm(id = id(pid, gid), vars = vars(party_strength), fn = fn(w ~     b0 + b1 * tenure, c = TRUE), RE = TRUE):</span> could not find function "mm"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Autoregressive random effects</span></span></span>
 <span class="r-in"><span><span class="fu">mm</span><span class="op">(</span></span></span>
@@ -175,7 +175,6 @@ Research Report RR791, Department for Education and Skills.</p>
 <span class="r-in"><span>  RE <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  ar <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># Random effects evolve over participations</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE),     RE = TRUE, ar = TRUE):</span> could not find function "mm"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Interactions and transformations in vars</span></span></span>
 <span class="r-in"><span><span class="fu">mm</span><span class="op">(</span></span></span>
@@ -184,7 +183,6 @@ Research Report RR791, Department for Education and Skills.</p>
 <span class="r-in"><span>  fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  RE <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mm(id = id(pid, gid), vars = vars(rile * ipd), fn = fn(w ~ 1/n,     c = TRUE), RE = FALSE):</span> could not find function "mm"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">mm</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
@@ -192,7 +190,7 @@ Research Report RR791, Department for Education and Skills.</p>
 <span class="r-in"><span>  fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  RE <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mm(id = id(pid, gid), vars = vars(rile + I(rile^2)), fn = fn(w ~     1/n, c = TRUE), RE = FALSE):</span> could not find function "mm"</span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -201,7 +199,7 @@ Research Report RR791, Department for Education and Skills.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

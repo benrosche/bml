@@ -8,10 +8,10 @@
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="Summarize MCMC convergence diagnostics — mcmcDiag"><meta name="description" content="Computes common convergence diagnostics for selected parameters from a
 JAGS/BUGS fit and returns a compact, report-ready table. The diagnostics
 include Gelman–Rubin \(\hat{R}\), Geweke z-scores, Heidelberger-Welch
-stationarity p-values, and autocorrelation at lag 50."><meta property="og:description" content="Computes common convergence diagnostics for selected parameters from a
+stationarity p-values, and autocorrelation at a user-specified lag."><meta property="og:description" content="Computes common convergence diagnostics for selected parameters from a
 JAGS/BUGS fit and returns a compact, report-ready table. The diagnostics
 include Gelman–Rubin \(\hat{R}\), Geweke z-scores, Heidelberger-Welch
-stationarity p-values, and autocorrelation at lag 50."></head><body>
+stationarity p-values, and autocorrelation at a user-specified lag."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -59,12 +59,12 @@ stationarity p-values, and autocorrelation at lag 50."></head><body>
     <p>Computes common convergence diagnostics for selected parameters from a
 JAGS/BUGS fit and returns a compact, report-ready table. The diagnostics
 include Gelman–Rubin \(\hat{R}\), Geweke z-scores, Heidelberger-Welch
-stationarity p-values, and autocorrelation at lag 50.</p>
+stationarity p-values, and autocorrelation at a user-specified lag.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">bml.out</span>, <span class="va">parameters</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">bml.out</span>, <span class="va">parameters</span>, lag <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -81,6 +81,12 @@ by <code><a href="https://rdrr.io/pkg/R2jags/man/jags.html" class="external-link
 These may be exact names or patterns (e.g., a prefix like <code>"b"</code> that
 matches <code>"b[1]"</code>, <code>"b[2]"</code>, …).</p></dd>
 
+
+<dt id="arg-lag">lag<a class="anchor" aria-label="anchor" href="#arg-lag"></a></dt>
+<dd><p>Integer specifying the lag at which to compute autocorrelation.
+Default: 50. Lower values (e.g., 10) capture short-range dependence; higher
+values assess whether the chain has mixed well over longer intervals.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -88,7 +94,7 @@ matches <code>"b[1]"</code>, <code>"b[2]"</code>, …).</p></dd>
   parameter; cell entries are the average diagnostic values across chains.
   Row names include: <code>"Gelman/Rubin convergence statistic"</code>,
   <code>"Geweke z-score"</code>, <code>"Heidelberger/Welch p-value"</code>,
-  <code>"Autocorrelation (lag 50)"</code>.</p>
+  <code>"Autocorrelation (lag &lt;lag&gt;)"</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -101,10 +107,20 @@ diagnostics and averages them across chains for each parameter:</p><ul><li><p><s
         Large absolute values (e.g., \(|z|&gt;2\)) suggest lack of convergence.</p></li>
 <li><p><strong>Heidelberger–Welch</strong> p-value: <code><a href="https://rdrr.io/pkg/coda/man/heidel.diag.html" class="external-link">coda::heidel.diag()</a></code> tests
         the null of stationarity in the chain segment.</p></li>
-<li><p><strong>Autocorrelation (lag 50)</strong>: <code><a href="https://rdrr.io/pkg/coda/man/autocorr.html" class="external-link">coda::autocorr()</a></code> at lag 50,
-        averaged across chains.</p></li>
+<li><p><strong>Autocorrelation</strong>: <code><a href="https://rdrr.io/pkg/coda/man/autocorr.html" class="external-link">coda::autocorr()</a></code> at the specified
+        <code>lag</code>, averaged across chains. Values near zero indicate good
+        mixing; persistent autocorrelation suggests the chain needs thinning
+        or reparameterization.</p></li>
 </ul><p>All statistics are rounded to three decimals. The returned table is transposed
 so that <em>rows are diagnostics</em> and <em>columns are parameters</em>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Gelman, A., &amp; Rubin, D. B. (1992). Inference from iterative simulation using
+multiple sequences. <em>Statistical Science</em>, 7(4), 457-472.</p>
+<p>Brooks, S. P., &amp; Gelman, A. (1998). General methods for monitoring convergence
+of iterative simulations. <em>Journal of Computational and Graphical Statistics</em>,
+7(4), 434-455.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -124,8 +140,8 @@ so that <em>rows are diagnostics</em> and <em>columns are parameters</em>.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fit model</span></span></span>
 <span class="r-in"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu"><a href="bml.html">bml</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
 <span class="r-in"><span>  monitor <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">coalgov</span></span></span>
@@ -138,13 +154,16 @@ so that <em>rows are diagnostics</em> and <em>columns are parameters</em>.</p>
 <span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b[1]"</span>, <span class="st">"b[2]"</span>, <span class="st">"shape"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check mm block parameters</span></span></span>
-<span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.mm.1"</span>, <span class="st">"sigma.mm"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.mm.1"</span>, <span class="st">"sigma.mm.1"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Custom autocorrelation lag</span></span></span>
+<span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="st">"b"</span>, lag <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Interpreting results:</span></span></span>
 <span class="r-in"><span><span class="co"># - Gelman-Rubin &lt; 1.1: Good convergence</span></span></span>
 <span class="r-in"><span><span class="co"># - |Geweke z| &lt; 2: No evidence against convergence</span></span></span>
 <span class="r-in"><span><span class="co"># - Heidelberger p &gt; 0.05: Chain appears stationary</span></span></span>
-<span class="r-in"><span><span class="co"># - Low autocorrelation at lag 50: Good mixing</span></span></span>
+<span class="r-in"><span><span class="co"># - Low autocorrelation: Good mixing</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
@@ -154,7 +173,7 @@ so that <em>rows are diagnostics</em> and <em>columns are parameters</em>.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

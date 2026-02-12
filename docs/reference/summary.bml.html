@@ -119,8 +119,8 @@ specified), the outcome description includes the number of intervals used.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fit model</span></span></span>
 <span class="r-in"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu"><a href="bml.html">bml</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">coalgov</span></span></span>
@@ -137,6 +137,22 @@ specified), the outcome description includes the number of intervals used.</p>
 <span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">Parameter</span>  <span class="co"># Parameter names</span></span></span>
 <span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">mean</span>       <span class="co"># Posterior means</span></span></span>
 <span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">lb</span>         <span class="co"># Lower credible bounds</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Custom posterior summaries (requires monitor = TRUE)</span></span></span>
+<span class="r-in"><span><span class="co"># Extract posterior draws as a tidy data frame</span></span></span>
+<span class="r-in"><span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu">coda</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/coda/man/mcmc.list.html" class="external-link">as.mcmc.list</a></span><span class="op">(</span><span class="va">m1</span><span class="op">$</span><span class="va">jags.out</span><span class="op">$</span><span class="va">BUGSoutput</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Select specific parameters and compute custom summaries</span></span></span>
+<span class="r-in"><span><span class="va">draws</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"b["</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span><span class="fu">everything</span><span class="op">(</span><span class="op">)</span>, names_to <span class="op">=</span> <span class="st">"param"</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">param</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    median <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">value</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    mad    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/mad.html" class="external-link">mad</a></span><span class="op">(</span><span class="va">value</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    q05    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">value</span>, <span class="fl">0.05</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    q95    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">value</span>, <span class="fl">0.95</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
@@ -146,7 +162,7 @@ specified), the outcome description includes the number of intervals used.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

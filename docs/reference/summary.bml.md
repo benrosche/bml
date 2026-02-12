@@ -83,8 +83,8 @@ data(coalgov)
 
 # Fit model
 m1 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
     hm(id = id(cid), type = "RE"),
   family = "Weibull",
   data = coalgov
@@ -101,5 +101,21 @@ s <- summary(m1)
 s$Parameter  # Parameter names
 s$mean       # Posterior means
 s$lb         # Lower credible bounds
+
+# Custom posterior summaries (requires monitor = TRUE)
+# Extract posterior draws as a tidy data frame
+draws <- coda::as.mcmc.list(m1$jags.out$BUGSoutput) |> as.matrix() |> as_tibble()
+
+# Select specific parameters and compute custom summaries
+draws |>
+  dplyr::select(dplyr::starts_with("b[")) |>
+  tidyr::pivot_longer(everything(), names_to = "param") |>
+  dplyr::group_by(param) |>
+  dplyr::summarise(
+    median = median(value),
+    mad    = mad(value),
+    q05    = quantile(value, 0.05),
+    q95    = quantile(value, 0.95)
+  )
 } # }
 ```

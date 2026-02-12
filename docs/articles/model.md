@@ -70,7 +70,7 @@ and random effects (unobserved heterogeneity).
 The group-level effect models the direct influence of group-level
 covariates and group-specific unobserved factors:
 
-\\\begin{equation} \theta_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot
+\\\begin{equation} \theta_i^{(g)} = \mathbf{\beta}^{(g)} \cdot
 \mathbf{x}\_i^{(g)} + u_i^{(g)}, \quad u_i^{(g)}
 \overset{\text{iid}}{\sim} N(0, \sigma\_{u^{(g)}}^2) \tag{2}
 \end{equation}\\
@@ -79,7 +79,7 @@ where:
 
 - \\\mathbf{x}\_i^{(g)} = \[1, x\_{1i}^{(g)}, \ldots, x\_{Gi}^{(g)}\]\\
   is a vector of group-level covariates
-- \\\boldsymbol{\beta}^{(g)} = \[\beta_0^{(g)}, \beta_1^{(g)}, \ldots,
+- \\\mathbf{\beta}^{(g)} = \[\beta_0^{(g)}, \beta_1^{(g)}, \ldots,
   \beta_G^{(g)}\]\\ are the corresponding regression coefficients
 - \\u_i^{(g)}\\ are independently and identically distributed (i.i.d.)
   random effects
@@ -95,7 +95,7 @@ conditions.
 When groups are nested within higher-level contexts, the nesting-level
 effect accounts for hierarchical dependencies:
 
-\\\begin{equation} \theta_j^{(c)} = \boldsymbol{\beta}^{(c)} \cdot
+\\\begin{equation} \theta_j^{(c)} = \mathbf{\beta}^{(c)} \cdot
 \mathbf{x}\_j^{(c)} + u_j^{(c)}, \quad u_j^{(c)}
 \overset{\text{iid}}{\sim} N(0, \sigma\_{u^{(c)}}^2) \tag{3}
 \end{equation}\\
@@ -104,8 +104,8 @@ where:
 
 - \\\mathbf{x}\_j^{(c)} = \[x\_{1j}^{(c)}, \ldots, x\_{Cj}^{(c)}\]\\ are
   nesting-level covariates
-- \\\boldsymbol{\beta}^{(c)} = \[\beta_1^{(c)}, \ldots,
-  \beta_C^{(c)}\]\\ are the corresponding coefficients
+- \\\mathbf{\beta}^{(c)} = \[\beta_1^{(c)}, \ldots, \beta_C^{(c)}\]\\
+  are the corresponding coefficients
 - \\u_j^{(c)}\\ are i.i.d. random effects
 - \\\sigma\_{u^{(c)}}^2\\ captures unobserved heterogeneity at the
   nesting level
@@ -131,12 +131,12 @@ effects aggregate to influence group outcomes. Individual member effects
 are first specified, then aggregated via a weighted sum:
 
 \\\begin{equation} \theta_i^{(p)} = \sum\_{k \in p\[i\]} w\_{ik} \left(
-\boldsymbol{\beta}^{(p)} \cdot \mathbf{x}\_{ik}^{(p)} + u_k^{(p)}
-\right) \tag{4} \end{equation}\\
+\mathbf{\beta}^{(p)} \cdot \mathbf{x}\_{ik}^{(p)} + u_k^{(p)} \right)
+\tag{4} \end{equation}\\
 
 This can be decomposed into systematic and random components:
 
-\\\begin{equation} \theta_i^{(p)} = \underbrace{\boldsymbol{\beta}^{(p)}
+\\\begin{equation} \theta_i^{(p)} = \underbrace{\mathbf{\beta}^{(p)}
 \sum\_{k \in p\[i\]} w\_{ik} \mathbf{x}\_{ik}^{(p)}}\_{\text{Systematic
 component}} + \underbrace{\sum\_{k \in p\[i\]} w\_{ik}
 u_k^{(p)}}\_{\text{Random component}}, \quad u_k^{(p)}
@@ -147,9 +147,9 @@ where:
 
 - \\\mathbf{x}\_{ik}^{(p)} = \[x\_{1ik}^{(p)}, \ldots,
   x\_{Pik}^{(p)}\]\\ are member-level covariates
-- \\\boldsymbol{\beta}^{(p)} = \[\beta_1^{(p)}, \ldots,
-  \beta_P^{(p)}\]\\ are structural regression coefficients measuring the
-  effect of member attributes on group outcomes
+- \\\mathbf{\beta}^{(p)} = \[\beta_1^{(p)}, \ldots, \beta_P^{(p)}\]\\
+  are structural regression coefficients measuring the effect of member
+  attributes on group outcomes
 - \\w\_{ik}\\ are **aggregation weights** determining how member \\k\\’s
   contribution enters group \\i\\’s outcome
 - \\u_k^{(p)}\\ are i.i.d. member-specific random effects
@@ -159,8 +159,8 @@ where:
 **Interpretation of Weights:** The weights \\w\_{ik}\\ define the
 **micro-macro link** — how individual member characteristics combine to
 produce group-level attributes. Since the structural effect
-\\\boldsymbol{\beta}^{(p)}\\ is constant, the weights serve to aggregate
-the member-level covariate \\\mathbf{x}\_{ik}^{(p)}\\ into a group-level
+\\\mathbf{\beta}^{(p)}\\ is constant, the weights serve to aggregate the
+member-level covariate \\\mathbf{x}\_{ik}^{(p)}\\ into a group-level
 construct \\\sum\_{k \in p\[i\]} w\_{ik} \mathbf{x}\_{ik}^{(p)}\\.
 
 **Covariance Structure:** Including member-specific random effects
@@ -203,7 +203,7 @@ The **extended MMMM** allows weights to be modeled as functions of
 covariates and estimated parameters. For example,
 
 \\\begin{equation} w\_{ik}(\mathbf{x}\_{ik}^{(w)}, n_i) = \frac{1}{1 +
-(n_i - 1) \exp\left(-\boldsymbol{\beta}^{(w)} \cdot
+(n_i - 1) \exp\left(-\mathbf{\beta}^{(w)} \cdot
 \mathbf{x}\_{ik}^{(w)}\right)} \tag{8} \end{equation}\\
 
 subject to the normalization constraint \\\sum\_{k \in p\[i\]} w\_{ik} =
@@ -220,33 +220,32 @@ where:
 
 - \\\mathbf{x}\_{ik}^{(w)} = \[1, x\_{1ik}^{(w)}, \ldots,
   x\_{Wik}^{(w)}\]\\ are **weight covariates**
-- \\\boldsymbol{\beta}^{(w)} = \[\beta_0^{(w)}, \beta_1^{(w)}, \ldots,
+- \\\mathbf{\beta}^{(w)} = \[\beta_0^{(w)}, \beta_1^{(w)}, \ldots,
   \beta_W^{(w)}\]\\ are **weight function parameters** to be estimated
 
 **Functional Form:** Equation (8) generalizes the logistic function by
-centering it at \\1/n_i\\ when \\\boldsymbol{\beta}^{(w)} \cdot
+centering it at \\1/n_i\\ when \\\mathbf{\beta}^{(w)} \cdot
 \mathbf{x}\_{ik}^{(w)} = 0\\. This sets equal weighting as the baseline:
 absent systematic differences, each member receives weight \\1/n_i\\.
-When \\\boldsymbol{\beta}^{(w)} \neq 0\\, weights deviate from this
+When \\\mathbf{\beta}^{(w)} \neq 0\\, weights deviate from this
 baseline, reflecting heterogeneous member influence.
 
 **Properties:**
 
 - Bounded: \\w\_{ik} \in \[0, 1\]\\
-- Baseline-centered: When \\\boldsymbol{\beta}^{(w)} = 0\\, weights
-  reduce to \\w\_{ik} = 1/n_i\\
+- Baseline-centered: When \\\mathbf{\beta}^{(w)} = 0\\, weights reduce
+  to \\w\_{ik} = 1/n_i\\
 - Monotonic: Weights increase/decrease smoothly with the linear
   predictor
 - Normalized: Constraint ensures \\\sum_k w\_{ik} = 1\\ (unless
   normalization is not desired)
 
-**Interpretation of Weight Parameters:** While
-\\\boldsymbol{\beta}^{(p)}\\ measure *structural effects* of member
-attributes on group outcomes, \\\boldsymbol{\beta}^{(w)}\\ measure
-*aggregation effects*—how member attributes determine their relative
-importance in the weighted sum. Together, they reveal both *what*
-matters (structural effects) and *how much* different members’
-characteristics matter (aggregation effects).
+**Interpretation of Weight Parameters:** While \\\mathbf{\beta}^{(p)}\\
+measure *structural effects* of member attributes on group outcomes,
+\\\mathbf{\beta}^{(w)}\\ measure *aggregation effects*—how member
+attributes determine their relative importance in the weighted sum.
+Together, they reveal both *what* matters (structural effects) and *how
+much* different members’ characteristics matter (aggregation effects).
 
 **Example:** Let \\x\_{ik}^{(p)}\\ = party cohesion and
 \\x\_{ik}^{(w)}\\ = indicator for holding the prime ministership in a
@@ -322,15 +321,15 @@ one-unit change by a *single* member already produces an effect of
 **3. Asymmetric Influence:** Do certain members (e.g., larger, more
 central, more powerful) carry disproportionate weight?
 
-\\w\_{ik} = \frac{1}{1 + (n_i - 1) \exp\left(-\beta_0^{(w)}\right)} +
-\beta_1^{(w)} x\_{1ik}^{(w)} + \beta_2^{(w)} x\_{2ik}^{(w)}\\
+\\ w\_{ik} = \frac{1}{1 + (n_i - 1) \exp\left(-(\beta_0^{(w)} +
+\beta_1^{(w)} x\_{1ik}^{(w)} + \beta_2^{(w)} x\_{2ik}^{(w)})\right)} \\
 
 In `bml`:
 
 ``` r
 
 fn(
-  w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x1 + b2 * x2))) ,
+  w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x1 + b2 * x2))),
   c = TRUE
 )
 ```
@@ -395,32 +394,72 @@ structure, including parameterizable weight functions.
 
 ## Variance Decomposition and Intraclass Correlation
 
-The multilevel structure partitions total variance into group-level,
-nesting-level, and member-level components:
+The multilevel structure partitions total variance into additive
+components corresponding to each level in the model. For a three-level
+model with group, nesting, and member levels:
 
 \\\begin{equation} \text{Var}(y_i^{(g)}) = \sigma\_{u^{(g)}}^2 +
 \sigma\_{u^{(c)}}^2 + \sigma\_{u^{(p)}}^2 \sum\_{k \in p\[i\]} w\_{ik}^2
 \tag{12} \end{equation}\\
 
-**Intraclass Correlation Coefficients (ICC):**
+Note that the member-level variance component is scaled by the sum of
+squared weights. With equal weights (\\w\_{ik} = 1/n_i\\), this
+simplifies to \\\sigma\_{u^{(p)}}^2 / n_i\\, so the effective
+member-level variance shrinks as group size increases. With unequal
+weights, members with larger weights contribute more to the variance.
 
-The proportion of variance attributable to each level quantifies the
-importance of group-level, nesting-level, and member-level unobserved
-factors:
+### Intraclass Correlation Coefficients (ICC)
+
+The **intraclass correlation coefficient (ICC)** for a given level is
+the proportion of total variance attributable to that level.
+Intuitively, the ICC answers: *“What fraction of the total variation in
+the outcome is due to differences between units at this level?”*
+
+For example, an ICC of 0.30 for the country level means that 30% of the
+outcome variation can be attributed to between-country differences,
+while the remaining 70% arises from variation at other levels (e.g.,
+between groups within countries, or between members).
 
 \\\begin{align} \rho^{(g)} &=
 \frac{\sigma\_{u^{(g)}}^2}{\sigma\_{u^{(g)}}^2 + \sigma\_{u^{(c)}}^2 +
-\sigma\_{u^{(p)}}^2 \mathbb{E}\[\sum_k w\_{ik}^2\]} \tag{13} \\
-\rho^{(c)} &= \frac{\sigma\_{u^{(c)}}^2}{\sigma\_{u^{(g)}}^2 +
-\sigma\_{u^{(c)}}^2 + \sigma\_{u^{(p)}}^2 \mathbb{E}\[\sum_k
-w\_{ik}^2\]} \tag{14} \\ \rho^{(p)} &= \frac{\sigma\_{u^{(p)}}^2
-\mathbb{E}\[\sum_k w\_{ik}^2\]}{\sigma\_{u^{(g)}}^2 +
-\sigma\_{u^{(c)}}^2 + \sigma\_{u^{(p)}}^2 \mathbb{E}\[\sum_k
-w\_{ik}^2\]} \tag{15} \end{align}\\
+\sigma\_{u^{(p)}}^2 \overline{w^2}} \tag{13} \\ \rho^{(c)} &=
+\frac{\sigma\_{u^{(c)}}^2}{\sigma\_{u^{(g)}}^2 + \sigma\_{u^{(c)}}^2 +
+\sigma\_{u^{(p)}}^2 \overline{w^2}} \tag{14} \\ \rho^{(p)} &=
+\frac{\sigma\_{u^{(p)}}^2 \overline{w^2}}{\sigma\_{u^{(g)}}^2 +
+\sigma\_{u^{(c)}}^2 + \sigma\_{u^{(p)}}^2 \overline{w^2}} \tag{15}
+\end{align}\\
 
-When weights are equal (\\w\_{ik} = 1/n_i\\), the member-level variance
-component simplifies to \\\sigma\_{u^{(p)}}^2 / \bar{n}\\ where
-\\\bar{n}\\ is average group size.
+where \\\overline{w^2} = \frac{1}{N} \sum\_{i=1}^{N} \sum\_{k \in
+p\[i\]} w\_{ik}^2\\ is the average sum of squared weights across groups.
+
+Since the model is estimated via MCMC, the ICCs inherit full posterior
+distributions. The
+[`varDecomp()`](https://benrosche.github.io/bml/reference/varDecomp.md)
+function computes ICCs per posterior draw and summarizes them, properly
+propagating uncertainty:
+
+``` r
+
+m1 <- bml(
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
+    hm(id = id(cid), type = "RE"),
+  family = "Weibull",
+  data = coalgov
+)
+
+varDecomp(m1)
+varDecomp(m1, uncertainty = "ci")
+```
+
+The `uncertainty` argument controls the reported uncertainty measure:
+`"sd"` (posterior standard deviation, the default), `"mad"` (median
+absolute deviation), or `"ci"` (95% credible intervals).
+
+**Family-specific handling:** For Binomial models, which have no
+residual \\\sigma\\, the latent logistic residual variance \\\pi^2/3
+\approx 3.29\\ is used. For Cox models, which also lack a residual
+variance, ICCs are computed among the non-residual components only.
 
 ## Extensions
 
@@ -432,24 +471,25 @@ distinct aggregation mechanisms. This is useful when different
 member-level covariates aggregate through different processes:
 
 \\\begin{equation} \theta_i^{(p)} = \sum\_{b=1}^B \sum\_{k \in p\[i\]}
-w\_{ik}^{(b)} \left( \boldsymbol{\beta}^{(p,b)} \cdot
+w\_{ik}^{(b)} \left( \mathbf{\beta}^{(p,b)} \cdot
 \mathbf{x}\_{ik}^{(p,b)} + u_k^{(p,b)} \right) \tag{16} \end{equation}\\
 
 where \\b\\ indexes MM blocks, each with its own weight function
 \\w\_{ik}^{(b)} = f(\mathbf{x}\_{ik}^{(w,b)}, n_i)\\.
 
-**Example:** Model both observed party characteristics (with estimated
-weights) and party random effects (with equal weights):
+**Example:** Model the effect of the cohesion of the party with the
+largest seat share while the party random effects are specified with
+equal weights:
 
 ``` r
 
-mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n^exp(b*primeminister)), RE = FALSE) +
+mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ pseat == max(pseat)), RE = FALSE) +
 mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)
 ```
 
-**Important:** Only one
-[`mm()`](https://benrosche.github.io/bml/reference/mm.md) block can have
-`RE = TRUE` in a given model.
+**Important:** For any given `id(pid, gid)` combination, only one
+[`mm()`](https://benrosche.github.io/bml/reference/mm.md) block may
+include `RE = TRUE` within the same model.
 
 ### Autoregressive Random Effects
 
@@ -488,35 +528,52 @@ When analyzing group outcomes influenced by both members and non-members
 model their distinct contributions:
 
 \\\begin{equation} \theta_i^{(p)} = \sum\_{k \in p\[i\]} w\_{ik}^{(g)}
-\left( \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}\_{ik}^{(g)} + u_k^{(g)}
+\left( \mathbf{\beta}^{(g)} \cdot \mathbf{x}\_{ik}^{(g)} + u_k^{(g)}
 \right) + \sum\_{k \notin p\[i\]} w\_{ik}^{(o)} \left(
-\boldsymbol{\beta}^{(o)} \cdot \mathbf{x}\_{ik}^{(o)} + u_k^{(o)}
-\right) \tag{18} \end{equation}\\
+\mathbf{\beta}^{(o)} \cdot \mathbf{x}\_{ik}^{(o)} + u_k^{(o)} \right)
+\tag{18} \end{equation}\\
 
 where superscripts \\(g)\\ and \\(o)\\ denote member and non-member
 effects, respectively. This allows both groups to have different
 structural effects and different aggregation mechanisms.
 
 In `bml`, this is specified using two
-[`mm()`](https://benrosche.github.io/bml/reference/mm.md) blocks — one
-for members (\\k \in p\[i\]\\) and one for non-members (\\k \notin
-p\[i\]\\):
+[`mm()`](https://benrosche.github.io/bml/reference/mm.md) blocks with
+different mmid variables — one for members (\\k \in p\[i\]\\) and one
+for non-members (\\k \notin p\[i\]\\):
 
 ``` r
 
-mm(id = id(pid, gid), vars = vars(x1, x2), fn = fn(w ~ 1/n), RE = TRUE) +
-mm(id = id(pid, gid), vars = vars(x1, x2), fn = fn(w ~ 1/n), RE = FALSE)
+mm(id = id(pid_g, gid), vars = vars(x1, x2), fn = fn(w ~ 1/n), RE = TRUE) +
+mm(id = id(pid_o, gid), vars = vars(x1, x2), fn = fn(w ~ 1/n), RE = TRUE)
 ```
+
+**Data format:** Since the two
+[`mm()`](https://benrosche.github.io/bml/reference/mm.md) blocks use
+different member ID variables (`pid_g` and `pid_o`), the data should be
+in a stacked long format where each member gets its own row, with `NA`
+in the mmid column it does not belong to:
+
+    gid  pid_g  pid_o  x1    x2    dur_wkb  event_wkb
+    1    1      NA     0.5   0.3   365      0
+    1    2      NA     0.4   0.2   365      0
+    1    NA     3      0.3   0.1   365      0
+    1    NA     4      0.7   0.5   365      0
+
+Government parties have `pid_g` filled and `pid_o = NA`; opposition
+parties have `pid_o` filled and `pid_g = NA`. Group-level variables
+(e.g., `dur_wkb`, `event_wkb`) are repeated across all rows within a
+group, as in the standard long format.
 
 ## Comparison with Conventional MMMM
 
 The **conventional MMMM** (as implemented in `brms` or `MLwiN`) is a
 special case:
 
-\\\begin{equation} y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot
-\mathbf{x}\_i^{(g)} + \boldsymbol{\beta}^{(p)} \cdot
+\\\begin{equation} y_i^{(g)} = \mathbf{\beta}^{(g)} \cdot
+\mathbf{x}\_i^{(g)} + \mathbf{\beta}^{(p)} \cdot
 \bar{\mathbf{x}}\_{i}^{(p)} + \sum\_{k \in p\[i\]} w\_{ik} u_k^{(p)} +
-u_i^{(g)} \tag{Conventional MMMM} \end{equation}\\
+u_i^{(g)} \end{equation}\\
 
 where \\\bar{\mathbf{x}}\_{i}^{(p)} = \sum_k w\_{ik}
 \mathbf{x}\_{ik}^{(p)}\\ is pre-aggregated using *imposed* weights
@@ -531,11 +588,11 @@ The **extended MMMM** generalizes this by:
 3.  **Enabling multiple aggregation mechanisms** via multiple
     [`mm()`](https://benrosche.github.io/bml/reference/mm.md) blocks
 
-\\\begin{equation} y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot
+\\\begin{equation} y_i^{(g)} = \mathbf{\beta}^{(g)} \cdot
 \mathbf{x}\_i^{(g)} + \sum\_{k \in p\[i\]} w\_{ik} \left(
-\boldsymbol{\beta}^{(p)} \cdot \mathbf{x}\_{ik}^{(p)} + u_k^{(p)}
-\right) + u_i^{(g)}, \quad w\_{ik} = f(\mathbf{x}\_{ik}^{(w)}, n_i)
-\tag{Extended MMMM} \end{equation}\\
+\mathbf{\beta}^{(p)} \cdot \mathbf{x}\_{ik}^{(p)} + u_k^{(p)} \right) +
+u_i^{(g)}, \quad w\_{ik} = f(\mathbf{x}\_{ik}^{(w)}, n_i)
+\end{equation}\\
 
 ## Model Assumptions
 

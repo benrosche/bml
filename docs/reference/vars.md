@@ -54,32 +54,25 @@ Returns `NULL` if no variables are specified.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # Simple variable specification (formula-style with +)
 vars(income + education)
-#> Error in vars(income + education): could not find function "vars"
 
 # Single variable
 vars(income)
-#> Error in vars(income): could not find function "vars"
 
 # Interactions
 vars(income * education)  # expands to income + education + income:education
-#> Error in vars(income * education): could not find function "vars"
 vars(income:education)    # interaction only
-#> Error in vars(income:education): could not find function "vars"
 
 # Transformations
 vars(I(income^2))         # squared term
-#> Error in vars(I(income^2)): could not find function "vars"
 vars(income + I(income^2)) # linear and squared
-#> Error in vars(income + I(income^2)): could not find function "vars"
 
 # Mix free and fixed variables
 vars(fix(exposure, 1.0) + income + education)
-#> Error in vars(fix(exposure, 1) + income + education): could not find function "vars"
 
 # Use in mm() specification
-if (FALSE) { # \dontrun{
 mm(
   id = id(pid, gid),
   vars = vars(rile + ipd),

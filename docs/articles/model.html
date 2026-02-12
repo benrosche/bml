@@ -170,7 +170,7 @@ and random effects (unobserved heterogeneity).</p>
 <p>The group-level effect models the direct influence of group-level
 covariates and group-specific unobserved factors:</p>
 <p><span class="math display">\[\begin{equation}
-\theta_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} +
+\theta_i^{(g)} = \mathbf{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} +
 u_i^{(g)}, \quad u_i^{(g)} \overset{\text{iid}}{\sim} N(0,
 \sigma_{u^{(g)}}^2) \tag{2}
 \end{equation}\]</span></p>
@@ -181,9 +181,9 @@ u_i^{(g)}, \quad u_i^{(g)} \overset{\text{iid}}{\sim} N(0,
 \ldots, x_{Gi}^{(g)}]\)</span> is a vector of group-level
 covariates</li>
 <li>
-<span class="math inline">\(\boldsymbol{\beta}^{(g)} =
-[\beta_0^{(g)}, \beta_1^{(g)}, \ldots, \beta_G^{(g)}]\)</span> are the
-corresponding regression coefficients</li>
+<span class="math inline">\(\mathbf{\beta}^{(g)} = [\beta_0^{(g)},
+\beta_1^{(g)}, \ldots, \beta_G^{(g)}]\)</span> are the corresponding
+regression coefficients</li>
 <li>
 <span class="math inline">\(u_i^{(g)}\)</span> are independently and
 identically distributed (i.i.d.) random effects</li>
@@ -200,7 +200,7 @@ status, ideological heterogeneity, or economic conditions.</p>
 <p>When groups are nested within higher-level contexts, the
 nesting-level effect accounts for hierarchical dependencies:</p>
 <p><span class="math display">\[\begin{equation}
-\theta_j^{(c)} = \boldsymbol{\beta}^{(c)} \cdot \mathbf{x}_j^{(c)} +
+\theta_j^{(c)} = \mathbf{\beta}^{(c)} \cdot \mathbf{x}_j^{(c)} +
 u_j^{(c)}, \quad u_j^{(c)} \overset{\text{iid}}{\sim} N(0,
 \sigma_{u^{(c)}}^2) \tag{3}
 \end{equation}\]</span></p>
@@ -210,9 +210,8 @@ u_j^{(c)}, \quad u_j^{(c)} \overset{\text{iid}}{\sim} N(0,
 <span class="math inline">\(\mathbf{x}_j^{(c)} = [x_{1j}^{(c)},
 \ldots, x_{Cj}^{(c)}]\)</span> are nesting-level covariates</li>
 <li>
-<span class="math inline">\(\boldsymbol{\beta}^{(c)} =
-[\beta_1^{(c)}, \ldots, \beta_C^{(c)}]\)</span> are the corresponding
-coefficients</li>
+<span class="math inline">\(\mathbf{\beta}^{(c)} = [\beta_1^{(c)},
+\ldots, \beta_C^{(c)}]\)</span> are the corresponding coefficients</li>
 <li>
 <span class="math inline">\(u_j^{(c)}\)</span> are i.i.d. random
 effects</li>
@@ -239,17 +238,16 @@ nested within multiple hierarchical contexts).</p>
 effects aggregate to influence group outcomes. Individual member effects
 are first specified, then aggregated via a weighted sum:</p>
 <p><span class="math display">\[\begin{equation}
-\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik} \left(
-\boldsymbol{\beta}^{(p)} \cdot \mathbf{x}_{ik}^{(p)} + u_k^{(p)} \right)
-\tag{4}
+\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik} \left( \mathbf{\beta}^{(p)}
+\cdot \mathbf{x}_{ik}^{(p)} + u_k^{(p)} \right) \tag{4}
 \end{equation}\]</span></p>
 <p>This can be decomposed into systematic and random components:</p>
 <p><span class="math display">\[\begin{equation}
-\theta_i^{(p)} = \underbrace{\boldsymbol{\beta}^{(p)} \sum_{k \in p[i]}
+\theta_i^{(p)} = \underbrace{\mathbf{\beta}^{(p)} \sum_{k \in p[i]}
 w_{ik} \mathbf{x}_{ik}^{(p)}}_{\text{Systematic component}} +
-\underbrace{\sum_{k \in p[i]} w_{ik} u_k^{(p)}}_{\text{Random
-component}}, \quad u_k^{(p)} \overset{\text{iid}}{\sim} N(0,
-\sigma_{u^{(p)}}^2) \tag{5}
+\underbrace{\sum_{k \in p[i]} w_{ik}
+u_k^{(p)}}_{\text{Random  component}}, \quad u_k^{(p)}
+\overset{\text{iid}}{\sim} N(0, \sigma_{u^{(p)}}^2) \tag{5}
 \end{equation}\]</span></p>
 <p>where:</p>
 <ul>
@@ -257,10 +255,9 @@ component}}, \quad u_k^{(p)} \overset{\text{iid}}{\sim} N(0,
 <span class="math inline">\(\mathbf{x}_{ik}^{(p)} = [x_{1ik}^{(p)},
 \ldots, x_{Pik}^{(p)}]\)</span> are member-level covariates</li>
 <li>
-<span class="math inline">\(\boldsymbol{\beta}^{(p)} =
-[\beta_1^{(p)}, \ldots, \beta_P^{(p)}]\)</span> are structural
-regression coefficients measuring the effect of member attributes on
-group outcomes</li>
+<span class="math inline">\(\mathbf{\beta}^{(p)} = [\beta_1^{(p)},
+\ldots, \beta_P^{(p)}]\)</span> are structural regression coefficients
+measuring the effect of member attributes on group outcomes</li>
 <li>
 <span class="math inline">\(w_{ik}\)</span> are <strong>aggregation
 weights</strong> determining how member <span class="math inline">\(k\)</span>’s contribution enters group <span class="math inline">\(i\)</span>’s outcome</li>
@@ -273,7 +270,7 @@ unobserved heterogeneity at the member level</li>
 </ul>
 <p><strong>Interpretation of Weights:</strong> The weights <span class="math inline">\(w_{ik}\)</span> define the <strong>micro-macro
 link</strong> — how individual member characteristics combine to produce
-group-level attributes. Since the structural effect <span class="math inline">\(\boldsymbol{\beta}^{(p)}\)</span> is constant, the
+group-level attributes. Since the structural effect <span class="math inline">\(\mathbf{\beta}^{(p)}\)</span> is constant, the
 weights serve to aggregate the member-level covariate <span class="math inline">\(\mathbf{x}_{ik}^{(p)}\)</span> into a group-level
 construct <span class="math inline">\(\sum_{k \in p[i]} w_{ik}
 \mathbf{x}_{ik}^{(p)}\)</span>.</p>
@@ -320,7 +317,7 @@ they vary in practice introduces <strong>aggregation bias</strong>.</p>
 functions of covariates and estimated parameters. For example,</p>
 <p><span class="math display">\[\begin{equation}
 w_{ik}(\mathbf{x}_{ik}^{(w)}, n_i) = \frac{1}{1 + (n_i - 1)
-\exp\left(-\boldsymbol{\beta}^{(w)} \cdot \mathbf{x}_{ik}^{(w)}\right)}
+\exp\left(-\mathbf{\beta}^{(w)} \cdot \mathbf{x}_{ik}^{(w)}\right)}
 \tag{8}
 \end{equation}\]</span></p>
 <p>subject to the normalization constraint <span class="math inline">\(\sum_{k \in p[i]} w_{ik} = 1\)</span> for all
@@ -336,32 +333,31 @@ x_{1ik}^{(w)}, \ldots, x_{Wik}^{(w)}]\)</span> are <strong>weight
 covariates</strong>
 </li>
 <li>
-<span class="math inline">\(\boldsymbol{\beta}^{(w)} =
-[\beta_0^{(w)}, \beta_1^{(w)}, \ldots, \beta_W^{(w)}]\)</span> are
-<strong>weight function parameters</strong> to be estimated</li>
+<span class="math inline">\(\mathbf{\beta}^{(w)} = [\beta_0^{(w)},
+\beta_1^{(w)}, \ldots, \beta_W^{(w)}]\)</span> are <strong>weight
+function parameters</strong> to be estimated</li>
 </ul>
 <p><strong>Functional Form:</strong> Equation (8) generalizes the
-logistic function by centering it at <span class="math inline">\(1/n_i\)</span> when <span class="math inline">\(\boldsymbol{\beta}^{(w)} \cdot
-\mathbf{x}_{ik}^{(w)} = 0\)</span>. This sets equal weighting as the
-baseline: absent systematic differences, each member receives weight
-<span class="math inline">\(1/n_i\)</span>. When <span class="math inline">\(\boldsymbol{\beta}^{(w)} \neq 0\)</span>, weights
+logistic function by centering it at <span class="math inline">\(1/n_i\)</span> when <span class="math inline">\(\mathbf{\beta}^{(w)} \cdot \mathbf{x}_{ik}^{(w)} =
+0\)</span>. This sets equal weighting as the baseline: absent systematic
+differences, each member receives weight <span class="math inline">\(1/n_i\)</span>. When <span class="math inline">\(\mathbf{\beta}^{(w)} \neq 0\)</span>, weights
 deviate from this baseline, reflecting heterogeneous member
 influence.</p>
 <p><strong>Properties:</strong></p>
 <ul>
 <li>Bounded: <span class="math inline">\(w_{ik} \in [0, 1]\)</span>
 </li>
-<li>Baseline-centered: When <span class="math inline">\(\boldsymbol{\beta}^{(w)} = 0\)</span>, weights
-reduce to <span class="math inline">\(w_{ik} = 1/n_i\)</span>
+<li>Baseline-centered: When <span class="math inline">\(\mathbf{\beta}^{(w)} = 0\)</span>, weights reduce
+to <span class="math inline">\(w_{ik} = 1/n_i\)</span>
 </li>
 <li>Monotonic: Weights increase/decrease smoothly with the linear
 predictor</li>
 <li>Normalized: Constraint ensures <span class="math inline">\(\sum_k
 w_{ik} = 1\)</span> (unless normalization is not desired)</li>
 </ul>
-<p><strong>Interpretation of Weight Parameters:</strong> While <span class="math inline">\(\boldsymbol{\beta}^{(p)}\)</span> measure
+<p><strong>Interpretation of Weight Parameters:</strong> While <span class="math inline">\(\mathbf{\beta}^{(p)}\)</span> measure
 <em>structural effects</em> of member attributes on group outcomes,
-<span class="math inline">\(\boldsymbol{\beta}^{(w)}\)</span> measure
+<span class="math inline">\(\mathbf{\beta}^{(w)}\)</span> measure
 <em>aggregation effects</em>—how member attributes determine their
 relative importance in the weighted sum. Together, they reveal both
 <em>what</em> matters (structural effects) and <em>how much</em>
@@ -432,13 +428,14 @@ change. Under sum aggregation, a one-unit change by a <em>single</em>
 member already produces an effect of <span class="math inline">\(\beta^{(p)}\)</span>.</p>
 <p><strong>3. Asymmetric Influence:</strong> Do certain members (e.g.,
 larger, more central, more powerful) carry disproportionate weight?</p>
-<p><span class="math display">\[w_{ik} = \frac{1}{1 + (n_i - 1)
-\exp\left(-\beta_0^{(w)}\right)} + \beta_1^{(w)} x_{1ik}^{(w)} +
-\beta_2^{(w)} x_{2ik}^{(w)}\]</span></p>
+<p><span class="math display">\[
+w_{ik} = \frac{1}{1 + (n_i - 1) \exp\left(-(\beta_0^{(w)} +
+\beta_1^{(w)} x_{1ik}^{(w)} + \beta_2^{(w)} x_{2ik}^{(w)})\right)}
+\]</span></p>
 <p>In <code>bml</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span></span>
-<span>  <span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">x2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> ,</span>
+<span>  <span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">x2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  c <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>This weight function tests whether member attributes <span class="math inline">\(x_1, x_2\)</span> (e.g., size, organization,
@@ -490,29 +487,68 @@ structure, including parameterizable weight functions.</p>
 <div class="section level2">
 <h2 id="variance-decomposition-and-intraclass-correlation">Variance Decomposition and Intraclass Correlation<a class="anchor" aria-label="anchor" href="#variance-decomposition-and-intraclass-correlation"></a>
 </h2>
-<p>The multilevel structure partitions total variance into group-level,
-nesting-level, and member-level components:</p>
+<p>The multilevel structure partitions total variance into additive
+components corresponding to each level in the model. For a three-level
+model with group, nesting, and member levels:</p>
 <p><span class="math display">\[\begin{equation}
 \text{Var}(y_i^{(g)}) = \sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 +
 \sigma_{u^{(p)}}^2 \sum_{k \in p[i]} w_{ik}^2 \tag{12}
 \end{equation}\]</span></p>
-<p><strong>Intraclass Correlation Coefficients (ICC):</strong></p>
-<p>The proportion of variance attributable to each level quantifies the
-importance of group-level, nesting-level, and member-level unobserved
-factors:</p>
+<p>Note that the member-level variance component is scaled by the sum of
+squared weights. With equal weights (<span class="math inline">\(w_{ik}
+= 1/n_i\)</span>), this simplifies to <span class="math inline">\(\sigma_{u^{(p)}}^2 / n_i\)</span>, so the
+effective member-level variance shrinks as group size increases. With
+unequal weights, members with larger weights contribute more to the
+variance.</p>
+<div class="section level3">
+<h3 id="intraclass-correlation-coefficients-icc">Intraclass Correlation Coefficients (ICC)<a class="anchor" aria-label="anchor" href="#intraclass-correlation-coefficients-icc"></a>
+</h3>
+<p>The <strong>intraclass correlation coefficient (ICC)</strong> for a
+given level is the proportion of total variance attributable to that
+level. Intuitively, the ICC answers: <em>“What fraction of the total
+variation in the outcome is due to differences between units at this
+level?”</em></p>
+<p>For example, an ICC of 0.30 for the country level means that 30% of
+the outcome variation can be attributed to between-country differences,
+while the remaining 70% arises from variation at other levels (e.g.,
+between groups within countries, or between members).</p>
 <p><span class="math display">\[\begin{align}
 \rho^{(g)} &amp;= \frac{\sigma_{u^{(g)}}^2}{\sigma_{u^{(g)}}^2 +
-\sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k w_{ik}^2]}
-\tag{13} \\
+\sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \overline{w^2}} \tag{13} \\
 \rho^{(c)} &amp;= \frac{\sigma_{u^{(c)}}^2}{\sigma_{u^{(g)}}^2 +
-\sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k w_{ik}^2]}
-\tag{14} \\
-\rho^{(p)} &amp;= \frac{\sigma_{u^{(p)}}^2 \mathbb{E}[\sum_k
-w_{ik}^2]}{\sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2
-\mathbb{E}[\sum_k w_{ik}^2]} \tag{15}
+\sigma_{u^{(c)}}^2 + \sigma_{u^{(p)}}^2 \overline{w^2}} \tag{14} \\
+\rho^{(p)} &amp;= \frac{\sigma_{u^{(p)}}^2
+\overline{w^2}}{\sigma_{u^{(g)}}^2 + \sigma_{u^{(c)}}^2 +
+\sigma_{u^{(p)}}^2 \overline{w^2}} \tag{15}
 \end{align}\]</span></p>
-<p>When weights are equal (<span class="math inline">\(w_{ik} =
-1/n_i\)</span>), the member-level variance component simplifies to <span class="math inline">\(\sigma_{u^{(p)}}^2 / \bar{n}\)</span> where <span class="math inline">\(\bar{n}\)</span> is average group size.</p>
+<p>where <span class="math inline">\(\overline{w^2} = \frac{1}{N}
+\sum_{i=1}^{N} \sum_{k \in p[i]} w_{ik}^2\)</span> is the average sum of
+squared weights across groups.</p>
+<p>Since the model is estimated via MCMC, the ICCs inherit full
+posterior distributions. The <code><a href="../reference/varDecomp.html">varDecomp()</a></code> function computes
+ICCs per posterior draw and summarizes them, properly propagating
+uncertainty:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">coalgov</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/varDecomp.html">varDecomp</a></span><span class="op">(</span><span class="va">m1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/varDecomp.html">varDecomp</a></span><span class="op">(</span><span class="va">m1</span>, uncertainty <span class="op">=</span> <span class="st">"ci"</span><span class="op">)</span></span></code></pre></div>
+<p>The <code>uncertainty</code> argument controls the reported
+uncertainty measure: <code>"sd"</code> (posterior standard deviation,
+the default), <code>"mad"</code> (median absolute deviation), or
+<code>"ci"</code> (95% credible intervals).</p>
+<p><strong>Family-specific handling:</strong> For Binomial models, which
+have no residual <span class="math inline">\(\sigma\)</span>, the latent
+logistic residual variance <span class="math inline">\(\pi^2/3 \approx
+3.29\)</span> is used. For Cox models, which also lack a residual
+variance, ICCs are computed among the non-residual components only.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="extensions">Extensions<a class="anchor" aria-label="anchor" href="#extensions"></a>
@@ -525,20 +561,21 @@ with distinct aggregation mechanisms. This is useful when different
 member-level covariates aggregate through different processes:</p>
 <p><span class="math display">\[\begin{equation}
 \theta_i^{(p)} = \sum_{b=1}^B \sum_{k \in p[i]} w_{ik}^{(b)} \left(
-\boldsymbol{\beta}^{(p,b)} \cdot \mathbf{x}_{ik}^{(p,b)} + u_k^{(p,b)}
+\mathbf{\beta}^{(p,b)} \cdot \mathbf{x}_{ik}^{(p,b)} + u_k^{(p,b)}
 \right) \tag{16}
 \end{equation}\]</span></p>
 <p>where <span class="math inline">\(b\)</span> indexes MM blocks, each
 with its own weight function <span class="math inline">\(w_{ik}^{(b)} =
 f(\mathbf{x}_{ik}^{(w,b)}, n_i)\)</span>.</p>
-<p><strong>Example:</strong> Model both observed party characteristics
-(with estimated weights) and party random effects (with equal
-weights):</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">b</span><span class="op">*</span><span class="va">primeminister</span><span class="op">)</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<p><strong>Example:</strong> Model the effect of the cohesion of the
+party with the largest seat share while the party random effects are
+specified with equal weights:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">pseat</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">pseat</span><span class="op">)</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Important:</strong> Only one <code><a href="../reference/mm.html">mm()</a></code> block can have
-<code>RE = TRUE</code> in a given model.</p>
+<p><strong>Important:</strong> For any given <code>id(pid, gid)</code>
+combination, only one <code><a href="../reference/mm.html">mm()</a></code> block may include
+<code>RE = TRUE</code> within the same model.</p>
 </div>
 <div class="section level3">
 <h3 id="autoregressive-random-effects">Autoregressive Random Effects<a class="anchor" aria-label="anchor" href="#autoregressive-random-effects"></a>
@@ -564,7 +601,7 @@ successive group participations. The variance <span class="math inline">\(\sigma
 governments may evolve as its leadership, organization, or electoral
 fortunes change.</p>
 <p><strong>Usage:</strong></p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span>, ar <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -575,20 +612,34 @@ non-members (e.g., coalition and opposition parties), separate
 <code><a href="../reference/mm.html">mm()</a></code> blocks can model their distinct contributions:</p>
 <p><span class="math display">\[\begin{equation}
 \theta_i^{(p)} = \sum_{k \in p[i]} w_{ik}^{(g)} \left(
-\boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_{ik}^{(g)} + u_k^{(g)} \right)
-+ \sum_{k \notin p[i]} w_{ik}^{(o)} \left( \boldsymbol{\beta}^{(o)}
-\cdot \mathbf{x}_{ik}^{(o)} + u_k^{(o)} \right) \tag{18}
+\mathbf{\beta}^{(g)} \cdot \mathbf{x}_{ik}^{(g)} + u_k^{(g)} \right) +
+\sum_{k \notin p[i]} w_{ik}^{(o)} \left( \mathbf{\beta}^{(o)} \cdot
+\mathbf{x}_{ik}^{(o)} + u_k^{(o)} \right) \tag{18}
 \end{equation}\]</span></p>
 <p>where superscripts <span class="math inline">\((g)\)</span> and <span class="math inline">\((o)\)</span> denote member and non-member effects,
 respectively. This allows both groups to have different structural
 effects and different aggregation mechanisms.</p>
 <p>In <code>bml</code>, this is specified using two <code><a href="../reference/mm.html">mm()</a></code>
-blocks — one for members (<span class="math inline">\(k \in
-p[i]\)</span>) and one for non-members (<span class="math inline">\(k
-\notin p[i]\)</span>):</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+blocks with different mmid variables — one for members (<span class="math inline">\(k \in p[i]\)</span>) and one for non-members
+(<span class="math inline">\(k \notin p[i]\)</span>):</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_g</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_o</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Data format:</strong> Since the two <code><a href="../reference/mm.html">mm()</a></code> blocks
+use different member ID variables (<code>pid_g</code> and
+<code>pid_o</code>), the data should be in a stacked long format where
+each member gets its own row, with <code>NA</code> in the mmid column it
+does not belong to:</p>
+<pre><code>gid  pid_g  pid_o  x1    x2    dur_wkb  event_wkb
+1    1      NA     0.5   0.3   365      0
+1    2      NA     0.4   0.2   365      0
+1    NA     3      0.3   0.1   365      0
+1    NA     4      0.7   0.5   365      0</code></pre>
+<p>Government parties have <code>pid_g</code> filled and
+<code>pid_o = NA</code>; opposition parties have <code>pid_o</code>
+filled and <code>pid_g = NA</code>. Group-level variables (e.g.,
+<code>dur_wkb</code>, <code>event_wkb</code>) are repeated across all
+rows within a group, as in the standard long format.</p>
 </div>
 </div>
 <div class="section level2">
@@ -597,9 +648,9 @@ p[i]\)</span>) and one for non-members (<span class="math inline">\(k
 <p>The <strong>conventional MMMM</strong> (as implemented in
 <code>brms</code> or <code>MLwiN</code>) is a special case:</p>
 <p><span class="math display">\[\begin{equation}
-y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} +
-\boldsymbol{\beta}^{(p)} \cdot \bar{\mathbf{x}}_{i}^{(p)} + \sum_{k \in
-p[i]} w_{ik} u_k^{(p)} + u_i^{(g)} \tag{Conventional MMMM}
+y_i^{(g)} = \mathbf{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} +
+\mathbf{\beta}^{(p)} \cdot \bar{\mathbf{x}}_{i}^{(p)} + \sum_{k \in
+p[i]} w_{ik} u_k^{(p)} + u_i^{(g)}
 \end{equation}\]</span></p>
 <p>where <span class="math inline">\(\bar{\mathbf{x}}_{i}^{(p)} = \sum_k
 w_{ik} \mathbf{x}_{ik}^{(p)}\)</span> is pre-aggregated using
@@ -617,10 +668,10 @@ with estimable parameters</li>
 multiple <code><a href="../reference/mm.html">mm()</a></code> blocks</li>
 </ol>
 <p><span class="math display">\[\begin{equation}
-y_i^{(g)} = \boldsymbol{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} + \sum_{k
-\in p[i]} w_{ik} \left( \boldsymbol{\beta}^{(p)} \cdot
-\mathbf{x}_{ik}^{(p)} + u_k^{(p)} \right) + u_i^{(g)}, \quad w_{ik} =
-f(\mathbf{x}_{ik}^{(w)}, n_i) \tag{Extended MMMM}
+y_i^{(g)} = \mathbf{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} + \sum_{k \in
+p[i]} w_{ik} \left( \mathbf{\beta}^{(p)} \cdot \mathbf{x}_{ik}^{(p)} +
+u_k^{(p)} \right) + u_i^{(g)}, \quad w_{ik} = f(\mathbf{x}_{ik}^{(w)},
+n_i)
 \end{equation}\]</span></p>
 </div>
 <div class="section level2">
@@ -677,7 +728,7 @@ post-estimation tools.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

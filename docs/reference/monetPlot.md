@@ -95,8 +95,8 @@ data(coalgov)
 
 # Fit model with monitoring enabled
 m1 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
     hm(id = id(cid), type = "RE"),
   family = "Weibull",
   monitor = TRUE,  # Required for monetPlot
@@ -113,7 +113,7 @@ monetPlot(m1, parameter = "b[2]", label = "Majority Government Effect")
 monetPlot(m1, parameter = "b.mm.1", label = "Party Fragmentation")
 
 # Plot random effect SD
-monetPlot(m1, parameter = "sigma.mm")
+monetPlot(m1, parameter = "sigma.mm.1")
 
 # List available parameters
 rownames(m1$reg.table)

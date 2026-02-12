@@ -235,6 +235,160 @@ where a member’s unobserved heterogeneity changes over time</li>
 <p><strong>Important:</strong> Only one <code><a href="../reference/mm.html">mm()</a></code> block can have
 <code>RE = TRUE</code> in a given model.</p>
 </div>
+<div class="section level2">
+<h2 id="how-do-i-fix-parameters-to-known-values">6. How do I fix parameters to known values?<a class="anchor" aria-label="anchor" href="#how-do-i-fix-parameters-to-known-values"></a>
+</h2>
+<p>There are two ways to fix parameters in <code>bml</code>, depending
+on where in the model they appear.</p>
+<div class="section level3">
+<h3 id="main-equation-and-hm-blocks-using-fix">Main equation and <code>hm()</code> blocks: Using
+<code>fix()</code><a class="anchor" aria-label="anchor" href="#main-equation-and-hm-blocks-using-fix"></a>
+</h3>
+<p>Use the <code><a href="../reference/fix.html">fix()</a></code> helper inside <code><a href="../reference/vars.html">vars()</a></code> to hold
+a coefficient at a specified value rather than estimating it. This works
+both in the main equation and in <code><a href="../reference/hm.html">hm()</a></code> blocks.</p>
+<p><strong>Main equation:</strong></p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Fix the coefficient of 'exposure' to 1 (i.e., use as an offset)</span></span>
+<span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="../reference/fix.html">fix</a></span><span class="op">(</span><span class="va">exposure</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">x2</span>,</span>
+<span>  family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">dat</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This is equivalent to adding <code>exposure</code> as a predictor but
+constraining its coefficient to 1 instead of estimating it. This is
+useful for offsets or when prior theory dictates a specific coefficient
+value.</p>
+<p><strong>In <code><a href="../reference/hm.html">hm()</a></code> blocks:</strong></p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="fu"><a href="../reference/fix.html">fix</a></span><span class="op">(</span><span class="va">investiture</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span> <span class="va">gdp</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"FE"</span><span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span>
+<span>  data   <span class="op">=</span> <span class="va">coalgov</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><strong>In <code><a href="../reference/mm.html">mm()</a></code> blocks:</strong></p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>      id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
+<span>      vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="fu"><a href="../reference/fix.html">fix</a></span><span class="op">(</span><span class="va">cohesion</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="va">finance</span><span class="op">)</span>,</span>
+<span>      fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>      RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
+<span>  data   <span class="op">=</span> <span class="va">coalgov</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Here, the coefficient of <code>cohesion</code> is fixed at 1 while
+<code>finance</code> is freely estimated.</p>
+</div>
+<div class="section level3">
+<h3 id="weight-function-fn-omitting-parameters">Weight function <code>fn()</code>: Omitting parameters<a class="anchor" aria-label="anchor" href="#weight-function-fn-omitting-parameters"></a>
+</h3>
+<p>In the weight function specified via <code><a href="../reference/fn.html">fn()</a></code>, you fix
+weights by simply not including any free parameters (<code>b0</code>,
+<code>b1</code>, …) in the formula. When no parameters appear, the
+weight function is treated as a known, fixed transformation.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Fixed equal weights (no parameters to estimate)</span></span>
+<span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Fixed weights proportional to seat share (no parameters to estimate)</span></span>
+<span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">pseat</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Compare this with weight functions that include free parameters:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Estimable: b is estimated from data</span></span>
+<span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">b</span> <span class="op">*</span> <span class="va">x</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Estimable: b0 is estimated from data</span></span>
+<span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">b0</span><span class="op">)</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>The key distinction: if the <code><a href="../reference/fn.html">fn()</a></code> formula contains
+<code>b</code>, <code>b0</code>, <code>b1</code>, etc., these are
+estimated. If the formula contains only data variables and constants
+(like <code>n</code>, <code>pseat</code>, <code>1</code>), the weights
+are fixed.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="i-get-error-in-node-w-1-invalid-parent-values-what-does-this-mean">7. I get “Error in node w.1[…]: Invalid parent values” — what does
+this mean?<a class="anchor" aria-label="anchor" href="#i-get-error-in-node-w-1-invalid-parent-values-what-does-this-mean"></a>
+</h2>
+<p>This error occurs when JAGS cannot evaluate the weight function for a
+particular observation because the computed weight is numerically
+invalid (e.g., <code>NaN</code>, <code>Inf</code>, or a value outside
+the domain of a downstream function). It most commonly arises with
+<strong>parameterized weight functions</strong> during the
+initialization phase.</p>
+<p><strong>Why it happens:</strong> Weight function parameters
+(<code>b0</code>, <code>b1</code>, …) are given vague priors by default
+(<code>dnorm(0, 0.0001)</code> in JAGS precision, which corresponds to
+SD = 100). When JAGS initializes the MCMC chains, it may draw extreme
+starting values (e.g., <code>b0 = 80</code>). For weight functions
+involving nonlinear transformations like <code>ilogit()</code> or
+<code><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp()</a></code>, extreme parameter values can cause numerical issues
+downstream — even if the weight function itself is mathematically
+well-defined, the resulting weights may produce overflow in the
+likelihood (e.g., <code>exp(-mu * shape)</code> in the Weibull
+model).</p>
+<p><strong>Built-in safeguard:</strong> <code>bml</code> initializes all
+weight parameters at 0 by default. This ensures numerically stable
+starting values (e.g., <code>ilogit(0) = 0.5</code>). However, if the
+error persists or occurs during sampling (not just initialization),
+consider the following steps.</p>
+<p><strong>How to fix it:</strong></p>
+<ol style="list-style-type: decimal">
+<li>
+<p><strong>Use more informative priors.</strong> Narrow the prior
+spread for weight parameters so that the sampler stays in a numerically
+stable region:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    <span class="st">"b.w.1[1] ~ dnorm(0, 1)"</span>,   <span class="co"># SD = 1 instead of 100</span></span>
+<span>    <span class="st">"b.w.1[2] ~ dnorm(0, 1)"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This is especially important for parameters inside
+<code>ilogit()</code>, <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp()</a></code>, or other functions that
+saturate or explode at extreme inputs.</p>
+</li>
+<li>
+<p><strong>Ensure the weight function is bounded.</strong> Unbounded
+weight functions can produce extreme values that destabilize the
+likelihood. Common strategies:</p>
+<ul>
+<li>Use <code>ilogit()</code> to bound weights between 0 and 1:
+<code>fn(w ~ ilogit(b0 + b1 * x), c = TRUE)</code>
+</li>
+<li>Use <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp()</a></code> carefully — it grows rapidly, so pair it with
+constraints like <code>c = TRUE</code> (normalization) or wrap the
+argument: <code>fn(w ~ exp(b1 * x), c = TRUE)</code> where
+<code>x</code> is standardized</li>
+</ul>
+</li>
+<li><p><strong>Standardize covariates in the weight function.</strong>
+If a weight variable has a large range (e.g., income in thousands), the
+product <code>b1 * x</code> can easily overflow. Standardize such
+variables before including them in <code><a href="../reference/fn.html">fn()</a></code>.</p></li>
+<li>
+<p><strong>Supply explicit initial values.</strong> If the default
+initialization at 0 doesn’t work for your model, provide custom starting
+values:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  inits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"b.w.1"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="op">-</span><span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</li>
+<li><p><strong>Re-run the model.</strong> Since the error can be
+seed-dependent (different chains draw different initial values), simply
+re-running may resolve it. However, this indicates a fragile
+parameterization — consider steps 1–3 for a robust solution.</p></li>
+</ol>
+</div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
@@ -242,7 +396,7 @@ where a member’s unobserved heterogeneity changes over time</li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

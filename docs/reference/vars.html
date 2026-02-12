@@ -95,32 +95,25 @@ coefficients held constant using <code><a href="fix.html">fix</a></code>).</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Simple variable specification (formula-style with +)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Simple variable specification (formula-style with +)</span></span></span>
 <span class="r-in"><span><span class="fu">vars</span><span class="op">(</span><span class="va">income</span> <span class="op">+</span> <span class="va">education</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(income + education):</span> could not find function "vars"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Single variable</span></span></span>
 <span class="r-in"><span><span class="fu">vars</span><span class="op">(</span><span class="va">income</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(income):</span> could not find function "vars"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Interactions</span></span></span>
 <span class="r-in"><span><span class="fu">vars</span><span class="op">(</span><span class="va">income</span> <span class="op">*</span> <span class="va">education</span><span class="op">)</span>  <span class="co"># expands to income + education + income:education</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(income * education):</span> could not find function "vars"</span>
 <span class="r-in"><span><span class="fu">vars</span><span class="op">(</span><span class="va">income</span><span class="op">:</span><span class="va">education</span><span class="op">)</span>    <span class="co"># interaction only</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(income:education):</span> could not find function "vars"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Transformations</span></span></span>
 <span class="r-in"><span><span class="fu">vars</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">income</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>         <span class="co"># squared term</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(I(income^2)):</span> could not find function "vars"</span>
 <span class="r-in"><span><span class="fu">vars</span><span class="op">(</span><span class="va">income</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">income</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="co"># linear and squared</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(income + I(income^2)):</span> could not find function "vars"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Mix free and fixed variables</span></span></span>
 <span class="r-in"><span><span class="fu">vars</span><span class="op">(</span><span class="fu"><a href="fix.html">fix</a></span><span class="op">(</span><span class="va">exposure</span>, <span class="fl">1.0</span><span class="op">)</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> <span class="va">education</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in vars(fix(exposure, 1) + income + education):</span> could not find function "vars"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use in mm() specification</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  vars <span class="op">=</span> <span class="fu">vars</span><span class="op">(</span><span class="va">rile</span> <span class="op">+</span> <span class="va">ipd</span><span class="op">)</span>,</span></span>
@@ -136,7 +129,7 @@ coefficients held constant using <code><a href="fix.html">fix</a></code>).</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

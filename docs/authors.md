@@ -2,7 +2,7 @@
 
 ## Authors
 
-- **Benjamin Rosche**. Author, maintainer.
+- **[Benjamin Rosche](https://benrosche.com)**. Author, maintainer.
   [](https://orcid.org/0000-0001-5196-625X)
 
 ## Citation

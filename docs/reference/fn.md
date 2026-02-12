@@ -102,14 +102,57 @@ be used in weight formulas:
 
 - `sinh`, `cosh`, `tanh`
 
+- `logit`, `ilogit`, `probit`, `iprobit`, `cloglog`, `icloglog`
+
 - `round`, `trunc`, `floor`, `ceiling`
 
 Example: `fn(w ~ 1 / (1 + (n - 1) * exp(-(b1 * x))))` uses an
 exponential decay function where weights depend on member
-characteristics. See Rosche (2026) for more details on parameterized
-weight functions.
+characteristics.
+
+**Ensuring Numerical Stability:**
+
+Weight functions with estimated parameters (`b0`, `b1`, ...) must
+produce bounded, positive values across all plausible parameter values.
+Unbounded weight functions can cause the MCMC sampler to crash (e.g.,
+`"Error in node w.1[...]: Invalid parent values"`). During sampling,
+weight parameters can take on extreme values, and if the weight function
+is not bounded, this will destabilize the likelihood.
+
+Recommendations:
+
+- **Use bounded weight functions.** Two options:
+
+  - `ilogit()`: Bounds weights between 0 and 1 with a zero-point at 0.5:
+    `fn(w ~ ilogit(b0 + b1 * x), c = TRUE)`
+
+  - **Generalized logistic** (Rosche, 2026): Bounds weights between 0
+    and 1 with a zero-point at \\1/n\\ (equal weights), so deviations
+    from equal weighting are estimated as a function of covariates:
+    `fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x))), c = TRUE)`
+
+- **Use `c = TRUE`** (weight normalization) to prevent weights from
+  growing without bound
+
+- **Standardize covariates** in the weight function. Variables with
+  large ranges (e.g., income in thousands) can cause `b * x` to overflow
+
+- **Use informative priors** for weight parameters via the `priors`
+  argument in [`bml`](https://benrosche.github.io/bml/reference/bml.md)
+  (e.g., `priors = list("b.w.1[1] ~ dnorm(0, 1)")`)
+
+- **Avoid unbounded functions** like `exp(b * x)` without normalization
+  (`c = TRUE`) or wrapping (e.g., inside `ilogit()`)
+
+Weight parameters are initialized at 0 by default to ensure numerically
+stable starting values. See
+[`vignette("faq")`](https://benrosche.github.io/bml/articles/faq.md)
+(Question 7) for detailed troubleshooting of numerical issues.
 
 ## References
+
+Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
+Micro-Macro Link. *Political Analysis*.
 
 Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
 multiple classification (MMMC) models. *Statistical Modelling*, 1(2),
@@ -118,40 +161,38 @@ multiple classification (MMMC) models. *Statistical Modelling*, 1(2),
 ## See also
 
 [`mm`](https://benrosche.github.io/bml/reference/mm.md),
-[`bml`](https://benrosche.github.io/bml/reference/bml.md)
+[`bml`](https://benrosche.github.io/bml/reference/bml.md),
+[`vignette("model")`](https://benrosche.github.io/bml/articles/model.md)
+for the model structure,
+[`vignette("faq")`](https://benrosche.github.io/bml/articles/faq.md) for
+troubleshooting
 
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 # Equal weights (standard multiple-membership)
 fn(w ~ 1/n, c = TRUE)
-#> Error in fn(w ~ 1/n, c = TRUE): could not find function "fn"
 
 # Tenure-based weights (proportional to time served)
 fn(w ~ tenure, c = TRUE)
-#> Error in fn(w ~ tenure, c = TRUE): could not find function "fn"
 
 # Flexible parameterized weights
 fn(w ~ b0 + b1 * seniority, c = TRUE)
-#> Error in fn(w ~ b0 + b1 * seniority, c = TRUE): could not find function "fn"
 
 # Unconstrained weights
 fn(w ~ importance, c = FALSE)
-#> Error in fn(w ~ importance, c = FALSE): could not find function "fn"
 
 # Weights based on group aggregates
 fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE)
-#> Error in fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE): could not find function "fn"
 
 # Combining individual and aggregate measures
 fn(w ~ b0 + b1 * (tenure / max(tenure)), c = TRUE)
-#> Error in fn(w ~ b0 + b1 * (tenure/max(tenure)), c = TRUE): could not find function "fn"
 
 # Using median for robust central tendency
 fn(w ~ tenure / median(tenure), c = TRUE)
-#> Error in fn(w ~ tenure/median(tenure), c = TRUE): could not find function "fn"
 
 # Using quantiles for percentile-based weights
 fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE)
-#> Error in fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE): could not find function "fn"
+} # }
 ```

@@ -58,16 +58,35 @@ bml(
 - priors:
 
   Named list or character vector of JAGS prior specifications. Parameter
-  names follow the pattern: `b.mm.k` (mm block k coefficients), `b.w.k`
-  (weight function parameters), `tau.mm` (mm random effect precision),
-  etc. Example:
-  `list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm ~ dgamma(2, 0.1)")`. Default
-  priors are weakly informative.
+  names follow JAGS naming conventions:
+
+  - **Main level:** `b[x]` for main-equation coefficients (e.g.,
+    `"b[1] ~ dnorm(0, 0.01)"` for the intercept)
+
+  - **HM level:** `b.hm.k[x]` for hm block `k` coefficients, `tau.hm.k`
+    for hm block `k` random effect precision
+
+  - **MM level:** `b.mm.k[x]` for mm block `k` coefficients, `b.w.k[x]`
+    for weight function parameters in mm block `k`, `tau.mm.g` for mm
+    random effect precision (indexed by member-group ID group `g`)
+
+  - **Other:** `shape` (Weibull shape parameter), `lambda0[k]` (Cox
+    baseline hazard intervals)
+
+  **Note:** Priors on variance components must be specified on the
+  *precision* scale (`tau = 1/sigma^2`), not the standard deviation,
+  since JAGS parameterizes normal distributions using precision.
+  Example:
+  `list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm.1 ~ dgamma(2, 0.1)")`.
+  Default priors are weakly informative.
 
 - inits:
 
   List of initial values for MCMC chains. Applied to all chains. If
-  `NULL`, JAGS generates initial values automatically.
+  `NULL`, JAGS generates initial values automatically. Weight function
+  parameters (`b.w.k`) are always initialized at 0 by default to prevent
+  numerical instability (e.g., `ilogit` with extreme inputs).
+  User-supplied inits override these defaults.
 
 - n.iter:
 
@@ -150,24 +169,28 @@ bml(
 
 A list of class `"bml"` containing:
 
-- `reg.table`: Data frame of posterior summaries (means, SDs, credible
-  intervals) for main parameters. Access columns via `$Parameter`,
-  `$mean`, `$sd`, `$lb`, `$ub`.
+- `reg.table`: Data frame of posterior summaries with columns
+  `Parameter`, `mean`, `sd`, `lb`, `ub` (95% credible interval bounds).
 
-- `jags.out`: Full JAGS output object (if `monitor = TRUE`)
+- `w`: List of weight matrices (one per
+  [`mm()`](https://benrosche.github.io/bml/reference/mm.md) block). Each
+  matrix has rows = groups and columns = members within each group.
 
-- `modelstring`: Generated JAGS model code
+- `re.mm`: List of member-level random effects (one per mmid group with
+  `RE = TRUE`). Vector for standard RE, matrix for autoregressive RE.
 
-- `jags.data`: Data passed to JAGS
+- `re.hm`: List of nesting-level random effects (one per
+  [`hm()`](https://benrosche.github.io/bml/reference/hm.md) block with
+  `type = "RE"`).
 
-- `jags.inits`: Initial values used
+- `pred`: Vector of predicted values (posterior means) for each group.
 
-- `formula`: Original formula
+- `input`: List of model specifications including `family`, `mm` and
+  `hm` block info, sample sizes, and MCMC settings.
 
-- `family`: Model family
-
-- Additional components for random effects, weights, predictions (when
-  applicable)
+- `jags.out`: Full R2jags output object (if `monitor = TRUE`; `NULL`
+  otherwise). Contains posterior samples, MCMC chains, and convergence
+  diagnostics.
 
 ## Details
 
@@ -303,8 +326,8 @@ different weight functions. However, `RE = TRUE` can only be specified
 for one [`mm()`](https://benrosche.github.io/bml/reference/mm.md) block.
 
 
-    mm(id = id(pid, gid), vars = vars(X1), fn = fn(w ~ 1/n), RE = FALSE) +
-    mm(id = id(pid, gid), vars = vars(X2), fn = fn(w ~ tenure), RE = FALSE) +
+    mm(id = id(pid, gid), vars = vars(X.mm.1), fn = fn(w ~ 1/n), RE = FALSE) +
+    mm(id = id(pid, gid), vars = vars(X.mm.2), fn = fn(w ~ pseat == max(pseat)), RE = FALSE) +
     mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)
 
 ## Hierarchical Membership Object [`hm()`](https://benrosche.github.io/bml/reference/hm.md)
@@ -345,7 +368,7 @@ indexed names:
     priors = list(
       "b.mm.1 ~ dnorm(0, 0.01)",
       "b.w.1 ~ dnorm(0, 0.1)",
-      "tau.mm ~ dscaled.gamma(25, 1)"
+      "tau.mm.1 ~ dscaled.gamma(25, 1)"
     )
 
 ## References
@@ -383,18 +406,16 @@ data(coalgov)
 # Basic multiple-membership model
 # Parties (pid) within governments (gid), nested in countries (cid)
 m1 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(
       id   = id(pid, gid),
-      vars = vars(fdep),
+      vars = vars(cohesion),
       fn   = fn(w ~ 1/n, c = TRUE),
       RE   = TRUE
     ) +
     hm(id = id(cid), type = "RE"),
-  family  = "Weibull",
-  n.iter  = 10000,
-  n.burnin = 5000,
-  data    = coalgov
+  family = "Weibull",
+  data   = coalgov
 )
 
 # View results
@@ -403,29 +424,31 @@ monetPlot(m1, "b[2]")  # Plot for majority coefficient
 
 # Multiple mm() blocks with different weight functions
 m2 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion),
+       fn = fn(w ~ cohesion == max(cohesion)), RE = FALSE) +
     mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE),
-  family  = "Weibull",
-  data    = coalgov
+  family = "Weibull",
+  data   = coalgov
 )
 
 # Cox model with piecewise baseline hazard (faster for large datasets)
 m3 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
-  family  = "Cox",
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
+  family = "Cox",
   cox_intervals = 10,  # Use 10 intervals instead of all unique times
-  data    = coalgov
+  data   = coalgov
 )
 
 # Parameterized weight function
+# ilogit() bounds raw weights between 0 and 1; c = TRUE normalizes to sum to 1
 m4 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(
       id   = id(pid, gid),
-      vars = vars(fdep),
-      fn   = fn(w ~ b0 + b1 * govmaxdur, c = TRUE),  # Weights depend on data
+      vars = vars(cohesion),
+      fn   = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
       RE   = FALSE
     ),
   family = "Weibull",
@@ -434,10 +457,10 @@ m4 <- bml(
 
 # Fixed coefficients (offsets)
 m5 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
+  Surv(dur_wkb, event_wkb) ~ 1 + fix(majority, 1) + # Fix majority coefficient to 1.0
     mm(
       id   = id(pid, gid),
-      vars = vars(fix(fdep, 1.0) + rile),  # Fix fdep coefficient to 1.0
+      vars = vars(rile),
       fn   = fn(w ~ 1/n, c = TRUE),
       RE   = FALSE
     ),
@@ -447,24 +470,26 @@ m5 <- bml(
 
 # Custom priors
 m6 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
   family = "Weibull",
   priors = list(
     "b[1] ~ dnorm(0, 0.01)",       # Intercept prior
     "b.mm.1 ~ dnorm(0, 0.1)",      # MM coefficient prior
-    "tau.mm ~ dgamma(2, 0.5)"      # MM precision prior
+    "tau.mm.1 ~ dgamma(2, 0.5)"    # MM precision prior
   ),
   data   = coalgov
 )
 
 # Cross-classified model (multiple hm blocks)
+# Governments are cross-classified by country and election year
 m7 <- bml(
-  Y ~ 1 + x1 +
-    hm(id = id(region), type = "RE") +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
+    hm(id = id(cid), type = "RE") +
     hm(id = id(year), type = "RE"),
-  family = "Gaussian",
-  data   = mydata
+  family = "Weibull",
+  data   = coalgov |> mutate(year = format(election, "%Y") |> as.integer())
 )
 } # }
 ```

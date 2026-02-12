@@ -100,16 +100,30 @@ Options:</p><ul><li><p><code>"Gaussian"</code>: Normal distribution with identit
 
 
 <dt id="arg-priors">priors<a class="anchor" aria-label="anchor" href="#arg-priors"></a></dt>
-<dd><p>Named list or character vector of JAGS prior specifications. Parameter
-names follow the pattern: <code>b.mm.k</code> (mm block k coefficients), <code>b.w.k</code>
-(weight function parameters), <code>tau.mm</code> (mm random effect precision), etc.
-Example: <code>list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm ~ dgamma(2, 0.1)")</code>.
+<dd><p>Named list or character vector of JAGS prior specifications.
+Parameter names follow JAGS naming conventions:</p><ul><li><p><strong>Main level:</strong> <code>b[x]</code> for main-equation coefficients
+    (e.g., <code>"b[1] ~ dnorm(0, 0.01)"</code> for the intercept)</p></li>
+<li><p><strong>HM level:</strong> <code>b.hm.k[x]</code> for hm block <code>k</code> coefficients,
+    <code>tau.hm.k</code> for hm block <code>k</code> random effect precision</p></li>
+<li><p><strong>MM level:</strong> <code>b.mm.k[x]</code> for mm block <code>k</code> coefficients,
+    <code>b.w.k[x]</code> for weight function parameters in mm block <code>k</code>,
+    <code>tau.mm.g</code> for mm random effect precision (indexed by member-group
+    ID group <code>g</code>)</p></li>
+<li><p><strong>Other:</strong> <code>shape</code> (Weibull shape parameter),
+    <code>lambda0[k]</code> (Cox baseline hazard intervals)</p></li>
+</ul><p><strong>Note:</strong> Priors on variance components must be specified on the
+<em>precision</em> scale (<code>tau = 1/sigma^2</code>), not the standard deviation,
+since JAGS parameterizes normal distributions using precision.
+Example: <code>list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm.1 ~ dgamma(2, 0.1)")</code>.
 Default priors are weakly informative.</p></dd>
 
 
 <dt id="arg-inits">inits<a class="anchor" aria-label="anchor" href="#arg-inits"></a></dt>
 <dd><p>List of initial values for MCMC chains. Applied to all chains. If
-<code>NULL</code>, JAGS generates initial values automatically.</p></dd>
+<code>NULL</code>, JAGS generates initial values automatically. Weight function
+parameters (<code>b.w.k</code>) are always initialized at 0 by default to prevent
+numerical instability (e.g., <code>ilogit</code> with extreme inputs). User-supplied
+inits override these defaults.</p></dd>
 
 
 <dt id="arg-n-iter">n.iter<a class="anchor" aria-label="anchor" href="#arg-n-iter"></a></dt>
@@ -180,17 +194,21 @@ formula, including identifiers specified in <code><a href="id.html">id()</a></co
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>"bml"</code> containing:</p><ul><li><p><code>reg.table</code>: Data frame of posterior summaries (means, SDs,
-      credible intervals) for main parameters. Access columns via
-      <code>$Parameter</code>, <code>$mean</code>, <code>$sd</code>, <code>$lb</code>, <code>$ub</code>.</p></li>
-<li><p><code>jags.out</code>: Full JAGS output object (if <code>monitor = TRUE</code>)</p></li>
-<li><p><code>modelstring</code>: Generated JAGS model code</p></li>
-<li><p><code>jags.data</code>: Data passed to JAGS</p></li>
-<li><p><code>jags.inits</code>: Initial values used</p></li>
-<li><p><code>formula</code>: Original formula</p></li>
-<li><p><code>family</code>: Model family</p></li>
-<li><p>Additional components for random effects, weights, predictions
-      (when applicable)</p></li>
+    <p>A list of class <code>"bml"</code> containing:</p><ul><li><p><code>reg.table</code>: Data frame of posterior summaries with columns
+      <code>Parameter</code>, <code>mean</code>, <code>sd</code>, <code>lb</code>, <code>ub</code>
+      (95% credible interval bounds).</p></li>
+<li><p><code>w</code>: List of weight matrices (one per <code><a href="mm.html">mm()</a></code> block). Each
+      matrix has rows = groups and columns = members within each group.</p></li>
+<li><p><code>re.mm</code>: List of member-level random effects (one per mmid group
+      with <code>RE = TRUE</code>). Vector for standard RE, matrix for autoregressive RE.</p></li>
+<li><p><code>re.hm</code>: List of nesting-level random effects (one per <code><a href="hm.html">hm()</a></code>
+      block with <code>type = "RE"</code>).</p></li>
+<li><p><code>pred</code>: Vector of predicted values (posterior means) for each group.</p></li>
+<li><p><code>input</code>: List of model specifications including <code>family</code>,
+      <code>mm</code> and <code>hm</code> block info, sample sizes, and MCMC settings.</p></li>
+<li><p><code>jags.out</code>: Full R2jags output object (if <code>monitor = TRUE</code>;
+      <code>NULL</code> otherwise). Contains posterior samples, MCMC chains, and
+      convergence diagnostics.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -271,8 +289,8 @@ Numeric literals in <code><a href="vars.html">vars()</a></code> are ignored (e.g
 </ul><p><strong>Multiple mm() blocks:</strong>
 You can specify multiple <code><a href="mm.html">mm()</a></code> blocks with different weight functions.
 However, <code>RE = TRUE</code> can only be specified for one <code><a href="mm.html">mm()</a></code> block.</p><div class="sourceCode"><pre><code><span></span>
-<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X1</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">tenure</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X.mm.1</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">X.mm.2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">pseat</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">pseat</span><span class="op">)</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 
     </div>
@@ -307,7 +325,7 @@ However, <code>RE = TRUE</code> can only be specified for one <code><a href="mm.
 <span><span class="va">priors</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="st">"b.mm.1 ~ dnorm(0, 0.01)"</span>,</span>
 <span>  <span class="st">"b.w.1 ~ dnorm(0, 0.1)"</span>,</span>
-<span>  <span class="st">"tau.mm ~ dscaled.gamma(25, 1)"</span></span>
+<span>  <span class="st">"tau.mm.1 ~ dscaled.gamma(25, 1)"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 
     </div>
@@ -338,18 +356,16 @@ multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103
 <span class="r-in"><span><span class="co"># Basic multiple-membership model</span></span></span>
 <span class="r-in"><span><span class="co"># Parties (pid) within governments (gid), nested in countries (cid)</span></span></span>
 <span class="r-in"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>      id   <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>      fn   <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>      RE   <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  family  <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
-<span class="r-in"><span>  n.iter  <span class="op">=</span> <span class="fl">10000</span>,</span></span>
-<span class="r-in"><span>  n.burnin <span class="op">=</span> <span class="fl">5000</span>,</span></span>
-<span class="r-in"><span>  data    <span class="op">=</span> <span class="va">coalgov</span></span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
+<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># View results</span></span></span>
@@ -358,29 +374,31 @@ multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Multiple mm() blocks with different weight functions</span></span></span>
 <span class="r-in"><span><span class="va">m2</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>       fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">cohesion</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  family  <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
-<span class="r-in"><span>  data    <span class="op">=</span> <span class="va">coalgov</span></span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
+<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Cox model with piecewise baseline hazard (faster for large datasets)</span></span></span>
 <span class="r-in"><span><span class="va">m3</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  family  <span class="op">=</span> <span class="st">"Cox"</span>,</span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Cox"</span>,</span></span>
 <span class="r-in"><span>  cox_intervals <span class="op">=</span> <span class="fl">10</span>,  <span class="co"># Use 10 intervals instead of all unique times</span></span></span>
-<span class="r-in"><span>  data    <span class="op">=</span> <span class="va">coalgov</span></span></span>
+<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Parameterized weight function</span></span></span>
+<span class="r-in"><span><span class="co"># ilogit() bounds raw weights between 0 and 1; c = TRUE normalizes to sum to 1</span></span></span>
 <span class="r-in"><span><span class="va">m4</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>      id   <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      fn   <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">govmaxdur</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,  <span class="co"># Weights depend on data</span></span></span>
+<span class="r-in"><span>      vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      fn   <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fu">ilogit</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">pseat</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>      RE   <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
@@ -389,10 +407,10 @@ multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fixed coefficients (offsets)</span></span></span>
 <span class="r-in"><span><span class="va">m5</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="fix.html">fix</a></span><span class="op">(</span><span class="va">majority</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="co"># Fix majority coefficient to 1.0</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>      id   <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="fu"><a href="fix.html">fix</a></span><span class="op">(</span><span class="va">fdep</span>, <span class="fl">1.0</span><span class="op">)</span> <span class="op">+</span> <span class="va">rile</span><span class="op">)</span>,  <span class="co"># Fix fdep coefficient to 1.0</span></span></span>
+<span class="r-in"><span>      vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">rile</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>      fn   <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>      RE   <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span>,</span></span>
@@ -402,24 +420,26 @@ multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Custom priors</span></span></span>
 <span class="r-in"><span><span class="va">m6</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">govdur</span>, <span class="va">earlyterm</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">fdep</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
 <span class="r-in"><span>  priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    <span class="st">"b[1] ~ dnorm(0, 0.01)"</span>,       <span class="co"># Intercept prior</span></span></span>
 <span class="r-in"><span>    <span class="st">"b.mm.1 ~ dnorm(0, 0.1)"</span>,      <span class="co"># MM coefficient prior</span></span></span>
-<span class="r-in"><span>    <span class="st">"tau.mm ~ dgamma(2, 0.5)"</span>      <span class="co"># MM precision prior</span></span></span>
+<span class="r-in"><span>    <span class="st">"tau.mm.1 ~ dgamma(2, 0.5)"</span>    <span class="co"># MM precision prior</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  data   <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Cross-classified model (multiple hm blocks)</span></span></span>
+<span class="r-in"><span><span class="co"># Governments are cross-classified by country and election year</span></span></span>
 <span class="r-in"><span><span class="va">m7</span> <span class="op">&lt;-</span> <span class="fu">bml</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">Y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">region</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span></span>
-<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">mydata</span></span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
+<span class="r-in"><span>  data   <span class="op">=</span> <span class="va">coalgov</span> <span class="op">|&gt;</span> <span class="fu">mutate</span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">election</span>, <span class="st">"%Y"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
@@ -430,7 +450,7 @@ multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Benjamin Rosche.</p>
+  <p>Developed by <a href="https://benrosche.com" class="external-link">Benjamin Rosche</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -191,6 +191,8 @@ package changelog.
   : Visualize posterior distributions with density and trace plots
 - [`summary(`*`<bml>`*`)`](https://benrosche.github.io/bml/reference/summary.bml.md)
   : Summarize a fitted bml model
+- [`varDecomp()`](https://benrosche.github.io/bml/reference/varDecomp.md)
+  : Variance decomposition for fitted bml models
 - [`vars()`](https://benrosche.github.io/bml/reference/vars.md) :
   Specify covariates for multiple-membership or hierarchical models
 
