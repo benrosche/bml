@@ -304,7 +304,7 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   }
 
   # Main-level parameters
-  if (family != "Cox") {
+  if (family %in% c("Gaussian", "Weibull")) {
     jags.params <- c(jags.params, "sigma")
   }
   if (n.Xmain > 0) {
@@ -355,12 +355,21 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     for (g in seq_along(all_mmid_names)) {
       jags.data <- c(jags.data,
         paste0("mmi1.", g),
-        paste0("mmi2.", g),
-        paste0("n.mm.", g)
+        paste0("mmi2.", g)
       )
 
       # Check if any block in this group has RE
       block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+
+      # n.mm.g is only needed in the model string when there are weight params, vars, or AR
+      needs_n_mm <- any(sapply(block_indices, function(i) {
+        length(mm_blocks[[i]]$fn$params) > 0 ||
+        (!is.null(mm_blocks[[i]]$vars) && length(mm_blocks[[i]]$vars) > 0) ||
+        mm_blocks[[i]]$ar
+      }))
+      if (needs_n_mm) {
+        jags.data <- c(jags.data, paste0("n.mm.", g))
+      }
       has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
       if (has_re_in_group) {
         jags.data <- c(jags.data, paste0("mmid.", g), paste0("n.umm.", g))
@@ -556,6 +565,17 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   # Finalize inits
   # ========================================================================================== #
 
+  # Initialize weight function parameters at 0 to prevent numerical issues
+  # (e.g., ilogit with extreme initial values drawn from vague priors)
+  if (has_mm) {
+    for (i in seq_along(mm_blocks)) {
+      block <- mm_blocks[[i]]
+      if (length(block$fn$params) > 0) {
+        jags.inits[[paste0("b.w.", i)]] <- rep(0, length(block$fn$params))
+      }
+    }
+  }
+
   jags.inits <- c(jags.inits, inits)
   jags.inits <- lapply(1:n.chains, function(x) jags.inits)
 
@@ -612,10 +632,19 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     for (g in seq_along(all_mmid_names)) {
       jags.data.list[[paste0("mmi1.", g)]] <- mmi1_list[[g]]
       jags.data.list[[paste0("mmi2.", g)]] <- mmi2_list[[g]]
-      jags.data.list[[paste0("n.mm.", g)]] <- n.mm_list[[g]]
 
       # Check if any block in this group has RE
       block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+
+      # n.mm.g is only needed when model string loops over mm observations
+      needs_n_mm <- any(sapply(block_indices, function(i) {
+        length(mm_blocks[[i]]$fn$params) > 0 ||
+        (!is.null(mm_blocks[[i]]$vars) && length(mm_blocks[[i]]$vars) > 0) ||
+        mm_blocks[[i]]$ar
+      }))
+      if (needs_n_mm) {
+        jags.data.list[[paste0("n.mm.", g)]] <- n.mm_list[[g]]
+      }
       has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
       if (has_re_in_group) {
         jags.data.list[[paste0("mmid.", g)]] <- mmid_list[[g]]

@@ -6,7 +6,7 @@
 #' analysis is parties in governments, making it suitable for multiple-membership
 #' multilevel models where governments (groups) are composed of multiple parties (members).
 #'
-#' @format A tibble with 2,077 rows and 21 variables. Each row represents a party's
+#' @format A tibble with 2,077 rows and 18 variables. Each row represents a party's
 #'   participation in a specific coalition government. The sample contains 628 governments
 #'   formed by 312 unique parties across 29 countries.
 #'
@@ -18,13 +18,13 @@
 #'     Range: [11110, 96955]}
 #'   \item{cid}{Country identifier (nesting-level unit in \code{hm()} specification).
 #'     Range: [11, 96]}
-#'   \item{country}{Three-letter country code (ISO 3166-1 alpha-3)}
+#'   \item{cname}{Three-letter country code (ISO 3166-1 alpha-3)}
 #'   \item{pname}{Full party name}
 #' }
 #'
 #' \strong{Government-level variables:}
 #' \describe{
-#'   \item{pelection}{Date of the preceding election that led to the government's formation.
+#'   \item{election}{Date of the preceding election that led to the government's formation.
 #'     Range: [1939-04-02, 2014-12-14]}
 #'   \item{n}{Number of parties in the coalition (group size for weight functions).
 #'     Range: [2, 9], mean: 3.31}
@@ -35,12 +35,6 @@
 #'     parliamentary support, or head of state intervention) more than one year before
 #'     the official end of term; 0 = censored (regular elections, other reasons, or
 #'     termination within one year of scheduled elections). Range: [0, 1], mean: 0.39}
-#'   \item{comp_early}{Early election indicator for competing risks analysis: 1 = government
-#'     terminated by calling early elections, 0 = otherwise. Sourced from WKB.
-#'     Range: [0, 1], mean: 0.04}
-#'   \item{comp_replace}{Nonelectoral replacement indicator for competing risks analysis:
-#'     1 = government terminated by nonelectoral replacement (cabinet reshuffle without
-#'     elections), 0 = otherwise. Sourced from WKB. Range: [0, 1], mean: 0.36}
 #'   \item{majority}{Majority government indicator: 1 = coalition controls majority of
 #'     parliamentary seats, 0 = minority government. Range: [0, 1], mean: 0.80}
 #'   \item{mwc}{Minimal winning coalition indicator: 1 = coalition would lose its majority
@@ -60,8 +54,9 @@
 #'
 #' \strong{Party-level variables:}
 #' \describe{
-#'   \item{pseat}{Party's proportional seat share within the coalition.
-#'     Range: [0.00, 73.00], mean: 0.22}
+#'   \item{pseat}{Party's relative seat share within the coalition, computed as
+#'     \code{pseat / sum(pseat)} within each government. Sums to 1 within each coalition.
+#'     Range: [0.00, 1.00], mean: 0.33}
 #'   \item{prime}{Prime minister party indicator: \code{TRUE} = party holds prime
 #'     ministership (n = 628), \code{FALSE} = junior coalition partner (n = 1,449)}
 #'   \item{cohesion}{Intra-party ideological cohesion, measured using an adaptation of
@@ -107,8 +102,6 @@
 #'     termination or new elections
 #'   \item Early termination events focus on political gridlock (conflict-related endings)
 #'     and exclude terminations within one year of scheduled elections
-#'   \item \code{comp_early} and \code{comp_replace} enable competing risks analysis
-#'     distinguishing between termination mechanisms
 #'   \item Party-level variables (\code{cohesion}, \code{finance}, \code{Nmembers}) are
 #'     standardized (mean = 0) for analysis
 #' }
@@ -141,17 +134,14 @@
 #' @examples
 #' data(coalgov)
 #'
-#' # Explore structure
-#' head(coalgov)
-#' table(coalgov$country)
+#' # Explore data structure
+#' str(coalgov)
+#' table(coalgov$cname)
 #'
-#' # Government statistics
-#' length(unique(coalgov$gid))
-#' mean(coalgov$event_wkb, na.rm = TRUE)
-#' summary(coalgov$dur_wkb)
-#'
-#' # Party participation patterns
-#' table(table(coalgov$pid))
+#' # Number of unique units
+#' length(unique(coalgov$gid))   # Governments
+#' length(unique(coalgov$pid))   # Parties
+#' length(unique(coalgov$cid))   # Countries
 #'
 #' \dontrun{
 #' # Model: government duration as function of majority status and party characteristics
@@ -168,4 +158,3 @@
 #' @docType data
 #' @keywords datasets
 "coalgov"
-

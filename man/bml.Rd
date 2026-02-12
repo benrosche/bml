@@ -36,14 +36,31 @@ Options:
   \item \code{"Cox"}: Cox proportional hazards model (requires \code{Surv(time, event)} outcome)
 }}
 
-\item{priors}{Named list or character vector of JAGS prior specifications. Parameter
-names follow the pattern: \code{b.mm.k} (mm block k coefficients), \code{b.w.k}
-(weight function parameters), \code{tau.mm} (mm random effect precision), etc.
-Example: \code{list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm ~ dgamma(2, 0.1)")}.
+\item{priors}{Named list or character vector of JAGS prior specifications.
+Parameter names follow JAGS naming conventions:
+\itemize{
+  \item \strong{Main level:} \code{b[x]} for main-equation coefficients
+    (e.g., \code{"b[1] ~ dnorm(0, 0.01)"} for the intercept)
+  \item \strong{HM level:} \code{b.hm.k[x]} for hm block \code{k} coefficients,
+    \code{tau.hm.k} for hm block \code{k} random effect precision
+  \item \strong{MM level:} \code{b.mm.k[x]} for mm block \code{k} coefficients,
+    \code{b.w.k[x]} for weight function parameters in mm block \code{k},
+    \code{tau.mm.g} for mm random effect precision (indexed by member-group
+    ID group \code{g})
+  \item \strong{Other:} \code{shape} (Weibull shape parameter),
+    \code{lambda0[k]} (Cox baseline hazard intervals)
+}
+\strong{Note:} Priors on variance components must be specified on the
+\emph{precision} scale (\code{tau = 1/sigma^2}), not the standard deviation,
+since JAGS parameterizes normal distributions using precision.
+Example: \code{list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm.1 ~ dgamma(2, 0.1)")}.
 Default priors are weakly informative.}
 
 \item{inits}{List of initial values for MCMC chains. Applied to all chains. If
-\code{NULL}, JAGS generates initial values automatically.}
+\code{NULL}, JAGS generates initial values automatically. Weight function
+parameters (\code{b.w.k}) are always initialized at 0 by default to prevent
+numerical instability (e.g., \code{ilogit} with extreme inputs). User-supplied
+inits override these defaults.}
 
 \item{n.iter}{Total number of MCMC iterations per chain. Default: 1000.
 Increase for better convergence (e.g., 10000-50000 for production models).}
@@ -96,17 +113,21 @@ formula, including identifiers specified in \code{id()}.}
 \value{
 A list of class \code{"bml"} containing:
   \itemize{
-    \item \code{reg.table}: Data frame of posterior summaries (means, SDs,
-      credible intervals) for main parameters. Access columns via
-      \code{$Parameter}, \code{$mean}, \code{$sd}, \code{$lb}, \code{$ub}.
-    \item \code{jags.out}: Full JAGS output object (if \code{monitor = TRUE})
-    \item \code{modelstring}: Generated JAGS model code
-    \item \code{jags.data}: Data passed to JAGS
-    \item \code{jags.inits}: Initial values used
-    \item \code{formula}: Original formula
-    \item \code{family}: Model family
-    \item Additional components for random effects, weights, predictions
-      (when applicable)
+    \item \code{reg.table}: Data frame of posterior summaries with columns
+      \code{Parameter}, \code{mean}, \code{sd}, \code{lb}, \code{ub}
+      (95\% credible interval bounds).
+    \item \code{w}: List of weight matrices (one per \code{mm()} block). Each
+      matrix has rows = groups and columns = members within each group.
+    \item \code{re.mm}: List of member-level random effects (one per mmid group
+      with \code{RE = TRUE}). Vector for standard RE, matrix for autoregressive RE.
+    \item \code{re.hm}: List of nesting-level random effects (one per \code{hm()}
+      block with \code{type = "RE"}).
+    \item \code{pred}: Vector of predicted values (posterior means) for each group.
+    \item \code{input}: List of model specifications including \code{family},
+      \code{mm} and \code{hm} block info, sample sizes, and MCMC settings.
+    \item \code{jags.out}: Full R2jags output object (if \code{monitor = TRUE};
+      \code{NULL} otherwise). Contains posterior samples, MCMC chains, and
+      convergence diagnostics.
   }
 }
 \description{
@@ -213,8 +234,8 @@ mm(
 You can specify multiple \code{mm()} blocks with different weight functions.
 However, \code{RE = TRUE} can only be specified for one \code{mm()} block.
 \preformatted{
-mm(id = id(pid, gid), vars = vars(X1), fn = fn(w ~ 1/n), RE = FALSE) +
-mm(id = id(pid, gid), vars = vars(X2), fn = fn(w ~ tenure), RE = FALSE) +
+mm(id = id(pid, gid), vars = vars(X.mm.1), fn = fn(w ~ 1/n), RE = FALSE) +
+mm(id = id(pid, gid), vars = vars(X.mm.2), fn = fn(w ~ pseat == max(pseat)), RE = FALSE) +
 mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)
 }
 }
@@ -253,7 +274,7 @@ Priors can be specified for parameters. With multiple mm() blocks, use indexed n
 priors = list(
   "b.mm.1 ~ dnorm(0, 0.01)",
   "b.w.1 ~ dnorm(0, 0.1)",
-  "tau.mm ~ dscaled.gamma(25, 1)"
+  "tau.mm.1 ~ dscaled.gamma(25, 1)"
 )
 }
 }
@@ -265,18 +286,16 @@ data(coalgov)
 # Basic multiple-membership model
 # Parties (pid) within governments (gid), nested in countries (cid)
 m1 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(
       id   = id(pid, gid),
-      vars = vars(fdep),
+      vars = vars(cohesion),
       fn   = fn(w ~ 1/n, c = TRUE),
       RE   = TRUE
     ) +
     hm(id = id(cid), type = "RE"),
-  family  = "Weibull",
-  n.iter  = 10000,
-  n.burnin = 5000,
-  data    = coalgov
+  family = "Weibull",
+  data   = coalgov
 )
 
 # View results
@@ -285,29 +304,31 @@ monetPlot(m1, "b[2]")  # Plot for majority coefficient
 
 # Multiple mm() blocks with different weight functions
 m2 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = FALSE) +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion),
+       fn = fn(w ~ cohesion == max(cohesion)), RE = FALSE) +
     mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE),
-  family  = "Weibull",
-  data    = coalgov
+  family = "Weibull",
+  data   = coalgov
 )
 
 # Cox model with piecewise baseline hazard (faster for large datasets)
 m3 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
-  family  = "Cox",
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
+  family = "Cox",
   cox_intervals = 10,  # Use 10 intervals instead of all unique times
-  data    = coalgov
+  data   = coalgov
 )
 
 # Parameterized weight function
+# ilogit() bounds raw weights between 0 and 1; c = TRUE normalizes to sum to 1
 m4 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(
       id   = id(pid, gid),
-      vars = vars(fdep),
-      fn   = fn(w ~ b0 + b1 * govmaxdur, c = TRUE),  # Weights depend on data
+      vars = vars(cohesion),
+      fn   = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
       RE   = FALSE
     ),
   family = "Weibull",
@@ -316,10 +337,10 @@ m4 <- bml(
 
 # Fixed coefficients (offsets)
 m5 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
+  Surv(dur_wkb, event_wkb) ~ 1 + fix(majority, 1) + # Fix majority coefficient to 1.0
     mm(
       id   = id(pid, gid),
-      vars = vars(fix(fdep, 1.0) + rile),  # Fix fdep coefficient to 1.0
+      vars = vars(rile),
       fn   = fn(w ~ 1/n, c = TRUE),
       RE   = FALSE
     ),
@@ -329,24 +350,26 @@ m5 <- bml(
 
 # Custom priors
 m6 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
   family = "Weibull",
   priors = list(
     "b[1] ~ dnorm(0, 0.01)",       # Intercept prior
     "b.mm.1 ~ dnorm(0, 0.1)",      # MM coefficient prior
-    "tau.mm ~ dgamma(2, 0.5)"      # MM precision prior
+    "tau.mm.1 ~ dgamma(2, 0.5)"    # MM precision prior
   ),
   data   = coalgov
 )
 
 # Cross-classified model (multiple hm blocks)
+# Governments are cross-classified by country and election year
 m7 <- bml(
-  Y ~ 1 + x1 +
-    hm(id = id(region), type = "RE") +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
+    hm(id = id(cid), type = "RE") +
     hm(id = id(year), type = "RE"),
-  family = "Gaussian",
-  data   = mydata
+  family = "Weibull",
+  data   = coalgov |> mutate(year = format(election, "\%Y") |> as.integer())
 )
 }
 

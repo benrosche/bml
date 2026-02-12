@@ -25,11 +25,13 @@
 #' @seealso \code{\link{mm}}, \code{\link{hm}}, \code{\link{bml}}
 #'
 #' @examples
+#' \dontrun{
 #' # Multiple-membership: parties (pid) within governments (gid)
 #' id(pid, gid)
 #'
 #' # Hierarchical: governments within countries
 #' id(cid)
+#' }
 #'
 #' @export
 id <- function(...) {
@@ -54,11 +56,13 @@ id <- function(...) {
 #' @seealso \code{\link{vars}}, \code{\link{mm}}, \code{\link{hm}}
 #'
 #' @examples
+#' \dontrun{
 #' # Fix a coefficient to 1.0 (standard offset)
 #' fix(exposure, 1.0)
 #'
 #' # Use within vars() for multiple-membership models
 #' vars(fix(population, 0.5) + income + education)
+#' }
 #'
 #' @export
 fix <- function(var, value) {
@@ -96,6 +100,7 @@ fix <- function(var, value) {
 #' @seealso \code{\link{fix}}, \code{\link{mm}}, \code{\link{hm}}
 #'
 #' @examples
+#' \dontrun{
 #' # Simple variable specification (formula-style with +)
 #' vars(income + education)
 #'
@@ -114,7 +119,6 @@ fix <- function(var, value) {
 #' vars(fix(exposure, 1.0) + income + education)
 #'
 #' # Use in mm() specification
-#' \dontrun{
 #' mm(
 #'   id = id(pid, gid),
 #'   vars = vars(rile + ipd),
@@ -281,16 +285,53 @@ vars <- function(...) {
 #'   \item \code{exp}, \code{log}, \code{log10}, \code{sqrt}, \code{abs}, \code{pow}
 #'   \item \code{sin}, \code{cos}, \code{tan}, \code{asin}, \code{acos}, \code{atan}
 #'   \item \code{sinh}, \code{cosh}, \code{tanh}
+#'   \item \code{logit}, \code{ilogit}, \code{probit}, \code{iprobit}, \code{cloglog}, \code{icloglog}
 #'   \item \code{round}, \code{trunc}, \code{floor}, \code{ceiling}
 #' }
 #'
 #' Example: \code{fn(w ~ 1 / (1 + (n - 1) * exp(-(b1 * x))))} uses an exponential
-#' decay function where weights depend on member characteristics. See Rosche (2026)
-#' for more details on parameterized weight functions.
+#' decay function where weights depend on member characteristics.
 #'
-#' @seealso \code{\link{mm}}, \code{\link{bml}}
+#' \strong{Ensuring Numerical Stability:}
+#'
+#' Weight functions with estimated parameters (\code{b0}, \code{b1}, ...) must
+#' produce bounded, positive values across all plausible parameter values.
+#' Unbounded weight functions can cause the MCMC sampler to crash
+#' (e.g., \code{"Error in node w.1[...]: Invalid parent values"}).
+#' During sampling, weight parameters can take on extreme values, and if the
+#' weight function is not bounded, this will destabilize the likelihood.
+#'
+#' Recommendations:
+#' \itemize{
+#'   \item \strong{Use bounded weight functions.} Two options:
+#'     \itemize{
+#'       \item \code{ilogit()}: Bounds weights between 0 and 1 with a zero-point
+#'         at 0.5: \code{fn(w ~ ilogit(b0 + b1 * x), c = TRUE)}
+#'       \item \strong{Generalized logistic} (Rosche, 2026): Bounds weights between
+#'         0 and 1 with a zero-point at \eqn{1/n} (equal weights), so deviations
+#'         from equal weighting are estimated as a function of covariates:
+#'         \code{fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x))), c = TRUE)}
+#'     }
+#'   \item \strong{Use \code{c = TRUE}} (weight normalization) to prevent weights
+#'     from growing without bound
+#'   \item \strong{Standardize covariates} in the weight function. Variables with
+#'     large ranges (e.g., income in thousands) can cause \code{b * x} to overflow
+#'   \item \strong{Use informative priors} for weight parameters via the
+#'     \code{priors} argument in \code{\link{bml}} (e.g.,
+#'     \code{priors = list("b.w.1[1] ~ dnorm(0, 1)")})
+#'   \item \strong{Avoid unbounded functions} like \code{exp(b * x)} without
+#'     normalization (\code{c = TRUE}) or wrapping (e.g., inside \code{ilogit()})
+#' }
+#'
+#' Weight parameters are initialized at 0 by default to ensure numerically stable
+#' starting values. See \code{vignette("faq")} (Question 7) for detailed
+#' troubleshooting of numerical issues.
+#'
+#' @seealso \code{\link{mm}}, \code{\link{bml}}, \code{vignette("model")} for
+#'   the model structure, \code{vignette("faq")} for troubleshooting
 #'
 #' @examples
+#' \dontrun{
 #' # Equal weights (standard multiple-membership)
 #' fn(w ~ 1/n, c = TRUE)
 #'
@@ -314,8 +355,12 @@ vars <- function(...) {
 #'
 #' # Using quantiles for percentile-based weights
 #' fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE)
+#' }
 #'
 #' @references
+#' Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
+#' Micro-Macro Link. \emph{Political Analysis}.
+#'
 #' Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
 #' multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
 #'
@@ -352,6 +397,8 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
   jags_math_funcs <- c("exp", "log", "log10", "sqrt", "abs", "pow",
                        "sin", "cos", "tan", "asin", "acos", "atan",
                        "sinh", "cosh", "tanh",
+                       "logit", "ilogit", "probit", "iprobit",
+                       "cloglog", "icloglog",
                        "round", "trunc", "floor", "ceiling")
 
   # All allowed functions (aggregation + JAGS math)
@@ -515,13 +562,13 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
 #'
 #' The contribution from mm block \eqn{k} to group \eqn{j} is:
 #'
-#' \deqn{\text{mm}_{kj} = \sum_{i \in group_j} w_{ki} (\mathbf{x}_{ki}'\boldsymbol{\beta}_k + \alpha_{ki})}
+#' \deqn{\mathrm{mm}_{kj} = \sum_{i \in group_j} w_{ki} (x_{ki}' \beta_k + \alpha_{ki})}
 #'
 #' where:
 #' \itemize{
 #'   \item \eqn{w_{ki}}: Weight for member \eqn{i} in group \eqn{j} (from \code{fn})
-#'   \item \eqn{\mathbf{x}_{ki}}: Member-level covariates (from \code{vars})
-#'   \item \eqn{\boldsymbol{\beta}_k}: Regression coefficients (estimated)
+#'   \item \eqn{x_{ki}}: Member-level covariates (from \code{vars})
+#'   \item \eqn{\beta_k}: Regression coefficients (estimated)
 #'   \item \eqn{\alpha_{ki}}: Member-level random effect (if \code{RE = TRUE})
 #' }
 #'
@@ -535,6 +582,7 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
 #'   \code{\link{hm}}
 #'
 #' @examples
+#' \dontrun{
 #' # Equal weights with variables
 #' mm(
 #'   id = id(pid, gid),
@@ -554,8 +602,8 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
 #' # Flexible weights with parameter
 #' mm(
 #'   id = id(pid, gid),
-#'   vars = vars(party_strength),
-#'   fn = fn(w ~ b0 + b1 * tenure, c = TRUE),
+#'   vars = vars(org_structure),
+#'   fn = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
 #'   RE = TRUE
 #' )
 #'
@@ -582,8 +630,12 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
 #'   fn = fn(w ~ 1/n, c = TRUE),
 #'   RE = FALSE
 #' )
+#' }
 #'
 #' @references
+#' Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
+#' Micro-Macro Link. \emph{Political Analysis}.
+#'
 #' Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
 #' multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
 #'
@@ -687,6 +739,7 @@ mm <- function(id, vars = NULL, fn = NULL, RE = NULL, ar = FALSE) {
 #' @seealso \code{\link{bml}}, \code{\link{mm}}, \code{\link{id}}, \code{\link{vars}}
 #'
 #' @examples
+#' \dontrun{
 #' # Random effects with covariates
 #' hm(
 #'   id = id(cid),
@@ -718,6 +771,7 @@ mm <- function(id, vars = NULL, fn = NULL, RE = NULL, ar = FALSE) {
 #'   type = "RE",
 #'   ar = TRUE  # Effects evolve over time
 #' )
+#' }
 #'
 #' @references
 #' Goldstein, H. (2011). \emph{Multilevel Statistical Models} (4th ed.). Wiley.

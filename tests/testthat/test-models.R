@@ -260,7 +260,7 @@ test_that("hm() with name specification works", {
   expect_no_error({
     m <- bml(
       Surv(dur_wkb, event_wkb) ~ 1 + majority +
-        hm(id = id(cid), name = country, type = "FE", showFE = TRUE),
+        hm(id = id(cid), name = cname, type = "FE", showFE = TRUE),
       family = "Weibull",
       data = coalgov,
       run = FALSE

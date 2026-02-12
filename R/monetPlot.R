@@ -60,8 +60,8 @@
 #'
 #' # Fit model with monitoring enabled
 #' m1 <- bml(
-#'   Surv(govdur, earlyterm) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE) +
+#'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
+#'     mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
 #'     hm(id = id(cid), type = "RE"),
 #'   family = "Weibull",
 #'   monitor = TRUE,  # Required for monetPlot
@@ -78,7 +78,7 @@
 #' monetPlot(m1, parameter = "b.mm.1", label = "Party Fragmentation")
 #'
 #' # Plot random effect SD
-#' monetPlot(m1, parameter = "sigma.mm")
+#' monetPlot(m1, parameter = "sigma.mm.1")
 #'
 #' # List available parameters
 #' rownames(m1$reg.table)
@@ -89,8 +89,6 @@
 
 monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
 
-  escape_regex <- function(x) gsub("([][{}()+*^$|.?\\\\])", "\\\\\\1", x)
-  
   # Checks --------------------------------------------------------------------------------------- #
 
   if (is.null(bml$jags.out) || is.null(bml$jags.out$BUGSoutput) ||
@@ -98,18 +96,34 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
     stop("JAGS output could not be retrieved. Please ensure that monitor = TRUE when fitting the model.", call. = FALSE)
   }
   if(is.null(label)) label = parameter
-  
+
   # Get mcmclist and posterior stats ------------------------------------------------------------- #
-  
-  mcmc.list <- coda::as.mcmc(bml$jags.out)
-  
-  mcmc.ggs <- 
-    ggmcmc::ggs(
-      mcmc.list,
-      family = paste0("^", escape_regex(parameter), "$"), 
-      par_labels = data.frame(Parameter = parameter, Label = label)
+
+  # Build ggs-compatible data frame manually to avoid ggmcmc::ggs() version issues
+  sims <- bml$jags.out$BUGSoutput$sims.array
+  param_names <- dimnames(sims)[[3]]
+  param_idx <- which(param_names == parameter)
+  if (length(param_idx) == 0) {
+    stop(paste0("Parameter '", parameter, "' not found. Use rownames(bml$reg.table) to see available parameters."), call. = FALSE)
+  }
+
+  n_iter <- dim(sims)[1]
+  n_chains <- dim(sims)[2]
+  mcmc.ggs <- do.call(rbind, lapply(seq_len(n_chains), function(ch) {
+    dplyr::tibble(
+      Iteration = seq_len(n_iter),
+      Chain     = factor(ch),
+      Parameter = factor(label),
+      value     = sims[, ch, param_idx]
     )
-  
+  }))
+  attr(mcmc.ggs, "nChains")     <- n_chains
+  attr(mcmc.ggs, "nParameters") <- 1L
+  attr(mcmc.ggs, "nIterations") <- n_iter
+  attr(mcmc.ggs, "nBurnin")     <- 0L
+  attr(mcmc.ggs, "nThin")       <- 1L
+  attr(mcmc.ggs, "description") <- "bml"
+
   p.quantiles <- round(quantile(dplyr::pull(mcmc.ggs, value), c(.05, .5, .95)), r)
   p.mad <- round(mad(dplyr::pull(mcmc.ggs, value)), r)
 
@@ -123,12 +137,12 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
 
   if(isTRUE(yaxis)) {
     yaxis <-  "Density"
-    xaxis <- paste0("Scans (", max(dplyr::pull(mcmc.ggs, Chain)), " chains)") 
+    xaxis <- paste0("Scans (", n_chains, " chains)")
   } else {
     yaxis <- ""
     xaxis <- ""
   }
-  
+
   # Density plot
   p1 <-
     ggmcmc::ggs_density(mcmc.ggs, hpd = TRUE) +
@@ -149,7 +163,7 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
       plot.title   = ggplot2::element_text(face = "bold", hjust = 0.5, size = 14),
       axis.title.y = ggplot2::element_text(face = "bold", size = 14)
     )
-  
+
   # Traceplot
   p2 <-
     ggmcmc::ggs_traceplot(mcmc.ggs, original_burnin = FALSE) +
@@ -189,5 +203,5 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
     patchwork::wrap_plots(p1, p2, ncol = 1, heights = c(1, 1)) +
       patchwork::plot_annotation(theme = ggplot2::theme(plot.margin = ggplot2::unit(c(0, 0, 0, 0), "cm")))
   )
-  
+
 }

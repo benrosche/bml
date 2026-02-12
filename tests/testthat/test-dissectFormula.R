@@ -10,7 +10,7 @@ test_that("dissectFormula() works with all model families and with and without i
         event_wkb ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = country, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Gaussian",
@@ -25,7 +25,7 @@ test_that("dissectFormula() works with all model families and with and without i
         Surv(dur_wkb, event_wkb) ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = country, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Gaussian",
@@ -41,7 +41,7 @@ test_that("dissectFormula() works with all model families and with and without i
         event_wkb ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = country, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Binomial",
@@ -56,7 +56,7 @@ test_that("dissectFormula() works with all model families and with and without i
         Surv(dur_wkb, event_wkb) ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = country, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Binomial",
@@ -72,7 +72,7 @@ test_that("dissectFormula() works with all model families and with and without i
         Surv(dur_wkb, event_wkb) ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = country, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Weibull",
@@ -87,7 +87,7 @@ test_that("dissectFormula() works with all model families and with and without i
         event_wkb ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = country, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Weibull",
@@ -101,7 +101,7 @@ test_that("dissectFormula() works with all model families and with and without i
       formula(
         event_wkb ~ majority +
           mwc +
-          hm(id = id(cid), name = country, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Gaussian",
@@ -118,7 +118,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
 
   expect_error(
     dissectFormula(
-      formula(Surv(govdur, event_wkb) ~ 1 + mm(vars = vars(cohesion), fn = fn(w ~ 1/exp(cohesion), c = FALSE))),
+      formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(vars = vars(cohesion), fn = fn(w ~ 1/exp(cohesion), c = FALSE))),
       family="Weibull",
       data
     ),
@@ -127,7 +127,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
 
   expect_no_error(
     dissectFormula(
-      formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), fn = fn(w ~ 1/exp(cohesion), c = FALSE))),
+      formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), fn = fn(w ~ 1/exp(cohesion), c = FALSE))),
       family="Weibull",
       data
     ),
@@ -136,7 +136,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
 
   expect_error(
     dissectFormula(
-      formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = vars(cohesion))),
+      formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = vars(cohesion))),
       family="Weibull",
       data
     ),
@@ -145,7 +145,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
 
   expect_no_error(
     dissectFormula(
-      formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE), RE = TRUE)),
+      formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE), RE = TRUE)),
       family="Weibull",
       data
     ),
@@ -154,7 +154,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
 
   expect_true(
     {dissectFormula(
-      formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE), RE = TRUE)),
+      formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE), RE = TRUE)),
       family="Weibull",
       data)}$mm[[1]]$fn$constraint,
     label="mm() -> c = TRUE (constrained) should return TRUE"
@@ -162,7 +162,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
 
   expect_false(
     {dissectFormula(
-      formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = FALSE), RE = TRUE)),
+      formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = FALSE), RE = TRUE)),
       family="Weibull",
       data)}$mm[[1]]$fn$constraint,
     label="mm() -> c = FALSE (unconstrained) should return FALSE"
@@ -170,7 +170,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
 
   expect_true(
     {dissectFormula(
-      formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)),
+      formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)),
       family="Weibull",
       data)}$mm[[1]]$fn$constraint,
     label="mm() -> default c (TRUE) should return TRUE"
@@ -179,7 +179,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
   expect_no_error(
     dissectFormula(
       formula(
-        Surv(govdur, event_wkb) ~ 1 +
+        Surv(dur_wkb, event_wkb) ~ 1 +
           mm(
             id = id(pid, gid),
             vars = vars(finance),
@@ -196,7 +196,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
   expect_no_error(
     dissectFormula(
       formula(
-        Surv(govdur, event_wkb) ~ 1 +
+        Surv(dur_wkb, event_wkb) ~ 1 +
           mm(
             id = id(pid, gid),
             vars = vars(finance),
@@ -213,7 +213,7 @@ test_that("dissectFormula() works with different ways of specifying mm()", {
   expect_no_error(
     dissectFormula(
       formula(
-        Surv(govdur, event_wkb) ~ 1 +
+        Surv(dur_wkb, event_wkb) ~ 1 +
           mm(
             id = id(pid, gid),
             vars = vars(finance),
@@ -280,7 +280,7 @@ test_that("vars() in mm() ignores numeric literals", {
 
   # vars(1 + finance) should only extract finance, not 1
   result_with_1 <- dissectFormula(
-    formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = vars(1 + finance), fn = fn(w ~ 1/n))),
+    formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = vars(1 + finance), fn = fn(w ~ 1/n))),
     family = "Weibull",
     data
   )
@@ -289,7 +289,7 @@ test_that("vars() in mm() ignores numeric literals", {
 
   # vars(-1 + finance) should only extract finance, not -1
   result_with_minus1 <- dissectFormula(
-    formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = vars(-1 + finance), fn = fn(w ~ 1/n))),
+    formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = vars(-1 + finance), fn = fn(w ~ 1/n))),
     family = "Weibull",
     data
   )
@@ -298,7 +298,7 @@ test_that("vars() in mm() ignores numeric literals", {
 
   # vars(0 + finance) should only extract finance
   result_with_0 <- dissectFormula(
-    formula(Surv(govdur, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = vars(0 + finance), fn = fn(w ~ 1/n))),
+    formula(Surv(dur_wkb, event_wkb) ~ 1 + mm(id = id(pid, gid), vars = vars(0 + finance), fn = fn(w ~ 1/n))),
     family = "Weibull",
     data
   )
@@ -334,7 +334,7 @@ test_that("dissectFormula() works with different ways of specifying hm()", {
 
   expect_error(
     dissectFormula(
-      formula(event_wkb ~ 1 + hm(name = country, type = "RE", showFE = F)),
+      formula(event_wkb ~ 1 + hm(name = cname, type = "RE", showFE = F)),
       family="Gaussian",
       data
     ),
@@ -343,7 +343,7 @@ test_that("dissectFormula() works with different ways of specifying hm()", {
 
   expect_no_error(
     dissectFormula(
-      formula(Surv(govdur, event_wkb) ~ 1 + hm(id = id(cid), name = country)),
+      formula(Surv(dur_wkb, event_wkb) ~ 1 + hm(id = id(cid), name = cname)),
       family="Weibull",
       data
     ),
@@ -362,7 +362,7 @@ test_that("mm() blocks with different mmid but same mainid are allowed", {
   expect_no_error(
     dissectFormula(
       formula(
-        Surv(govdur, event_wkb) ~ 1 +
+        Surv(dur_wkb, event_wkb) ~ 1 +
           mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE) +
           mm(id = id(pid2, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = FALSE)
       ),
@@ -375,7 +375,7 @@ test_that("mm() blocks with different mmid but same mainid are allowed", {
   # Verify mm_groups is correctly populated
   result <- dissectFormula(
     formula(
-      Surv(govdur, event_wkb) ~ 1 +
+      Surv(dur_wkb, event_wkb) ~ 1 +
         mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE) +
         mm(id = id(pid2, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = FALSE)
     ),
@@ -398,7 +398,7 @@ test_that("mm() blocks with different mainid are not allowed", {
   expect_error(
     dissectFormula(
       formula(
-        Surv(govdur, event_wkb) ~ 1 +
+        Surv(dur_wkb, event_wkb) ~ 1 +
           mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = FALSE) +
           mm(id = id(pid, gid2), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = FALSE)
       ),
@@ -415,7 +415,7 @@ test_that("RE=TRUE for multiple mm() blocks with same mmid is not allowed", {
   expect_error(
     dissectFormula(
       formula(
-        Surv(govdur, event_wkb) ~ 1 +
+        Surv(dur_wkb, event_wkb) ~ 1 +
           mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE)
       ),
@@ -436,7 +436,7 @@ test_that("RE=TRUE for multiple mm() blocks with different mmid is allowed", {
   expect_no_error(
     dissectFormula(
       formula(
-        Surv(govdur, event_wkb) ~ 1 +
+        Surv(dur_wkb, event_wkb) ~ 1 +
           mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE) +
           mm(id = id(pid2, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)
       ),

@@ -67,8 +67,6 @@ mod1 <- bml(
     ),
   family = "Weibull",
   data = coalgov,
-  n.iter = 2000,
-  n.burnin = 500,
   seed = 1
 )
 
@@ -100,7 +98,7 @@ mod2 <- bml(
       RE = TRUE
     ),
   family = "Weibull",
-  priors = c("b.w ~ dnorm(0, 1)"), # prior on the weight parameters
+  priors = c("b.w ~ dnorm(0,1)"), # weakly informative prior on the weight parameters
   data = coalgov,
   seed = 1,
   monitor = TRUE
@@ -117,18 +115,18 @@ summary(mod2)
 
 **Interpretation:**
 
-- If `b1 ≈ 0`: Seat share doesn't affect weights (equal influence)
-- If `b1 > 0`: Larger parties have more weight
-- If `b1 < 0`: Smaller parties have more weight
+- If $b1 \approx 0$: Seat share doesn't affect weights (equal influence)
+- If $b1 > 0$: Larger parties have more weight
+- If $b1 < 0$: Smaller parties have more weight
 
 ### Visualizing Results
 
 ```{r}
 # Diagnostic plot for weight parameter
-monetPlot(mod2, parameter = "b.w[1]", label = "Seat share effect")
+monetPlot(mod2, parameter = "b.w.1[1]", label = "Seat share effect")
 
 # MCMC diagnostics
-mcmcDiag(mod2, parameters = "b.w[1]")
+mcmcDiag(mod2, parameters = "b.w.1[1]")
 ```
 
 ## Next Steps

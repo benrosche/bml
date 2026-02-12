@@ -34,6 +34,7 @@ free variables (with coefficients to be estimated) and fixed variables (with
 coefficients held constant using \code{\link{fix}}).
 }
 \examples{
+\dontrun{
 # Simple variable specification (formula-style with +)
 vars(income + education)
 
@@ -52,7 +53,6 @@ vars(income + I(income^2)) # linear and squared
 vars(fix(exposure, 1.0) + income + education)
 
 # Use in mm() specification
-\dontrun{
 mm(
   id = id(pid, gid),
   vars = vars(rile + ipd),

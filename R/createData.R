@@ -11,6 +11,9 @@ createData <- function(data, formula_parts) {
   # Return:
   # - Returns a list with: data, mm_blocks, main, hm_blocks
 
+  # Ensure data is ungrouped to avoid dplyr "Adding missing grouping variables" messages
+  data <- dplyr::ungroup(data)
+
   # Unpack formula parts -------------------------------------------------------------------- #
 
   lhs            <- formula_parts$lhs
@@ -58,14 +61,17 @@ createData <- function(data, formula_parts) {
     dplyr::group_by(hmid) %>% dplyr::mutate(hmid = dplyr::cur_group_id()) %>% dplyr::ungroup()
 
   # Rename each unique mmid variable to mmid.g format and create sequential IDs
+  # NAs are preserved (rows where a member doesn't belong to this mmid group)
   for (g in seq_along(all_mmid_names)) {
     mmid_orig_name <- all_mmid_names[g]
     mmid_new_name <- paste0("mmid.", g)
     data <- data %>%
-      dplyr::rename(!!mmid_new_name := all_of(mmid_orig_name)) %>%
-      dplyr::group_by(.data[[mmid_new_name]]) %>%
-      dplyr::mutate(!!mmid_new_name := dplyr::cur_group_id()) %>%
-      dplyr::ungroup()
+      dplyr::rename(!!mmid_new_name := all_of(mmid_orig_name))
+    non_na <- !is.na(data[[mmid_new_name]])
+    if (any(non_na)) {
+      orig_vals <- data[[mmid_new_name]]
+      data[[mmid_new_name]][non_na] <- dplyr::dense_rank(orig_vals[non_na])
+    }
   }
 
   # For backward compatibility, create 'mmid' as alias for 'mmid.1'
@@ -112,6 +118,9 @@ createData <- function(data, formula_parts) {
       mmid_group <- which(all_mmid_names == block_mmid_name)
       mmid_col <- paste0("mmid.", mmid_group)
 
+      # Filter to rows belonging to this mmid group (drop NAs from other groups)
+      mmdat_block <- mmdat_base %>% dplyr::filter(!is.na(.data[[mmid_col]]))
+
       # Extract formula and fixed vars from new structure
       vars_formula <- NULL
       vars_fixed <- NULL
@@ -126,10 +135,10 @@ createData <- function(data, formula_parts) {
 
       # Build design matrix using model.matrix() - handles interactions and I()
       if (!is.null(vars_formula)) {
-        X_mm <- model.matrix(vars_formula, data = mmdat_base)
+        X_mm <- model.matrix(vars_formula, data = mmdat_block)
         X_mm_df <- as.data.frame(X_mm)
         dat_free <- dplyr::bind_cols(
-          mmdat_base %>% dplyr::select(all_of(mmid_col), mainid) %>% dplyr::rename(mmid = all_of(mmid_col)),
+          mmdat_block %>% dplyr::select(all_of(mmid_col), mainid) %>% dplyr::rename(mmid = all_of(mmid_col)),
           X_mm_df
         )
         # Get actual column names from model.matrix (these are the "vars")
@@ -142,7 +151,7 @@ createData <- function(data, formula_parts) {
       # Handle fixed variables
       dat_fixed <- if (!is.null(vars_fixed)) {
         var_names <- sapply(vars_fixed, function(x) x$var)
-        mmdat_base %>% dplyr::select(all_of(mmid_col), mainid, all_of(var_names)) %>% dplyr::rename(mmid = all_of(mmid_col))
+        mmdat_block %>% dplyr::select(all_of(mmid_col), mainid, all_of(var_names)) %>% dplyr::rename(mmid = all_of(mmid_col))
       } else NULL
 
       fix_values <- if (!is.null(vars_fixed)) {
@@ -155,6 +164,7 @@ createData <- function(data, formula_parts) {
       agg_vars <- block$fn$agg_vars
 
       wdat <- data %>%
+        dplyr::filter(!is.na(.data[[mmid_col]])) %>%
         dplyr::add_count(mainid, name = "n") %>%
         dplyr::mutate(X0 = 1)
 
@@ -368,7 +378,15 @@ createData <- function(data, formula_parts) {
   }
 
   # Create base maindat with index variables and LHS
-  maindat_base <- data %>%
+  # When multiple mmid groups exist (stacked data with NAs), count members from
+  # the first mmid group only for the legacy mmn/mmi1/mmi2 values.
+  # Per-group values are recomputed in createJagsVars.R.
+  mmn_data <- if (has_mm && "mmid.1" %in% colnames(data)) {
+    data %>% dplyr::filter(!is.na(.data[["mmid.1"]]))
+  } else {
+    data
+  }
+  maindat_base <- mmn_data %>%
     dplyr::arrange(mainid) %>%
     dplyr::group_by(mainid) %>%
     dplyr::add_count(mainid, name = "mmn") %>%

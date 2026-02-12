@@ -3,13 +3,16 @@
 #' Computes common convergence diagnostics for selected parameters from a
 #' JAGS/BUGS fit and returns a compact, report-ready table. The diagnostics
 #' include Gelman–Rubin \eqn{\hat{R}}, Geweke z-scores, Heidelberger-Welch
-#' stationarity p-values, and autocorrelation at lag 50.
+#' stationarity p-values, and autocorrelation at a user-specified lag.
 #'
 #' @param bml.out A model fit object containing JAGS output, typically as returned
 #'   by \code{R2jags::jags()}, with component \code{$jags.out$BUGSoutput}.
 #' @param parameters Character vector of parameter names (or patterns) to extract.
 #'   These may be exact names or patterns (e.g., a prefix like \code{"b"} that
 #'   matches \code{"b[1]"}, \code{"b[2]"}, …).
+#' @param lag Integer specifying the lag at which to compute autocorrelation.
+#'   Default: 50. Lower values (e.g., 10) capture short-range dependence; higher
+#'   values assess whether the chain has mixed well over longer intervals.
 #'
 #' @details
 #' Internally, the function converts the BUGS/JAGS output to a
@@ -23,8 +26,10 @@
 #'         Large absolute values (e.g., \eqn{|z|>2}) suggest lack of convergence.
 #'   \item \strong{Heidelberger–Welch} p-value: \code{coda::heidel.diag()} tests
 #'         the null of stationarity in the chain segment.
-#'   \item \strong{Autocorrelation (lag 50)}: \code{coda::autocorr()} at lag 50,
-#'         averaged across chains.
+#'   \item \strong{Autocorrelation}: \code{coda::autocorr()} at the specified
+#'         \code{lag}, averaged across chains. Values near zero indicate good
+#'         mixing; persistent autocorrelation suggests the chain needs thinning
+#'         or reparameterization.
 #' }
 #' All statistics are rounded to three decimals. The returned table is transposed
 #' so that \emph{rows are diagnostics} and \emph{columns are parameters}.
@@ -33,7 +38,15 @@
 #'   parameter; cell entries are the average diagnostic values across chains.
 #'   Row names include: \code{"Gelman/Rubin convergence statistic"},
 #'   \code{"Geweke z-score"}, \code{"Heidelberger/Welch p-value"},
-#'   \code{"Autocorrelation (lag 50)"}.
+#'   \code{"Autocorrelation (lag <lag>)"}.
+#'
+#' @references
+#' Gelman, A., & Rubin, D. B. (1992). Inference from iterative simulation using
+#' multiple sequences. \emph{Statistical Science}, 7(4), 457-472.
+#'
+#' Brooks, S. P., & Gelman, A. (1998). General methods for monitoring convergence
+#' of iterative simulations. \emph{Journal of Computational and Graphical Statistics},
+#' 7(4), 434-455.
 #'
 #' @seealso \code{\link[coda]{gelman.diag}},
 #'   \code{\link[coda]{geweke.diag}}, \code{\link[coda]{heidel.diag}},
@@ -45,8 +58,8 @@
 #'
 #' # Fit model
 #' m1 <- bml(
-#'   Surv(govdur, earlyterm) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+#'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
+#'     mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
 #'   family = "Weibull",
 #'   monitor = TRUE,
 #'   data = coalgov
@@ -59,19 +72,22 @@
 #' mcmcDiag(m1, parameters = c("b[1]", "b[2]", "shape"))
 #'
 #' # Check mm block parameters
-#' mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm"))
+#' mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm.1"))
+#'
+#' # Custom autocorrelation lag
+#' mcmcDiag(m1, parameters = "b", lag = 100)
 #'
 #' # Interpreting results:
 #' # - Gelman-Rubin < 1.1: Good convergence
 #' # - |Geweke z| < 2: No evidence against convergence
 #' # - Heidelberger p > 0.05: Chain appears stationary
-#' # - Low autocorrelation at lag 50: Good mixing
+#' # - Low autocorrelation: Good mixing
 #' }
 #'
 #' @author Benjamin Rosche \email{benrosche@@nyu.edu}
 #' @export mcmcDiag
 
-mcmcDiag <- function(bml.out, parameters) {
+mcmcDiag <- function(bml.out, parameters, lag = 50) {
 
   # Check that JAGS output is available ---------------------------------------------------------- #
 
@@ -85,53 +101,53 @@ mcmcDiag <- function(bml.out, parameters) {
   crMCMC <- function(bml.out, parameter, regex=T) {
     m <- coda::as.mcmc.list(bml.out$jags.out$BUGSoutput)
     vars <- colnames(m[[1]])
-    
+
     # Escape regex metacharacters
     esc <- function(x) gsub("([][{}()+*^$.|\\?\\\\])", "\\\\\\1", x)
-    
+
     get_matches <- function(p) {
       if (!regex) return(vars[vars %in% p])
-      
+
       # exact match if full name present
       if (p %in% vars) return(p)
-      
+
       # if contains brackets → treat literally
       if (grepl("\\[.*\\]", p)) {
         return(vars[grepl(paste0("^", esc(p), "$"), vars)])
       }
-      
+
       # otherwise treat as prefix (match all indexed variants)
       vars[grepl(paste0("^", esc(p), "\\[[^]]+\\]$"), vars)]
     }
-    
+
     sel <- unique(unlist(lapply(parameter, get_matches)))
-    
+
     if (length(sel) == 0)
       stop("No parameters matched any pattern.", call. = FALSE)
-    
+
     coda::mcmc.list(lapply(m, \(ch) ch[, sel, drop = FALSE]))
   }
-  
-  
+
+
   mcmcl <- crMCMC(bml.out, parameters)
-  
+
   n.chains <- length(mcmcl)
   n.parameters <- mcmcl[[1]] %>% ncol()
-  
+
   # Save different convergence statistics -------------------------------------------------------- #
-  
+
   message("Parameter(s): ", parameters)
-  
-  gelman_rubin <- 
-    coda::gelman.diag(mcmcl, autoburnin = F)$psrf %>% 
-    as.data.frame() %>% 
+
+  gelman_rubin <-
+    coda::gelman.diag(mcmcl, autoburnin = F)$psrf %>%
+    as.data.frame() %>%
     tibble::rownames_to_column("Parameter") %>%
-    select(Parameter, "Gelman/Rubin convergence statistic"=2) 
-  
+    select(Parameter, "Gelman/Rubin convergence statistic"=2)
+
   # Gelman/Rubin: "A rule of thumb is that values of 1.1 and less suggests adequate convergence" - Finley (2013): Using JAGS in R with the rjags package
-  
-  geweke <- 
-    coda::geweke.diag(mcmcl) %>% 
+
+  geweke <-
+    coda::geweke.diag(mcmcl) %>%
     purrr::map(., \(x) x[[1]]) %>%
     as.data.frame(col.names = paste0("Chain ", 1:n.chains)) %>%
     tibble::rownames_to_column("Parameter") %>%
@@ -141,12 +157,12 @@ mcmcDiag <- function(bml.out, parameters) {
       "Geweke z-score" = mean(c_across(starts_with("Chain")), na.rm = TRUE)
     ) %>%
     ungroup()
-  
+
   # Geweke: "The test statistic is a z-score, so |Z| > 2 indicates poor convergence" - Reich (XXXX): Applied Bayesian Analysis
-  
-  heidel <- 
-    coda::heidel.diag(mcmcl) %>% 
-    purrr::map(., .f=\(x){ setNames(x[, "pvalue"], rownames(x)) }) %>% 
+
+  heidel <-
+    coda::heidel.diag(mcmcl) %>%
+    purrr::map(., .f=\(x){ setNames(x[, "pvalue"], rownames(x)) }) %>%
     as.data.frame(col.names = paste0("Chain ", 1:n.chains)) %>%
     tibble::rownames_to_column("Parameter") %>%
     rowwise() %>%
@@ -155,22 +171,23 @@ mcmcDiag <- function(bml.out, parameters) {
       "Heidelberger/Welch p-value" = mean(c_across(starts_with("Chain")), na.rm = TRUE)
     ) %>%
     ungroup()
-  
-  # "The Heidelberger and Welch diagnostic first tests the null hypothesis that the Markov Chain is 
+
+  # "The Heidelberger and Welch diagnostic first tests the null hypothesis that the Markov Chain is
   # in the stationary distribution and produces p-values for each estimated parameter"
-  
-  autocorr <- 
-    coda::autocorr(mcmcl) %>% 
-    purrr::map(., .f=\(x){ if(n.parameters>1) setNames(diag(x[5,,]), colnames(x)) else setNames(x[5,,], colnames(x)) }) %>% 
+
+  ac_label <- paste0("Autocorrelation (lag ", lag, ")")
+  autocorr <-
+    coda::autocorr(mcmcl, lags = lag) %>%
+    purrr::map(., .f=\(x){ if(n.parameters>1) setNames(diag(x[1,,]), colnames(x)) else setNames(x[1,,], colnames(x)) }) %>%
     as.data.frame(col.names = paste0("Chain ", 1:n.chains)) %>%
     tibble::rownames_to_column("Parameter") %>%
     rowwise() %>%
     summarise(
       Parameter,
-      "Autocorrelation (lag 50)" = mean(c_across(starts_with("Chain")), na.rm = TRUE)
+      !!ac_label := mean(c_across(starts_with("Chain")), na.rm = TRUE)
     ) %>%
     ungroup()
-  
+
   return(
     gelman_rubin %>%
       left_join(geweke, by = "Parameter") %>%
@@ -179,7 +196,7 @@ mcmcDiag <- function(bml.out, parameters) {
       mutate(across(-Parameter, ~ round(., 3))) %>%
       tibble::column_to_rownames("Parameter") %>%
       t() %>%
-      as.data.frame() 
+      as.data.frame()
   )
-  
+
 }

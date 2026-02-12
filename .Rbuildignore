@@ -13,3 +13,5 @@
 ^\.claude$
 ^create$
 ^ext$
+^README\.html$
+^backup$

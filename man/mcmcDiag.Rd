@@ -4,7 +4,7 @@
 \alias{mcmcDiag}
 \title{Summarize MCMC convergence diagnostics}
 \usage{
-mcmcDiag(bml.out, parameters)
+mcmcDiag(bml.out, parameters, lag = 50)
 }
 \arguments{
 \item{bml.out}{A model fit object containing JAGS output, typically as returned
@@ -13,19 +13,23 @@ by \code{R2jags::jags()}, with component \code{$jags.out$BUGSoutput}.}
 \item{parameters}{Character vector of parameter names (or patterns) to extract.
 These may be exact names or patterns (e.g., a prefix like \code{"b"} that
 matches \code{"b[1]"}, \code{"b[2]"}, …).}
+
+\item{lag}{Integer specifying the lag at which to compute autocorrelation.
+Default: 50. Lower values (e.g., 10) capture short-range dependence; higher
+values assess whether the chain has mixed well over longer intervals.}
 }
 \value{
 A \code{data.frame} with one row per diagnostic and one column per
   parameter; cell entries are the average diagnostic values across chains.
   Row names include: \code{"Gelman/Rubin convergence statistic"},
   \code{"Geweke z-score"}, \code{"Heidelberger/Welch p-value"},
-  \code{"Autocorrelation (lag 50)"}.
+  \code{"Autocorrelation (lag <lag>)"}.
 }
 \description{
 Computes common convergence diagnostics for selected parameters from a
 JAGS/BUGS fit and returns a compact, report-ready table. The diagnostics
 include Gelman–Rubin \eqn{\hat{R}}, Geweke z-scores, Heidelberger-Welch
-stationarity p-values, and autocorrelation at lag 50.
+stationarity p-values, and autocorrelation at a user-specified lag.
 }
 \details{
 Internally, the function converts the BUGS/JAGS output to a
@@ -39,8 +43,10 @@ diagnostics and averages them across chains for each parameter:
         Large absolute values (e.g., \eqn{|z|>2}) suggest lack of convergence.
   \item \strong{Heidelberger–Welch} p-value: \code{coda::heidel.diag()} tests
         the null of stationarity in the chain segment.
-  \item \strong{Autocorrelation (lag 50)}: \code{coda::autocorr()} at lag 50,
-        averaged across chains.
+  \item \strong{Autocorrelation}: \code{coda::autocorr()} at the specified
+        \code{lag}, averaged across chains. Values near zero indicate good
+        mixing; persistent autocorrelation suggests the chain needs thinning
+        or reparameterization.
 }
 All statistics are rounded to three decimals. The returned table is transposed
 so that \emph{rows are diagnostics} and \emph{columns are parameters}.
@@ -51,8 +57,8 @@ data(coalgov)
 
 # Fit model
 m1 <- bml(
-  Surv(govdur, earlyterm) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(fdep), fn = fn(w ~ 1/n), RE = TRUE),
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
   family = "Weibull",
   monitor = TRUE,
   data = coalgov
@@ -65,15 +71,26 @@ mcmcDiag(m1, parameters = "b")  # All b coefficients
 mcmcDiag(m1, parameters = c("b[1]", "b[2]", "shape"))
 
 # Check mm block parameters
-mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm"))
+mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm.1"))
+
+# Custom autocorrelation lag
+mcmcDiag(m1, parameters = "b", lag = 100)
 
 # Interpreting results:
 # - Gelman-Rubin < 1.1: Good convergence
 # - |Geweke z| < 2: No evidence against convergence
 # - Heidelberger p > 0.05: Chain appears stationary
-# - Low autocorrelation at lag 50: Good mixing
+# - Low autocorrelation: Good mixing
 }
 
+}
+\references{
+Gelman, A., & Rubin, D. B. (1992). Inference from iterative simulation using
+multiple sequences. \emph{Statistical Science}, 7(4), 457-472.
+
+Brooks, S. P., & Gelman, A. (1998). General methods for monitoring convergence
+of iterative simulations. \emph{Journal of Computational and Graphical Statistics},
+7(4), 434-455.
 }
 \seealso{
 \code{\link[coda]{gelman.diag}},

@@ -81,14 +81,50 @@ used in weight formulas:
   \item \code{exp}, \code{log}, \code{log10}, \code{sqrt}, \code{abs}, \code{pow}
   \item \code{sin}, \code{cos}, \code{tan}, \code{asin}, \code{acos}, \code{atan}
   \item \code{sinh}, \code{cosh}, \code{tanh}
+  \item \code{logit}, \code{ilogit}, \code{probit}, \code{iprobit}, \code{cloglog}, \code{icloglog}
   \item \code{round}, \code{trunc}, \code{floor}, \code{ceiling}
 }
 
 Example: \code{fn(w ~ 1 / (1 + (n - 1) * exp(-(b1 * x))))} uses an exponential
-decay function where weights depend on member characteristics. See Rosche (2026)
-for more details on parameterized weight functions.
+decay function where weights depend on member characteristics.
+
+\strong{Ensuring Numerical Stability:}
+
+Weight functions with estimated parameters (\code{b0}, \code{b1}, ...) must
+produce bounded, positive values across all plausible parameter values.
+Unbounded weight functions can cause the MCMC sampler to crash
+(e.g., \code{"Error in node w.1[...]: Invalid parent values"}).
+During sampling, weight parameters can take on extreme values, and if the
+weight function is not bounded, this will destabilize the likelihood.
+
+Recommendations:
+\itemize{
+  \item \strong{Use bounded weight functions.} Two options:
+    \itemize{
+      \item \code{ilogit()}: Bounds weights between 0 and 1 with a zero-point
+        at 0.5: \code{fn(w ~ ilogit(b0 + b1 * x), c = TRUE)}
+      \item \strong{Generalized logistic} (Rosche, 2026): Bounds weights between
+        0 and 1 with a zero-point at \eqn{1/n} (equal weights), so deviations
+        from equal weighting are estimated as a function of covariates:
+        \code{fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x))), c = TRUE)}
+    }
+  \item \strong{Use \code{c = TRUE}} (weight normalization) to prevent weights
+    from growing without bound
+  \item \strong{Standardize covariates} in the weight function. Variables with
+    large ranges (e.g., income in thousands) can cause \code{b * x} to overflow
+  \item \strong{Use informative priors} for weight parameters via the
+    \code{priors} argument in \code{\link{bml}} (e.g.,
+    \code{priors = list("b.w.1[1] ~ dnorm(0, 1)")})
+  \item \strong{Avoid unbounded functions} like \code{exp(b * x)} without
+    normalization (\code{c = TRUE}) or wrapping (e.g., inside \code{ilogit()})
+}
+
+Weight parameters are initialized at 0 by default to ensure numerically stable
+starting values. See \code{vignette("faq")} (Question 7) for detailed
+troubleshooting of numerical issues.
 }
 \examples{
+\dontrun{
 # Equal weights (standard multiple-membership)
 fn(w ~ 1/n, c = TRUE)
 
@@ -112,12 +148,17 @@ fn(w ~ tenure / median(tenure), c = TRUE)
 
 # Using quantiles for percentile-based weights
 fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE)
+}
 
 }
 \references{
+Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
+Micro-Macro Link. \emph{Political Analysis}.
+
 Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
 multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
 }
 \seealso{
-\code{\link{mm}}, \code{\link{bml}}
+\code{\link{mm}}, \code{\link{bml}}, \code{vignette("model")} for
+  the model structure, \code{vignette("faq")} for troubleshooting
 }

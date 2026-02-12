@@ -94,3 +94,120 @@ mm(
   - `ar = TRUE`: Member-level random effects evolve as a random walk across repeated group participations, capturing dynamics where a member's unobserved heterogeneity changes over time
 
 **Important:** Only one `mm()` block can have `RE = TRUE` in a given model.
+
+## 6. How do I fix parameters to known values?
+
+There are two ways to fix parameters in `bml`, depending on where in the model they appear.
+
+### Main equation and `hm()` blocks: Using `fix()`
+
+Use the `fix()` helper inside `vars()` to hold a coefficient at a specified value rather than estimating it. This works both in the main equation and in `hm()` blocks.
+
+**Main equation:**
+
+```r
+# Fix the coefficient of 'exposure' to 1 (i.e., use as an offset)
+m <- bml(
+  y ~ 1 + fix(exposure, 1) + x1 + x2,
+  family = "Gaussian",
+  data = dat
+)
+```
+
+This is equivalent to adding `exposure` as a predictor but constraining its coefficient to 1 instead of estimating it. This is useful for offsets or when prior theory dictates a specific coefficient value.
+
+**In `hm()` blocks:**
+
+```r
+m <- bml(
+  y ~ 1 + x1 +
+    mm(id = id(pid, gid), fn = fn(w ~ 1/n), RE = TRUE) +
+    hm(id = id(cid), vars = vars(fix(investiture, 0.5) + gdp), type = "FE"),
+  family = "Gaussian",
+  data   = coalgov
+)
+```
+
+**In `mm()` blocks:**
+
+```r
+m <- bml(
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(
+      id   = id(pid, gid),
+      vars = vars(fix(cohesion, 1) + finance),
+      fn   = fn(w ~ 1/n, c = TRUE),
+      RE   = TRUE
+    ),
+  family = "Weibull",
+  data   = coalgov
+)
+```
+
+Here, the coefficient of `cohesion` is fixed at 1 while `finance` is freely estimated.
+
+### Weight function `fn()`: Omitting parameters
+
+In the weight function specified via `fn()`, you fix weights by simply not including any free parameters (`b0`, `b1`, ...) in the formula. When no parameters appear, the weight function is treated as a known, fixed transformation.
+
+```r
+# Fixed equal weights (no parameters to estimate)
+fn(w ~ 1/n, c = TRUE)
+
+# Fixed weights proportional to seat share (no parameters to estimate)
+fn(w ~ pseat, c = TRUE)
+```
+
+Compare this with weight functions that include free parameters:
+
+```r
+# Estimable: b is estimated from data
+fn(w ~ 1/n^exp(b * x), c = TRUE)
+
+# Estimable: b0 is estimated from data
+fn(w ~ 1 / (1 + (n - 1) * exp(-b0)), c = FALSE)
+```
+
+The key distinction: if the `fn()` formula contains `b`, `b0`, `b1`, etc., these are estimated. If the formula contains only data variables and constants (like `n`, `pseat`, `1`), the weights are fixed.
+
+## 7. I get "Error in node w.1[...]: Invalid parent values" — what does this mean?
+
+This error occurs when JAGS cannot evaluate the weight function for a particular observation because the computed weight is numerically invalid (e.g., `NaN`, `Inf`, or a value outside the domain of a downstream function). It most commonly arises with **parameterized weight functions** during the initialization phase.
+
+**Why it happens:** Weight function parameters (`b0`, `b1`, ...) are given vague priors by default (`dnorm(0, 0.0001)` in JAGS precision, which corresponds to SD = 100). When JAGS initializes the MCMC chains, it may draw extreme starting values (e.g., `b0 = 80`). For weight functions involving nonlinear transformations like `ilogit()` or `exp()`, extreme parameter values can cause numerical issues downstream — even if the weight function itself is mathematically well-defined, the resulting weights may produce overflow in the likelihood (e.g., `exp(-mu * shape)` in the Weibull model).
+
+**Built-in safeguard:** `bml` initializes all weight parameters at 0 by default. This ensures numerically stable starting values (e.g., `ilogit(0) = 0.5`). However, if the error persists or occurs during sampling (not just initialization), consider the following steps.
+
+**How to fix it:**
+
+1. **Use more informative priors.** Narrow the prior spread for weight parameters so that the sampler stays in a numerically stable region:
+
+    ```r
+    m <- bml(
+      ...,
+      priors = list(
+        "b.w.1[1] ~ dnorm(0, 1)",   # SD = 1 instead of 100
+        "b.w.1[2] ~ dnorm(0, 1)"
+      )
+    )
+    ```
+
+    This is especially important for parameters inside `ilogit()`, `exp()`, or other functions that saturate or explode at extreme inputs.
+
+2. **Ensure the weight function is bounded.** Unbounded weight functions can produce extreme values that destabilize the likelihood. Common strategies:
+
+    - Use `ilogit()` to bound weights between 0 and 1: `fn(w ~ ilogit(b0 + b1 * x), c = TRUE)`
+    - Use `exp()` carefully — it grows rapidly, so pair it with constraints like `c = TRUE` (normalization) or wrap the argument: `fn(w ~ exp(b1 * x), c = TRUE)` where `x` is standardized
+
+3. **Standardize covariates in the weight function.** If a weight variable has a large range (e.g., income in thousands), the product `b1 * x` can easily overflow. Standardize such variables before including them in `fn()`.
+
+4. **Supply explicit initial values.** If the default initialization at 0 doesn't work for your model, provide custom starting values:
+
+    ```r
+    m <- bml(
+      ...,
+      inits = list("b.w.1" = c(0.5, -0.1))
+    )
+    ```
+
+5. **Re-run the model.** Since the error can be seed-dependent (different chains draw different initial values), simply re-running may resolve it. However, this indicates a fragile parameterization — consider steps 1--3 for a robust solution.

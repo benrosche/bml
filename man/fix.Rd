@@ -22,11 +22,13 @@ handled efficiently by pre-computing their contribution in R before passing
 data to JAGS.
 }
 \examples{
+\dontrun{
 # Fix a coefficient to 1.0 (standard offset)
 fix(exposure, 1.0)
 
 # Use within vars() for multiple-membership models
 vars(fix(population, 0.5) + income + education)
+}
 
 }
 \seealso{

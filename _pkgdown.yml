@@ -2,6 +2,9 @@ home:
   title: bml
   description: Bayesian multiple-membership multilevel models with parameterizable weight function
   author: "Ben Rosche"
+authors:
+  Benjamin Rosche:
+    href: https://benrosche.com
 url: https://benrosche.github.io/bml/
 template:
   bootstrap: 5

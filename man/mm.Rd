@@ -48,13 +48,13 @@ of multiple members, with flexible weighting of member contributions.
 
 The contribution from mm block \eqn{k} to group \eqn{j} is:
 
-\deqn{\text{mm}_{kj} = \sum_{i \in group_j} w_{ki} (\mathbf{x}_{ki}'\boldsymbol{\beta}_k + \alpha_{ki})}
+\deqn{\mathrm{mm}_{kj} = \sum_{i \in group_j} w_{ki} (x_{ki}' \beta_k + \alpha_{ki})}
 
 where:
 \itemize{
   \item \eqn{w_{ki}}: Weight for member \eqn{i} in group \eqn{j} (from \code{fn})
-  \item \eqn{\mathbf{x}_{ki}}: Member-level covariates (from \code{vars})
-  \item \eqn{\boldsymbol{\beta}_k}: Regression coefficients (estimated)
+  \item \eqn{x_{ki}}: Member-level covariates (from \code{vars})
+  \item \eqn{\beta_k}: Regression coefficients (estimated)
   \item \eqn{\alpha_{ki}}: Member-level random effect (if \code{RE = TRUE})
 }
 
@@ -65,6 +65,7 @@ variables, or random effect specifications. This allows modeling different
 aggregation mechanisms simultaneously.
 }
 \examples{
+\dontrun{
 # Equal weights with variables
 mm(
   id = id(pid, gid),
@@ -84,8 +85,8 @@ mm(
 # Flexible weights with parameter
 mm(
   id = id(pid, gid),
-  vars = vars(party_strength),
-  fn = fn(w ~ b0 + b1 * tenure, c = TRUE),
+  vars = vars(org_structure),
+  fn = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
   RE = TRUE
 )
 
@@ -112,9 +113,13 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
+}
 
 }
 \references{
+Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
+Micro-Macro Link. \emph{Political Analysis}.
+
 Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
 multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
 
