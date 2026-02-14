@@ -12,12 +12,12 @@ Source:
 
 Rosche B (2026). *bml: Bayesian Multiple-Membership Multilevel Models
 with Parameterizable Weight Functions*. R package version 0.9.0,
-<https://benrosche.github.io/bml>.
+<https://benrosche.github.io/bml/>.
 
     @Manual{,
       title = {bml: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions},
       author = {Benjamin Rosche},
       year = {2026},
       note = {R package version 0.9.0},
-      url = {https://benrosche.github.io/bml},
+      url = {https://benrosche.github.io/bml/},
     }

@@ -10,7 +10,7 @@ so installation has two parts:
 
 Install the latest JAGS version for your operating system from:
 
-- <http://mcmc-jags.sourceforge.net/>
+- <https://mcmc-jags.sourceforge.io/>
 
 After installing JAGS, restart R so `rjags` can find it.
 
