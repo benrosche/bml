@@ -21,9 +21,24 @@ articles:
       - faq
 navbar:
   structure:
-    left:  [intro, reference, articles, news]
+    left:  [bml, installation, model, examples, faq, reference, news]
     right: [search, github, lightswitch]
   components:
+    bml:
+      text: Get started
+      href: articles/bml.html
+    installation:
+      text: Installation
+      href: articles/installation.html
+    model:
+      text: Model
+      href: articles/model.html
+    examples:
+      text: Examples
+      href: articles/examples.html
+    faq:
+      text: FAQ
+      href: articles/faq.html
     github:
       icon: fab fa-github
       href: https://github.com/benrosche/bml/

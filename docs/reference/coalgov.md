@@ -220,101 +220,153 @@ data(coalgov)
 
 # Explore data structure
 str(coalgov)
-#> 'data.frame':    1288 obs. of  27 variables:
-#>  $ pid        : num  2 6 2 6 2 6 3 5 6 3 ...
-#>   ..- attr(*, "label")= chr "Unique party ID"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ pname      : chr  "Social Democratic Labour Party" "Agrarian Party" "Social Democratic Labour Party" "Agrarian Party" ...
-#>   ..- attr(*, "label")= chr "Party name"
-#>   ..- attr(*, "format.stata")= chr "%-50s"
-#>  $ gid        : num  1 1 2 2 3 3 4 4 4 5 ...
-#>   ..- attr(*, "label")= chr "Unique government ID"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ gname      : chr  "Erlander III" "Erlander III" "Erlander IV" "Erlander IV" ...
-#>   ..- attr(*, "label")= chr "Government name"
-#>   ..- attr(*, "format.stata")= chr "%21s"
-#>  $ cid        : num  1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, "label")= chr "Unique country ID"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ cname      : chr  "Sweden" "Sweden" "Sweden" "Sweden" ...
-#>   ..- attr(*, "label")= chr "Country name"
-#>   ..- attr(*, "format.stata")= chr "%26s"
-#>  $ gstart     : Date, format: "1951-09-30" "1951-09-30" ...
-#>  $ gend       : Date, format: "1952-09-21" "1952-09-21" ...
-#>  $ n          : num  2 2 2 2 2 2 3 3 3 3 ...
-#>   ..- attr(*, "label")= chr "# government parties"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ prime      : num  1 0 1 0 1 0 0 0 1 0 ...
-#>   ..- attr(*, "label")= chr "Prime minister party"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ pfam       : hvn_lbll [1:1288] 3, 8, 3, 8, 3, 8, 4, 6, 8, 4, 6, 8, 4, 8, 4, 5, 6, 8...
-#>    ..@ label       : chr "Party family"
-#>    ..@ format.stata: chr "%13.0g"
-#>    ..@ labels      : Named num  1 2 3 4 5 6 7 8 9 10
-#>    .. ..- attr(*, "names")= chr [1:10] "ecologist" "communist" "socdem" "liberal" ...
-#>  $ rile       : num  -33.4 -4.9 -28.3 1.2 -44.2 1.8 -2.1 2.2 -18.2 -15.2 ...
-#>   ..- attr(*, "label")= chr "Right-left position"
-#>   ..- attr(*, "format.stata")= chr "%5.2f"
-#>  $ ipd        : num  0.25 0 0.25 0 0.25 0 0 0 0 0 ...
-#>   ..- attr(*, "label")= chr "Intra-party democracy"
+#> gropd_df [2,077 × 19] (S3: grouped_df/tbl_df/tbl/data.frame)
+#>  $ cid        : num [1:2077] 11 11 11 11 11 11 11 11 11 11 ...
 #>   ..- attr(*, "format.stata")= chr "%10.0g"
-#>  $ fdep       : num  20.2 1.57 20.2 1.57 20.2 ...
-#>   ..- attr(*, "label")= chr "Financial dependency"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ pseatrel   : num  0.577 -0.577 0.618 -0.618 0.696 ...
-#>   ..- attr(*, "label")= chr "Party's relative seat share within coalition"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ majority   : num  0 0 0 0 0 0 1 1 1 1 ...
-#>   ..- attr(*, "label")= chr "Majority government"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ mwc        : num  1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, "label")= chr "Minimal winning coalition"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ hetero     : num  0.49 0.49 0.631 0.631 0.793 ...
-#>   ..- attr(*, "label")= chr "SD(rile) of goverment / SD(rile) of parliament"
-#>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ investiture: num  1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, "label")= chr "Investiture vote"
+#>  $ cname      : chr [1:2077] "SWE" "SWE" "SWE" "SWE" ...
+#>  $ gid        : int [1:2077] 3 3 4 4 5 5 14 14 14 16 ...
+#>  $ pid        : num [1:2077] 11320 11810 11320 11810 11320 ...
 #>   ..- attr(*, "format.stata")= chr "%10.0g"
-#>  $ pmpower    : num  3 3 3 3 3 3 3 3 3 3 ...
-#>   ..- attr(*, "label")= chr "Prime ministerial powers"
+#>  $ pname      : chr [1:2077] "Social Democratic Labour Party" "Agrarian Party" "Social Democratic Labour Party" "Agrarian Party" ...
+#>  $ election   : Date[1:2077], format: "1948-09-19" "1948-09-19" ...
+#>  $ investiture: num [1:2077] 1 1 1 1 1 1 1 1 1 1 ...
 #>   ..- attr(*, "format.stata")= chr "%10.0g"
-#>  $ earlyterm  : num  0 0 0 0 1 1 1 1 1 1 ...
-#>   ..- attr(*, "label")= chr "Discretionary early termination"
+#>  $ dur_wkb    : num [1:2077] 357 357 1466 1466 399 ...
 #>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ govdur     : num  357 357 1466 1466 399 ...
-#>   ..- attr(*, "label")= chr "Government duration"
+#>  $ event_wkb  : num [1:2077] 0 0 0 0 1 1 1 1 1 1 ...
 #>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ govmaxdur  : num  357 357 1466 1466 1451 ...
-#>   ..- attr(*, "label")= chr "Maximum possible government duration"
-#>  $ sim.w      : num  0.326 0.318 0.327 0.319 0.327 ...
-#>   ..- attr(*, "label")= chr "Simulated weights"
+#>  $ n          : num [1:2077] 2 2 2 2 2 2 3 3 3 3 ...
 #>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ sim.y      : num  24.7 24.7 24.4 24.4 23.5 ...
-#>   ..- attr(*, "label")= chr "Simulated linear outcome"
+#>  $ majority   : num [1:2077] 0 0 0 0 0 0 1 1 1 1 ...
 #>   ..- attr(*, "format.stata")= chr "%9.0g"
-#>  $ sim.st     : num  2.42e-10 2.77e-09 5.43e-10 1.92e-10 1.21e-09 ...
-#>   ..- attr(*, "label")= chr "Simulated survival time"
-#>  $ sim.e      : num  1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, "label")= chr "Simulated event status"
+#>  $ mwc        : num [1:2077] 1 1 1 1 1 1 1 1 1 1 ...
+#>   ..- attr(*, "format.stata")= chr "%9.0g"
+#>  $ rile_SD    : num [1:2077] 0.0935 0.0935 0.0935 0.0935 0.0935 ...
+#>  $ pseat      : num [1:2077] 0.789 0.211 0.809 0.191 0.848 ...
+#>  $ prime      : logi [1:2077] TRUE FALSE TRUE FALSE TRUE FALSE ...
+#>  $ rile       : num [1:2077] -1.585 -0.228 -1.585 -0.228 -1.585 ...
+#>  $ cohesion   : num [1:2077] 0.67 -0.205 0.67 -0.205 0.67 ...
+#>  $ finance    : num [1:2077] -0.929 -0.983 -0.929 -0.983 -0.929 ...
+#>  $ Nmembers   : num [1:2077] -0.105 -0.264 -0.105 -0.264 -0.105 ...
+#>  - attr(*, "groups")= tibble [628 × 2] (S3: tbl_df/tbl/data.frame)
+#>   ..$ gid  : int [1:628] 3 4 5 14 16 17 23 28 29 30 ...
+#>   ..$ .rows: list<int> [1:628] 
+#>   .. ..$ : int [1:2] 1 2
+#>   .. ..$ : int [1:2] 3 4
+#>   .. ..$ : int [1:2] 5 6
+#>   .. ..$ : int [1:3] 7 8 9
+#>   .. ..$ : int [1:3] 10 11 12
+#>   .. ..$ : int [1:2] 13 14
+#>   .. ..$ : int [1:4] 15 16 17 18
+#>   .. ..$ : int [1:4] 19 20 21 22
+#>   .. ..$ : int [1:4] 23 24 25 26
+#>   .. ..$ : int [1:2] 27 28
+#>   .. ..$ : int [1:4] 29 30 31 32
+#>   .. ..$ : int [1:4] 33 34 35 36
+#>   .. ..$ : int [1:4] 37 38 39 40
+#>   .. ..$ : int [1:3] 41 42 43
+#>   .. ..$ : int [1:3] 44 45 46
+#>   .. ..$ : int [1:3] 47 48 49
+#>   .. ..$ : int [1:3] 50 51 52
+#>   .. ..$ : int [1:3] 53 54 55
+#>   .. ..$ : int [1:3] 56 57 58
+#>   .. ..$ : int [1:3] 59 60 61
+#>   .. ..$ : int [1:3] 62 63 64
+#>   .. ..$ : int [1:4] 65 66 67 68
+#>   .. ..$ : int [1:2] 69 70
+#>   .. ..$ : int [1:2] 71 72
+#>   .. ..$ : int [1:2] 73 74
+#>   .. ..$ : int [1:2] 75 76
+#>   .. ..$ : int [1:2] 77 78
+#>   .. ..$ : int [1:3] 79 80 81
+#>   .. ..$ : int [1:3] 82 83 84
+#>   .. ..$ : int [1:2] 85 86
+#>   .. ..$ : int [1:2] 87 88
+#>   .. ..$ : int [1:3] 89 90 91
+#>   .. ..$ : int [1:2] 92 93
+#>   .. ..$ : int [1:3] 94 95 96
+#>   .. ..$ : int [1:5] 97 98 99 100 101
+#>   .. ..$ : int [1:2] 102 103
+#>   .. ..$ : int [1:4] 104 105 106 107
+#>   .. ..$ : int [1:4] 108 109 110 111
+#>   .. ..$ : int [1:4] 112 113 114 115
+#>   .. ..$ : int [1:3] 116 117 118
+#>   .. ..$ : int [1:2] 119 120
+#>   .. ..$ : int [1:4] 121 122 123 124
+#>   .. ..$ : int [1:3] 125 126 127
+#>   .. ..$ : int [1:2] 128 129
+#>   .. ..$ : int [1:2] 130 131
+#>   .. ..$ : int [1:2] 132 133
+#>   .. ..$ : int [1:2] 134 135
+#>   .. ..$ : int [1:2] 136 137
+#>   .. ..$ : int [1:2] 138 139
+#>   .. ..$ : int [1:3] 140 141 142
+#>   .. ..$ : int [1:2] 143 144
+#>   .. ..$ : int [1:5] 145 146 147 148 149
+#>   .. ..$ : int [1:4] 150 151 152 153
+#>   .. ..$ : int [1:4] 154 155 156 157
+#>   .. ..$ : int [1:4] 158 159 160 161
+#>   .. ..$ : int [1:4] 162 163 164 165
+#>   .. ..$ : int [1:2] 166 167
+#>   .. ..$ : int [1:3] 168 169 170
+#>   .. ..$ : int [1:2] 171 172
+#>   .. ..$ : int [1:4] 173 174 175 176
+#>   .. ..$ : int [1:3] 177 178 179
+#>   .. ..$ : int [1:2] 180 181
+#>   .. ..$ : int [1:3] 182 183 184
+#>   .. ..$ : int [1:3] 185 186 187
+#>   .. ..$ : int [1:5] 188 189 190 191 192
+#>   .. ..$ : int [1:4] 193 194 195 196
+#>   .. ..$ : int [1:4] 197 198 199 200
+#>   .. ..$ : int [1:4] 201 202 203 204
+#>   .. ..$ : int [1:4] 205 206 207 208
+#>   .. ..$ : int [1:4] 209 210 211 212
+#>   .. ..$ : int [1:5] 213 214 215 216 217
+#>   .. ..$ : int [1:5] 218 219 220 221 222
+#>   .. ..$ : int [1:5] 223 224 225 226 227
+#>   .. ..$ : int [1:4] 228 229 230 231
+#>   .. ..$ : int [1:4] 232 233 234 235
+#>   .. ..$ : int [1:5] 236 237 238 239 240
+#>   .. ..$ : int [1:5] 241 242 243 244 245
+#>   .. ..$ : int [1:3] 246 247 248
+#>   .. ..$ : int [1:5] 249 250 251 252 253
+#>   .. ..$ : int [1:4] 254 255 256 257
+#>   .. ..$ : int [1:4] 258 259 260 261
+#>   .. ..$ : int [1:4] 262 263 264 265
+#>   .. ..$ : int [1:3] 266 267 268
+#>   .. ..$ : int [1:4] 269 270 271 272
+#>   .. ..$ : int [1:4] 273 274 275 276
+#>   .. ..$ : int [1:3] 277 278 279
+#>   .. ..$ : int [1:4] 280 281 282 283
+#>   .. ..$ : int [1:3] 284 285 286
+#>   .. ..$ : int [1:5] 287 288 289 290 291
+#>   .. ..$ : int [1:5] 292 293 294 295 296
+#>   .. ..$ : int [1:3] 297 298 299
+#>   .. ..$ : int [1:3] 300 301 302
+#>   .. ..$ : int [1:4] 303 304 305 306
+#>   .. ..$ : int [1:4] 307 308 309 310
+#>   .. ..$ : int [1:6] 311 312 313 314 315 316
+#>   .. ..$ : int [1:5] 317 318 319 320 321
+#>   .. ..$ : int [1:5] 322 323 324 325 326
+#>   .. ..$ : int [1:4] 327 328 329 330
+#>   .. ..$ : int [1:3] 331 332 333
+#>   .. .. [list output truncated]
+#>   .. ..@ ptype: int(0) 
+#>   ..- attr(*, ".drop")= logi TRUE
 table(coalgov$cname)
 #> 
-#>      Australia        Austria        Belgium Czech Republic        Denmark 
-#>             46             45            150             31             76 
-#>         France        Germany        Hungary        Ireland         Israel 
-#>            182             57             19             34            252 
-#>          Italy    Netherlands         Norway         Poland       Portugal 
-#>            196             74             40             42             10 
-#>          Spain         Sweden United Kingdom 
-#>              4             28              2 
+#> AUS AUT BEL BGR CHE CZE DEU DNK ESP EST FIN FRA GBR GRC HRV HUN IRL ISR ITA JPN 
+#>  46  45 150   7 289  31  57  76   4  27 186 182   2  13  21  19  34 252 196  58 
+#> LTU LVA NLD NOR POL PRT ROU SVK SWE 
+#>  41  72  74  40  42  10  43  32  28 
 
 # Number of unique units
 length(unique(coalgov$gid))   # Governments
-#> [1] 402
+#> [1] 628
 length(unique(coalgov$pid))   # Parties
-#> [1] 194
+#> [1] 312
 length(unique(coalgov$cid))   # Countries
-#> [1] 18
+#> [1] 29
 
 if (FALSE) { # \dontrun{
 # Model: government duration as function of majority status and party characteristics
