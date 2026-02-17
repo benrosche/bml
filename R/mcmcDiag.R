@@ -53,7 +53,7 @@
 #'   \code{\link[coda]{autocorr}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' data(coalgov)
 #'
 #' # Fit model

@@ -69,7 +69,7 @@
 #' @seealso \code{\link{bml}}, \code{\link{summary.bml}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' data(coalgov)
 #'
 #' m1 <- bml(

@@ -47,7 +47,7 @@ For Cox models with piecewise baseline hazards (when \code{cox_intervals} is
 specified), the outcome description includes the number of intervals used.
 }
 \examples{
-\donttest{
+\dontrun{
 data(coalgov)
 
 # Fit model

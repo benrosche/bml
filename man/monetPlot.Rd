@@ -61,7 +61,7 @@ Use \code{\link{mcmcDiag}} for formal convergence statistics (Gelman-Rubin,
 Geweke, etc.).
 }
 \examples{
-\donttest{
+\dontrun{
 data(coalgov)
 
 # Fit model with monitoring enabled

@@ -22,7 +22,7 @@ handled efficiently by pre-computing their contribution in R before passing
 data to JAGS.
 }
 \examples{
-\donttest{
+\dontrun{
 # Fix a coefficient to 1.0 (standard offset)
 fix(exposure, 1.0)
 

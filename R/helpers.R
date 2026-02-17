@@ -25,7 +25,7 @@
 #' @seealso \code{\link{mm}}, \code{\link{hm}}, \code{\link{bml}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Multiple-membership: parties (pid) within governments (gid)
 #' id(pid, gid)
 #'
@@ -56,7 +56,7 @@ id <- function(...) {
 #' @seealso \code{\link{vars}}, \code{\link{mm}}, \code{\link{hm}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Fix a coefficient to 1.0 (standard offset)
 #' fix(exposure, 1.0)
 #'
@@ -100,7 +100,7 @@ fix <- function(var, value) {
 #' @seealso \code{\link{fix}}, \code{\link{mm}}, \code{\link{hm}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Simple variable specification (formula-style with +)
 #' vars(income + education)
 #'
@@ -331,7 +331,7 @@ vars <- function(...) {
 #'   the model structure, \code{vignette("faq")} for troubleshooting
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Equal weights (standard multiple-membership)
 #' fn(w ~ 1/n, c = TRUE)
 #'
@@ -582,7 +582,7 @@ fn <- function(w = w ~ 1/n, c = TRUE) {
 #'   \code{\link{hm}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Equal weights with variables
 #' mm(
 #'   id = id(pid, gid),
@@ -739,7 +739,7 @@ mm <- function(id, vars = NULL, fn = NULL, RE = NULL, ar = FALSE) {
 #' @seealso \code{\link{bml}}, \code{\link{mm}}, \code{\link{id}}, \code{\link{vars}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Random effects with covariates
 #' hm(
 #'   id = id(cid),

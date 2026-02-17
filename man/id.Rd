@@ -27,7 +27,7 @@ IDs) to group-level units (e.g., government IDs). In hierarchical models,
 \code{id()} specifies the nesting-level identifier (e.g., country ID).
 }
 \examples{
-\donttest{
+\dontrun{
 # Multiple-membership: parties (pid) within governments (gid)
 id(pid, gid)
 

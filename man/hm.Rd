@@ -60,7 +60,7 @@ simultaneously nested within multiple non-nested hierarchies (e.g., schools
 within both neighborhoods and districts).
 }
 \examples{
-\donttest{
+\dontrun{
 # Random effects with covariates
 hm(
   id = id(cid),

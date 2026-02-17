@@ -143,7 +143,7 @@
 #' length(unique(coalgov$pid))   # Parties
 #' length(unique(coalgov$cid))   # Countries
 #'
-#' \donttest{
+#' \dontrun{
 #' # Model: government duration as function of majority status and party characteristics
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +

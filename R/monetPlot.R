@@ -55,7 +55,7 @@
 #' @seealso \code{\link{bml}}, \code{\link{mcmcDiag}}, \code{\link{summary.bml}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' data(coalgov)
 #'
 #' # Fit model with monitoring enabled

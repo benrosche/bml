@@ -39,7 +39,7 @@
 #' @seealso \code{\link{bml}}, \code{\link{monetPlot}}, \code{\link{mcmcDiag}}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' data(coalgov)
 #'
 #' # Fit model

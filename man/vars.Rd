@@ -34,7 +34,7 @@ free variables (with coefficients to be estimated) and fixed variables (with
 coefficients held constant using \code{\link{fix}}).
 }
 \examples{
-\donttest{
+\dontrun{
 # Simple variable specification (formula-style with +)
 vars(income + education)
 

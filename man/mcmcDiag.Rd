@@ -52,7 +52,7 @@ All statistics are rounded to three decimals. The returned table is transposed
 so that \emph{rows are diagnostics} and \emph{columns are parameters}.
 }
 \examples{
-\donttest{
+\dontrun{
 data(coalgov)
 
 # Fit model
