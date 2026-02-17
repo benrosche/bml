@@ -59,7 +59,7 @@ density (HPD) interval.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">monetPlot</span><span class="op">(</span><span class="va">bml</span>, <span class="va">parameter</span>, label <span class="op">=</span> <span class="cn">NULL</span>, r <span class="op">=</span> <span class="fl">2</span>, yaxis <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">monetPlot</span><span class="op">(</span><span class="va">bml</span>, <span class="va">parameter</span>, label <span class="op">=</span> <span class="cn">NULL</span>, r <span class="op">=</span> <span class="fl">2</span>, yaxis <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -125,7 +125,7 @@ Geweke, etc.).</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">coalgov</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fit model with monitoring enabled</span></span></span>
@@ -137,22 +137,28 @@ Geweke, etc.).</p>
 <span class="r-in"><span>  monitor <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># Required for monetPlot</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in c(ids, vars, l1, l3) %&lt;-% dissectFormula(formula, family, data):</span> could not find function "%&lt;-%"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot intercept</span></span></span>
 <span class="r-in"><span><span class="fu">monetPlot</span><span class="op">(</span><span class="va">m1</span>, parameter <span class="op">=</span> <span class="st">"b[1]"</span>, label <span class="op">=</span> <span class="st">"Intercept"</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot majority coefficient with custom label</span></span></span>
 <span class="r-in"><span><span class="fu">monetPlot</span><span class="op">(</span><span class="va">m1</span>, parameter <span class="op">=</span> <span class="st">"b[2]"</span>, label <span class="op">=</span> <span class="st">"Majority Government Effect"</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot mm coefficient</span></span></span>
 <span class="r-in"><span><span class="fu">monetPlot</span><span class="op">(</span><span class="va">m1</span>, parameter <span class="op">=</span> <span class="st">"b.mm.1"</span>, label <span class="op">=</span> <span class="st">"Party Fragmentation"</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot random effect SD</span></span></span>
 <span class="r-in"><span><span class="fu">monetPlot</span><span class="op">(</span><span class="va">m1</span>, parameter <span class="op">=</span> <span class="st">"sigma.mm.1"</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># List available parameters</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">m1</span><span class="op">$</span><span class="va">reg.table</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

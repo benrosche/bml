@@ -78,7 +78,7 @@ Benjamin Rosche \<benrosche@nyu.edu\>
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 data(coalgov)
 
 # Fit model
@@ -89,22 +89,30 @@ m1 <- bml(
   family = "Weibull",
   data = coalgov
 )
+#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 # View summary
 summary(m1)
+#> Error: object 'm1' not found
 
 # Summary with more decimal places
 summary(m1, r = 4)
+#> Error: object 'm1' not found
 
 # Access specific columns
 s <- summary(m1)
+#> Error: object 'm1' not found
 s$Parameter  # Parameter names
+#> Error: object 's' not found
 s$mean       # Posterior means
+#> Error: object 's' not found
 s$lb         # Lower credible bounds
+#> Error: object 's' not found
 
 # Custom posterior summaries (requires monitor = TRUE)
 # Extract posterior draws as a tidy data frame
 draws <- coda::as.mcmc.list(m1$jags.out$BUGSoutput) |> as.matrix() |> as_tibble()
+#> Error: object 'm1' not found
 
 # Select specific parameters and compute custom summaries
 draws |>
@@ -117,5 +125,6 @@ draws |>
     q05    = quantile(value, 0.05),
     q95    = quantile(value, 0.95)
   )
-} # }
+#> Error: object 'draws' not found
+# }
 ```

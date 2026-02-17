@@ -170,29 +170,37 @@ troubleshooting
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Equal weights (standard multiple-membership)
 fn(w ~ 1/n, c = TRUE)
+#> Error in fn(w ~ 1/n, c = TRUE): could not find function "fn"
 
 # Tenure-based weights (proportional to time served)
 fn(w ~ tenure, c = TRUE)
+#> Error in fn(w ~ tenure, c = TRUE): could not find function "fn"
 
 # Flexible parameterized weights
 fn(w ~ b0 + b1 * seniority, c = TRUE)
+#> Error in fn(w ~ b0 + b1 * seniority, c = TRUE): could not find function "fn"
 
 # Unconstrained weights
 fn(w ~ importance, c = FALSE)
+#> Error in fn(w ~ importance, c = FALSE): could not find function "fn"
 
 # Weights based on group aggregates
 fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE)
+#> Error in fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE): could not find function "fn"
 
 # Combining individual and aggregate measures
 fn(w ~ b0 + b1 * (tenure / max(tenure)), c = TRUE)
+#> Error in fn(w ~ b0 + b1 * (tenure/max(tenure)), c = TRUE): could not find function "fn"
 
 # Using median for robust central tendency
 fn(w ~ tenure / median(tenure), c = TRUE)
+#> Error in fn(w ~ tenure/median(tenure), c = TRUE): could not find function "fn"
 
 # Using quantiles for percentile-based weights
 fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE)
-} # }
+#> Error in fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE): could not find function "fn"
+# }
 ```

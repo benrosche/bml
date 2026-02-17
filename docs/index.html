@@ -64,9 +64,13 @@
 </h2>
 <!-- badges: start -->
 
-<p><code>bml</code> is an R package for fitting <em>Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions</em> (“extended MMMM”) via JAGS. It supports a range of outcome types—including linear, logit, and survival models (Cox and Weibull)—and is designed for settings where researchers want to model how multiple units at a lower level jointly influence outcomes at a higher level.</p>
+<p><code>bml</code> is an R package for fitting <em>Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions</em> (“extended MMMM”) via JAGS. It supports a range of outcome types—including linear, logit, and survival models—and is designed for settings where researchers want to model how multiple units at a lower level jointly influence outcomes at a higher level.</p>
 <p>In most multilevel analyses, the primary focus is on how higher-level contextual units (e.g., neighborhoods, schools, countries) shape outcomes observed at lower levels (e.g., individuals, students, governments), reflecting a macro-to-micro perspective. bml turns this logic around. Through an extended multiple-membership multilevel model, it allows researchers to explicitly model how the combined influence of many lower-level units propagates “upwards” to a higher-level outcome, enabling the study of micro-to-macro relationships.</p>
-<p>Traditional approaches to micro-macro questions either (i) aggregate lower-level variables to the higher level (risking aggregation bias), or (ii) disaggregate higher-level outcomes to the lower level (artificially inflating sample size).</p>
+<p>Traditional approaches to micro-macro questions either:</p>
+<ul>
+<li>aggregate lower-level variables to the higher level (risking aggregation bias), or</li>
+<li>disaggregate higher-level outcomes to the lower level (artificially inflating sample size).</li>
+</ul>
 <p>Both strategies obscure the underlying aggregation process, ignore the statistical dependencies present in the data, and prevent the decomposition of variance across levels. In contrast, the extended MMMM implemented in <code>bml</code> explicitly models aggregation through a weight function that may itself depend on parameters and covariates. This approach provides a theoretically grounded and statistically principled framework for studying micro-macro relationships using regression models.</p>
 <div class="section level3">
 <h3 id="with-the-bml-package-you-can">With the bml package, you can<a class="anchor" aria-label="anchor" href="#with-the-bml-package-you-can"></a>
@@ -120,9 +124,6 @@
 <p>Install the stable version from CRAN:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"bml"</span><span class="op">)</span></span></code></pre></div>
-<p>Or install the development version from GitHub:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"benrosche/bml"</span><span class="op">)</span></span></code></pre></div>
 <p>See the <a href="https://benrosche.github.io/bml/articles/installation.html">installation vignette</a> for detailed instructions including JAGS setup.</p>
 </div>
 <div class="section level2">

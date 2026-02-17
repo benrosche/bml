@@ -4,7 +4,7 @@
 \alias{monetPlot}
 \title{Visualize posterior distributions with density and trace plots}
 \usage{
-monetPlot(bml, parameter, label = NULL, r = 2, yaxis = T)
+monetPlot(bml, parameter, label = NULL, r = 2, yaxis = TRUE)
 }
 \arguments{
 \item{bml}{A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.
@@ -61,7 +61,7 @@ Use \code{\link{mcmcDiag}} for formal convergence statistics (Gelman-Rubin,
 Geweke, etc.).
 }
 \examples{
-\dontrun{
+\donttest{
 data(coalgov)
 
 # Fit model with monitoring enabled

@@ -95,7 +95,7 @@ Modeling Using Stata* (3rd ed.). Stata Press.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Random effects with covariates
 hm(
   id = id(cid),
@@ -103,6 +103,7 @@ hm(
   name = cname,
   type = "RE"
 )
+#> Error in hm(id = id(cid), vars = vars(gdp + democracy), name = cname,     type = "RE"): could not find function "hm"
 
 # Random intercepts only
 hm(
@@ -110,6 +111,7 @@ hm(
   vars = NULL,
   type = "RE"
 )
+#> Error in hm(id = id(cid), vars = NULL, type = "RE"): could not find function "hm"
 
 # Fixed effects
 hm(
@@ -119,6 +121,7 @@ hm(
   type = "FE",
   showFE = TRUE  # Show estimates for each country
 )
+#> Error in hm(id = id(cid), vars = NULL, name = cname, type = "FE", showFE = TRUE): could not find function "hm"
 
 # Autoregressive random effects
 hm(
@@ -127,5 +130,6 @@ hm(
   type = "RE",
   ar = TRUE  # Effects evolve over time
 )
-} # }
+#> Error in hm(id = id(cid), vars = NULL, type = "RE", ar = TRUE): could not find function "hm"
+# }
 ```

@@ -109,7 +109,7 @@ specified), the outcome description includes the number of intervals used.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">coalgov</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fit model</span></span></span>
@@ -120,22 +120,30 @@ specified), the outcome description includes the number of intervals used.</p>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in c(ids, vars, l1, l3) %&lt;-% dissectFormula(formula, family, data):</span> could not find function "%&lt;-%"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># View summary</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">m1</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Summary with more decimal places</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">m1</span>, r <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Access specific columns</span></span></span>
 <span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">m1</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">Parameter</span>  <span class="co"># Parameter names</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 's' not found</span>
 <span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">mean</span>       <span class="co"># Posterior means</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 's' not found</span>
 <span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">lb</span>         <span class="co"># Lower credible bounds</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 's' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Custom posterior summaries (requires monitor = TRUE)</span></span></span>
 <span class="r-in"><span><span class="co"># Extract posterior draws as a tidy data frame</span></span></span>
 <span class="r-in"><span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu">coda</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/coda/man/mcmc.list.html" class="external-link">as.mcmc.list</a></span><span class="op">(</span><span class="va">m1</span><span class="op">$</span><span class="va">jags.out</span><span class="op">$</span><span class="va">BUGSoutput</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Select specific parameters and compute custom summaries</span></span></span>
 <span class="r-in"><span><span class="va">draws</span> <span class="op">|&gt;</span></span></span>
@@ -148,7 +156,8 @@ specified), the outcome description includes the number of intervals used.</p>
 <span class="r-in"><span>    q05    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">value</span>, <span class="fl">0.05</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    q95    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">value</span>, <span class="fl">0.95</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'draws' not found</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

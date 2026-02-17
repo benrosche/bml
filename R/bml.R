@@ -246,7 +246,7 @@
 #'   }
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(coalgov)
 #'
 #' # Basic multiple-membership model

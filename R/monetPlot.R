@@ -55,7 +55,7 @@
 #' @seealso \code{\link{bml}}, \code{\link{mcmcDiag}}, \code{\link{summary.bml}}
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(coalgov)
 #'
 #' # Fit model with monitoring enabled
@@ -87,7 +87,7 @@
 #' @export monetPlot
 #' @author Benjamin Rosche <benrosche@@nyu.edu>
 
-monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=T) {
+monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=TRUE) {
 
   # Checks --------------------------------------------------------------------------------------- #
 

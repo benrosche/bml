@@ -65,7 +65,7 @@ variables, or random effect specifications. This allows modeling different
 aggregation mechanisms simultaneously.
 }
 \examples{
-\dontrun{
+\donttest{
 # Equal weights with variables
 mm(
   id = id(pid, gid),

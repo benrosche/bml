@@ -207,7 +207,7 @@ mod.rmm1 <-
         mmc(),
         mmw(w ~ 1/n, constraint=1)
       ),
-    n.iter = 1000, n.burnin = 100, seed=1, monitor = T,
+    n.iter = 1000, n.burnin = 100, seed=1, monitor = TRUE,
     data = boston_df
   )
 
@@ -225,7 +225,7 @@ mod.rmm2 <-
         mmc(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
         mmw(w ~ 1/n, constraint=1)
       ),
-    n.iter = 1000, n.burnin = 100, seed=1, monitor = T,
+    n.iter = 1000, n.burnin = 100, seed=1, monitor = TRUE,
     data = boston_df
   )
 
@@ -363,7 +363,7 @@ mod.rmm3 <-
         mmc(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
         mmw(w ~ 1/n^exp(-(b1*DIFF)), constraint=1)
       ),
-    priors=c("b.w~dnorm(0,1)"), n.iter = 1000, n.burnin = 100, seed=1, monitor = T,
+    priors=c("b.w~dnorm(0,1)"), n.iter = 1000, n.burnin = 100, seed=1, monitor = TRUE,
     data = boston_df2
   )
 
@@ -381,9 +381,9 @@ If we set `monitor=T`, we can take a look at the weight estimates:
 
 ```{r}
 
-data.frame(mod.rmm3$w, sum=rowSums(mod.rmm3$w, na.rm = T)) %>% head()
+data.frame(mod.rmm3$w, sum=rowSums(mod.rmm3$w, na.rm = TRUE)) %>% head()
 
-rowSums(mod.rmm3$w, na.rm = T) %>% sum()
+rowSums(mod.rmm3$w, na.rm = TRUE) %>% sum()
 
 ```
 
@@ -465,7 +465,7 @@ mod.rmm4 <-
         mmc(parent_inc_to),
         mmw(w ~ b1*1/n_friends+(1-b1)*bestie, constraint=1)
       ),
-    n.iter = 1000, n.burnin = 100, seed=1, monitor = T, priors = c("b.w~dunif(0,1)"),
+    n.iter = 1000, n.burnin = 100, seed=1, monitor = TRUE, priors = c("b.w~dunif(0,1)"),
     data = schoolnets
   )
 

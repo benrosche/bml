@@ -36,11 +36,19 @@ A `bml_fix` object that can be used within
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Fix a coefficient to 1.0 (standard offset)
 fix(exposure, 1.0)
+#> Error in edit.default(function() {}, title = subx, ...): invalid argument to edit()
 
 # Use within vars() for multiple-membership models
 vars(fix(population, 0.5) + income + education)
-} # }
+#> <list_of<quosure>>
+#> 
+#> [[1]]
+#> <quosure>
+#> expr: ^fix(population, 0.5) + income + education
+#> env:  0x000001f83847e658
+#> 
+# }
 ```

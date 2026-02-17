@@ -7,9 +7,9 @@
 `bml` is an R package for fitting *Bayesian Multiple-Membership
 Multilevel Models with Parameterizable Weight Functions* (“extended
 MMMM”) via JAGS. It supports a range of outcome types—including linear,
-logit, and survival models (Cox and Weibull)—and is designed for
-settings where researchers want to model how multiple units at a lower
-level jointly influence outcomes at a higher level.
+logit, and survival models—and is designed for settings where
+researchers want to model how multiple units at a lower level jointly
+influence outcomes at a higher level.
 
 In most multilevel analyses, the primary focus is on how higher-level
 contextual units (e.g., neighborhoods, schools, countries) shape
@@ -20,10 +20,12 @@ it allows researchers to explicitly model how the combined influence of
 many lower-level units propagates “upwards” to a higher-level outcome,
 enabling the study of micro-to-macro relationships.
 
-Traditional approaches to micro-macro questions either (i) aggregate
-lower-level variables to the higher level (risking aggregation bias), or
-(ii) disaggregate higher-level outcomes to the lower level (artificially
-inflating sample size).
+Traditional approaches to micro-macro questions either:
+
+- aggregate lower-level variables to the higher level (risking
+  aggregation bias), or
+- disaggregate higher-level outcomes to the lower level (artificially
+  inflating sample size).
 
 Both strategies obscure the underlying aggregation process, ignore the
 statistical dependencies present in the data, and prevent the
@@ -136,13 +138,6 @@ Install the stable version from CRAN:
 ``` r
 
 install.packages("bml")
-```
-
-Or install the development version from GitHub:
-
-``` r
-
-remotes::install_github("benrosche/bml")
 ```
 
 See the [installation

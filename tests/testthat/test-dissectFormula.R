@@ -10,7 +10,7 @@ test_that("dissectFormula() works with all model families and with and without i
         event_wkb ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = FALSE) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Gaussian",
@@ -25,7 +25,7 @@ test_that("dissectFormula() works with all model families and with and without i
         Surv(dur_wkb, event_wkb) ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = FALSE) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Gaussian",
@@ -41,7 +41,7 @@ test_that("dissectFormula() works with all model families and with and without i
         event_wkb ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = FALSE) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Binomial",
@@ -56,7 +56,7 @@ test_that("dissectFormula() works with all model families and with and without i
         Surv(dur_wkb, event_wkb) ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = FALSE) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Binomial",
@@ -72,7 +72,7 @@ test_that("dissectFormula() works with all model families and with and without i
         Surv(dur_wkb, event_wkb) ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = FALSE) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Weibull",
@@ -87,7 +87,7 @@ test_that("dissectFormula() works with all model families and with and without i
         event_wkb ~ 1 +
           majority +
           mwc +
-          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = FALSE) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Weibull",
@@ -101,7 +101,7 @@ test_that("dissectFormula() works with all model families and with and without i
       formula(
         event_wkb ~ majority +
           mwc +
-          hm(id = id(cid), name = cname, type = "RE", showFE = F) +
+          hm(id = id(cid), name = cname, type = "RE", showFE = FALSE) +
           mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1 / n, c = TRUE))
       ),
       family = "Gaussian",
@@ -334,7 +334,7 @@ test_that("dissectFormula() works with different ways of specifying hm()", {
 
   expect_error(
     dissectFormula(
-      formula(event_wkb ~ 1 + hm(name = cname, type = "RE", showFE = F)),
+      formula(event_wkb ~ 1 + hm(name = cname, type = "RE", showFE = FALSE)),
       family="Gaussian",
       data
     ),

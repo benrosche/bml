@@ -77,7 +77,7 @@ uncertainty from the MCMC samples.
 }
 }
 \examples{
-\dontrun{
+\donttest{
 data(coalgov)
 
 m1 <- bml(

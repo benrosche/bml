@@ -54,23 +54,72 @@ Returns `NULL` if no variables are specified.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Simple variable specification (formula-style with +)
 vars(income + education)
+#> <list_of<quosure>>
+#> 
+#> [[1]]
+#> <quosure>
+#> expr: ^income + education
+#> env:  0x000001f82f747ee8
+#> 
 
 # Single variable
 vars(income)
+#> <list_of<quosure>>
+#> 
+#> [[1]]
+#> <quosure>
+#> expr: ^income
+#> env:  0x000001f82f747ee8
+#> 
 
 # Interactions
 vars(income * education)  # expands to income + education + income:education
+#> <list_of<quosure>>
+#> 
+#> [[1]]
+#> <quosure>
+#> expr: ^income * education
+#> env:  0x000001f82f747ee8
+#> 
 vars(income:education)    # interaction only
+#> <list_of<quosure>>
+#> 
+#> [[1]]
+#> <quosure>
+#> expr: ^income:education
+#> env:  0x000001f82f747ee8
+#> 
 
 # Transformations
 vars(I(income^2))         # squared term
+#> <list_of<quosure>>
+#> 
+#> [[1]]
+#> <quosure>
+#> expr: ^I(income^2)
+#> env:  0x000001f82f747ee8
+#> 
 vars(income + I(income^2)) # linear and squared
+#> <list_of<quosure>>
+#> 
+#> [[1]]
+#> <quosure>
+#> expr: ^income + I(income^2)
+#> env:  0x000001f82f747ee8
+#> 
 
 # Mix free and fixed variables
 vars(fix(exposure, 1.0) + income + education)
+#> <list_of<quosure>>
+#> 
+#> [[1]]
+#> <quosure>
+#> expr: ^fix(exposure, 1) + income + education
+#> env:  0x000001f82f747ee8
+#> 
 
 # Use in mm() specification
 mm(
@@ -79,5 +128,6 @@ mm(
   fn = fn(w ~ 1/n),
   RE = FALSE
 )
-} # }
+#> Error in mm(id = id(pid, gid), vars = vars(rile + ipd), fn = fn(w ~ 1/n),     RE = FALSE): could not find function "mm"
+# }
 ```

@@ -92,7 +92,7 @@ Benjamin Rosche <benrosche@nyu.edu>
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 data(coalgov)
 
 # Fit model
@@ -103,23 +103,28 @@ m1 <- bml(
   monitor = TRUE,
   data = coalgov
 )
+#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 # Check convergence for main parameters
 mcmcDiag(m1, parameters = "b")  # All b coefficients
+#> Error: object 'm1' not found
 
 # Check specific parameters
 mcmcDiag(m1, parameters = c("b[1]", "b[2]", "shape"))
+#> Error: object 'm1' not found
 
 # Check mm block parameters
 mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm.1"))
+#> Error: object 'm1' not found
 
 # Custom autocorrelation lag
 mcmcDiag(m1, parameters = "b", lag = 100)
+#> Error in mcmcDiag(m1, parameters = "b", lag = 100): unused argument (lag = 100)
 
 # Interpreting results:
 # - Gelman-Rubin < 1.1: Good convergence
 # - |Geweke z| < 2: No evidence against convergence
 # - Heidelberger p > 0.05: Chain appears stationary
 # - Low autocorrelation: Good mixing
-} # }
+# }
 ```

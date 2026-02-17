@@ -124,7 +124,7 @@ starting values. See \code{vignette("faq")} (Question 7) for detailed
 troubleshooting of numerical issues.
 }
 \examples{
-\dontrun{
+\donttest{
 # Equal weights (standard multiple-membership)
 fn(w ~ 1/n, c = TRUE)
 

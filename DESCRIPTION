@@ -2,7 +2,7 @@ Package: bml
 Type: Package
 Title: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions
 Version: 0.9.0
-Description: The bml package provides an interface for fitting Bayesian multiple-membership multilevel models with parameterizable weight functions using JAGS.
+Description: Implements Bayesian multiple-membership multilevel models with parameterizable weight functions via 'JAGS' to model how lower-level units jointly shape higher-level outcomes (micro-macro link) across a range of outcome types (e.g., linear, logit, and survival models). Supports estimation and comparison of alternative aggregation mechanisms, allows weight matrices to be endogenized through parameters and covariates, and accommodates complex dependence structures that extend beyond traditional multilevel frameworks. For details, see Rosche (2026) "A Multilevel Model for Coalition Governments. Uncovering Party-Level Dependencies Within and Between Governments" <doi:10.31235/osf.io/4bafr_v2>.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

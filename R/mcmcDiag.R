@@ -53,7 +53,7 @@
 #'   \code{\link[coda]{autocorr}}
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(coalgov)
 #'
 #' # Fit model
@@ -98,7 +98,7 @@ mcmcDiag <- function(bml.out, parameters, lag = 50) {
 
   # Extract mcmc.list from bml.out --------------------------------------------------------------- #
 
-  crMCMC <- function(bml.out, parameter, regex=T) {
+  crMCMC <- function(bml.out, parameter, regex=TRUE) {
     m <- coda::as.mcmc.list(bml.out$jags.out$BUGSoutput)
     vars <- colnames(m[[1]])
 
@@ -139,7 +139,7 @@ mcmcDiag <- function(bml.out, parameters, lag = 50) {
   message("Parameter(s): ", parameters)
 
   gelman_rubin <-
-    coda::gelman.diag(mcmcl, autoburnin = F)$psrf %>%
+    coda::gelman.diag(mcmcl, autoburnin = FALSE)$psrf %>%
     as.data.frame() %>%
     tibble::rownames_to_column("Parameter") %>%
     select(Parameter, "Gelman/Rubin convergence statistic"=2)

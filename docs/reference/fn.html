@@ -163,31 +163,39 @@ multiple classification (MMMC) models. <em>Statistical Modelling</em>, 1(2), 103
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="co"># Equal weights (standard multiple-membership)</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ 1/n, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Tenure-based weights (proportional to time served)</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">tenure</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ tenure, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Flexible parameterized weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">seniority</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b0 + b1 * seniority, c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Unconstrained weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">importance</span>, c <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ importance, c = FALSE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Weights based on group aggregates</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Combining individual and aggregate measures</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="op">(</span><span class="va">tenure</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ b0 + b1 * (tenure/max(tenure)), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using median for robust central tendency</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">tenure</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">tenure</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ tenure/median(tenure), c = TRUE):</span> could not find function "fn"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using quantiles for percentile-based weights</span></span></span>
 <span class="r-in"><span><span class="fu">fn</span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">tenure</span>, <span class="fl">0.75</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">tenure</span>, <span class="fl">0.25</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE):</span> could not find function "fn"</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
