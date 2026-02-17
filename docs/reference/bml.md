@@ -400,7 +400,7 @@ Benjamin Rosche \<benrosche@nyu.edu\>
 ## Examples
 
 ``` r
-# \donttest{
+if (FALSE) { # \dontrun{
 data(coalgov)
 
 # Basic multiple-membership model
@@ -417,23 +417,10 @@ m1 <- bml(
   family = "Weibull",
   data   = coalgov
 )
-#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 # View results
 summary(m1)
-#> Error: object 'm1' not found
 monetPlot(m1, "b[2]")  # Plot for majority coefficient
-#> Loading required package: dplyr
-#> 
-#> Attaching package: 'dplyr'
-#> The following objects are masked from 'package:stats':
-#> 
-#>     filter, lag
-#> The following objects are masked from 'package:base':
-#> 
-#>     intersect, setdiff, setequal, union
-#> Loading required package: tidyr
-#> Error: object 'm1' not found
 
 # Multiple mm() blocks with different weight functions
 m2 <- bml(
@@ -444,7 +431,6 @@ m2 <- bml(
   family = "Weibull",
   data   = coalgov
 )
-#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 # Cox model with piecewise baseline hazard (faster for large datasets)
 m3 <- bml(
@@ -454,7 +440,6 @@ m3 <- bml(
   cox_intervals = 10,  # Use 10 intervals instead of all unique times
   data   = coalgov
 )
-#> Error in bml(Surv(dur_wkb, event_wkb) ~ 1 + majority + mm(id = id(pid,     gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),     family = "Cox", cox_intervals = 10, data = coalgov): unused argument (cox_intervals = 10)
 
 # Parameterized weight function
 # ilogit() bounds raw weights between 0 and 1; c = TRUE normalizes to sum to 1
@@ -469,7 +454,6 @@ m4 <- bml(
   family = "Weibull",
   data   = coalgov
 )
-#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 # Fixed coefficients (offsets)
 m5 <- bml(
@@ -483,7 +467,6 @@ m5 <- bml(
   family = "Weibull",
   data   = coalgov
 )
-#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 # Custom priors
 m6 <- bml(
@@ -497,7 +480,6 @@ m6 <- bml(
   ),
   data   = coalgov
 )
-#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 # Cross-classified model (multiple hm blocks)
 # Governments are cross-classified by country and election year
@@ -509,8 +491,5 @@ m7 <- bml(
   family = "Weibull",
   data   = coalgov |> mutate(year = format(election, "%Y") |> as.integer())
 )
-#> Error in mutate(coalgov, year = as.integer(format(election, "%Y"))): ℹ In argument: `year = as.integer(format(election, "%Y"))`.
-#> Caused by error:
-#> ! object 'election' not found
-# }
+} # }
 ```

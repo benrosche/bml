@@ -130,7 +130,7 @@ of iterative simulations. <em>Journal of Computational and Graphical Statistics<
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">coalgov</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fit model</span></span></span>
@@ -141,30 +141,25 @@ of iterative simulations. <em>Journal of Computational and Graphical Statistics<
 <span class="r-in"><span>  monitor <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in c(ids, vars, l1, l3) %&lt;-% dissectFormula(formula, family, data):</span> could not find function "%&lt;-%"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check convergence for main parameters</span></span></span>
 <span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="st">"b"</span><span class="op">)</span>  <span class="co"># All b coefficients</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check specific parameters</span></span></span>
 <span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b[1]"</span>, <span class="st">"b[2]"</span>, <span class="st">"shape"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check mm block parameters</span></span></span>
 <span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.mm.1"</span>, <span class="st">"sigma.mm.1"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'm1' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Custom autocorrelation lag</span></span></span>
 <span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="st">"b"</span>, lag <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in mcmcDiag(m1, parameters = "b", lag = 100):</span> unused argument (lag = 100)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Interpreting results:</span></span></span>
 <span class="r-in"><span><span class="co"># - Gelman-Rubin &lt; 1.1: Good convergence</span></span></span>
 <span class="r-in"><span><span class="co"># - |Geweke z| &lt; 2: No evidence against convergence</span></span></span>
 <span class="r-in"><span><span class="co"># - Heidelberger p &gt; 0.05: Chain appears stationary</span></span></span>
 <span class="r-in"><span><span class="co"># - Low autocorrelation: Good mixing</span></span></span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

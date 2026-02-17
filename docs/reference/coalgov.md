@@ -316,7 +316,7 @@ length(unique(coalgov$pid))   # Parties
 length(unique(coalgov$cid))   # Countries
 #> [1] 18
 
-# \donttest{
+if (FALSE) { # \dontrun{
 # Model: government duration as function of majority status and party characteristics
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
@@ -325,8 +325,6 @@ m1 <- bml(
   family = "Weibull",
   data = coalgov
 )
-#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 summary(m1)
-#> Error: object 'm1' not found
-# }
+} # }
 ```

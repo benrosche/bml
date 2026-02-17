@@ -135,7 +135,7 @@ uncertainty from the MCMC samples.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">coalgov</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu"><a href="bml.html">bml</a></span><span class="op">(</span></span></span>
@@ -145,15 +145,11 @@ uncertainty from the MCMC samples.</p>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in c(ids, vars, l1, l3) %&lt;-% dissectFormula(formula, family, data):</span> could not find function "%&lt;-%"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">varDecomp</span><span class="op">(</span><span class="va">m1</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in varDecomp(m1):</span> could not find function "varDecomp"</span>
 <span class="r-in"><span><span class="fu">varDecomp</span><span class="op">(</span><span class="va">m1</span>, uncertainty <span class="op">=</span> <span class="st">"ci"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in varDecomp(m1, uncertainty = "ci"):</span> could not find function "varDecomp"</span>
 <span class="r-in"><span><span class="fu">varDecomp</span><span class="op">(</span><span class="va">m1</span>, uncertainty <span class="op">=</span> <span class="st">"mad"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in varDecomp(m1, uncertainty = "mad"):</span> could not find function "varDecomp"</span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

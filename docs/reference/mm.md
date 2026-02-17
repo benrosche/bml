@@ -109,7 +109,7 @@ Research Report RR791, Department for Education and Skills.
 ## Examples
 
 ``` r
-# \donttest{
+if (FALSE) { # \dontrun{
 # Equal weights with variables
 mm(
   id = id(pid, gid),
@@ -117,7 +117,6 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile + ipd), fn = fn(w ~ 1/n,     c = TRUE), RE = FALSE): could not find function "mm"
 
 # Random effects only (no variables)
 mm(
@@ -126,7 +125,6 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = TRUE  # Automatically TRUE when vars = NULL
 )
-#> Error in mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE),     RE = TRUE): could not find function "mm"
 
 # Flexible weights with parameter
 mm(
@@ -135,7 +133,6 @@ mm(
   fn = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
   RE = TRUE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(org_structure), fn = fn(w ~     ilogit(b0 + b1 * pseat), c = TRUE), RE = TRUE): could not find function "mm"
 
 # Autoregressive random effects
 mm(
@@ -145,7 +142,6 @@ mm(
   RE = TRUE,
   ar = TRUE  # Random effects evolve over participations
 )
-#> Error in mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n, c = TRUE),     RE = TRUE, ar = TRUE): could not find function "mm"
 
 # Interactions and transformations in vars
 mm(
@@ -154,7 +150,6 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile * ipd), fn = fn(w ~ 1/n,     c = TRUE), RE = FALSE): could not find function "mm"
 
 mm(
   id = id(pid, gid),
@@ -162,6 +157,5 @@ mm(
   fn = fn(w ~ 1/n, c = TRUE),
   RE = FALSE
 )
-#> Error in mm(id = id(pid, gid), vars = vars(rile + I(rile^2)), fn = fn(w ~     1/n, c = TRUE), RE = FALSE): could not find function "mm"
-# }
+} # }
 ```

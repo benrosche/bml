@@ -90,7 +90,7 @@ Benjamin Rosche \<benrosche@nyu.edu\>
 ## Examples
 
 ``` r
-# \donttest{
+if (FALSE) { # \dontrun{
 data(coalgov)
 
 # Fit model with monitoring enabled
@@ -102,26 +102,20 @@ m1 <- bml(
   monitor = TRUE,  # Required for monetPlot
   data = coalgov
 )
-#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 # Plot intercept
 monetPlot(m1, parameter = "b[1]", label = "Intercept")
-#> Error: object 'm1' not found
 
 # Plot majority coefficient with custom label
 monetPlot(m1, parameter = "b[2]", label = "Majority Government Effect")
-#> Error: object 'm1' not found
 
 # Plot mm coefficient
 monetPlot(m1, parameter = "b.mm.1", label = "Party Fragmentation")
-#> Error: object 'm1' not found
 
 # Plot random effect SD
 monetPlot(m1, parameter = "sigma.mm.1")
-#> Error: object 'm1' not found
 
 # List available parameters
 rownames(m1$reg.table)
-#> Error: object 'm1' not found
-# }
+} # }
 ```

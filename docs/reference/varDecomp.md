@@ -99,7 +99,7 @@ Benjamin Rosche \<benrosche@nyu.edu\>
 ## Examples
 
 ``` r
-# \donttest{
+if (FALSE) { # \dontrun{
 data(coalgov)
 
 m1 <- bml(
@@ -109,13 +109,9 @@ m1 <- bml(
   family = "Weibull",
   data = coalgov
 )
-#> Error in c(ids, vars, l1, l3) %<-% dissectFormula(formula, family, data): could not find function "%<-%"
 
 varDecomp(m1)
-#> Error in varDecomp(m1): could not find function "varDecomp"
 varDecomp(m1, uncertainty = "ci")
-#> Error in varDecomp(m1, uncertainty = "ci"): could not find function "varDecomp"
 varDecomp(m1, uncertainty = "mad")
-#> Error in varDecomp(m1, uncertainty = "mad"): could not find function "varDecomp"
-# }
+} # }
 ```

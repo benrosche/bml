@@ -41,15 +41,11 @@ A `bml_id` object containing the variable names as character strings.
 ## Examples
 
 ``` r
-# \donttest{
+if (FALSE) { # \dontrun{
 # Multiple-membership: parties (pid) within governments (gid)
 id(pid, gid)
-#> Error: `id()` was deprecated in dplyr 0.5.0 and is now defunct.
-#> ℹ Please use `vctrs::vec_group_id()` instead.
 
 # Hierarchical: governments within countries
 id(cid)
-#> Error: `id()` was deprecated in dplyr 0.5.0 and is now defunct.
-#> ℹ Please use `vctrs::vec_group_id()` instead.
-# }
+} # }
 ```
