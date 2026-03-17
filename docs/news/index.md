@@ -2,6 +2,8 @@
 
 ## bml 0.9.0
 
+CRAN release: 2026-02-20
+
 ### Major Changes
 
 - **Package renamed from `rmm` to `bml`** (Bayesian Multiple-Membership

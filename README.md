@@ -9,7 +9,8 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/benrosche/bml/workflows/R-CMD-check/badge.svg)](https://github.com/benrosche/bml/actions)
+[![R-CMD-check](https://github.com/benrosche/bml/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/benrosche/bml/actions)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/bml)](https://cran.r-project.org/package=bml)
 <!-- badges: end -->
 
 `bml` is an R package for fitting *Bayesian Multiple-Membership
