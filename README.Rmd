@@ -13,8 +13,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-<br>
-
 ## bml: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions
 
 <img src="man/figures/bml-hexagon.png" align="right" width="240" alt="bml package hexagon logo" />
