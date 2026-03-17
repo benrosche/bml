@@ -3,13 +3,15 @@
 
 <br>
 
-<img src="man/figures/bml-hexagon.png" align="right" width="240" alt="bml package hexagon logo" />
-
 ## bml: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions
 
+<img src="man/figures/bml-hexagon.png" align="right" width="240" alt="bml package hexagon logo" />
+
 <!-- badges: start -->
+
 [![R-CMD-check](https://github.com/benrosche/bml/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/benrosche/bml/actions)
-[![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/bml)](https://cran.r-project.org/package=bml)
+[![CRAN
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/bml)](https://cran.r-project.org/package=bml)
 <!-- badges: end -->
 
 `bml` is an R package for fitting *Bayesian Multiple-Membership
