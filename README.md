@@ -1,8 +1,6 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-<br>
-
 ## bml: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions
 
 <img src="man/figures/bml-hexagon.png" align="right" width="240" alt="bml package hexagon logo" />
