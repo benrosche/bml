@@ -1,35 +1,4 @@
-data("coalgov")
-
-# ================================================================================================ #
-# Setup: Create a simple fitted model for output tests
-# ================================================================================================ #
-
-# Create a minimal model for testing (if JAGS is available)
-create_test_model <- function(monitor = FALSE) {
-  testthat::skip_on_cran()
-
-  if (!requireNamespace("rjags", quietly = TRUE)) {
-    skip("rjags not available")
-  }
-
-  # Use a very small subset and few iterations for speed
-  test_data <- coalgov[1:100, ]
-
-  tryCatch({
-    m <- bml(
-      event_wkb ~ 1 + majority,
-      family = "Gaussian",
-      data = test_data,
-      n.iter = 500,
-      n.burnin = 100,
-      n.chains = 2,
-      monitor = monitor
-    )
-    return(m)
-  }, error = function(e) {
-    skip(paste("Could not fit test model:", e$message))
-  })
-}
+# create_test_model() and data are provided by helper-models.R
 
 # ================================================================================================ #
 # Tests for summary.bml()
@@ -116,6 +85,24 @@ test_that("mcmcDiag() works with specific parameter names", {
   expect_equal(ncol(diag), 2)
   expect_true("b[1]" %in% colnames(diag))
   expect_true("b[2]" %in% colnames(diag))
+})
+
+test_that("mcmcDiag() works with n.thin > 1 (fewer stored draws than lag)", {
+  # n.iter = 500, n.burnin = 100, n.thin = 10 -> 40 stored draws per chain,
+  # below the default lag of 50; mcmcDiag should clamp the lag instead of erroring
+  m <- create_test_model(monitor = TRUE, n.thin = 10)
+
+  expect_warning(
+    diag <- mcmcDiag(m, parameters = "b"),
+    "Requested lag exceeds the number of stored draws"
+  )
+
+  expect_s3_class(diag, "data.frame")
+  expect_true(all(c("Gelman/Rubin convergence statistic",
+                    "Geweke z-score",
+                    "Heidelberger/Welch p-value",
+                    "Autocorrelation (lag 39)") %in% rownames(diag)))
+  expect_true(all(is.finite(as.matrix(diag["Autocorrelation (lag 39)", ]))))
 })
 
 test_that("mcmcDiag() handles pattern matching", {

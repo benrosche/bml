@@ -383,6 +383,9 @@ multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-1
 }
 \seealso{
 \code{\link{summary.bml}} for model summaries,
+\code{\link{tidy.bml}}, \code{\link{glance.bml}} for broom-style output,
+\code{\link{bmlCompare}} for multi-model comparison tables,
+\code{\link{coefPlot}} for coefficient plots,
 \code{\link{monetPlot}} for posterior visualization,
 \code{\link{mcmcDiag}} for convergence diagnostics,
 \code{\link{mm}}, \code{\link{hm}} for model specification helpers

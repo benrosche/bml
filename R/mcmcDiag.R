@@ -10,9 +10,13 @@
 #' @param parameters Character vector of parameter names (or patterns) to extract.
 #'   These may be exact names or patterns (e.g., a prefix like \code{"b"} that
 #'   matches \code{"b[1]"}, \code{"b[2]"}, …).
-#' @param lag Integer specifying the lag at which to compute autocorrelation.
-#'   Default: 50. Lower values (e.g., 10) capture short-range dependence; higher
-#'   values assess whether the chain has mixed well over longer intervals.
+#' @param lag Integer specifying the lag at which to compute autocorrelation,
+#'   in units of stored (post-thinning) samples. Default: 50. Lower values
+#'   (e.g., 10) capture short-range dependence; higher values assess whether
+#'   the chain has mixed well over longer intervals. If \code{lag} is greater
+#'   than or equal to the number of stored draws per chain (e.g., because
+#'   \code{n.thin > 1} reduced the number of stored draws), it is automatically
+#'   lowered with a warning.
 #'
 #' @details
 #' Internally, the function converts the BUGS/JAGS output to a
@@ -133,6 +137,15 @@ mcmcDiag <- function(bml.out, parameters, lag = 50) {
 
   n.chains <- length(mcmcl)
   n.parameters <- mcmcl[[1]] %>% ncol()
+  n.kept <- coda::niter(mcmcl)
+
+  # coda::autocorr() silently drops lags >= the number of stored draws per chain,
+  # which happens easily when n.thin > 1 shrinks the chain; clamp to avoid that
+  if (lag >= n.kept) {
+    lag <- max(1, n.kept - 1)
+    warning("Requested lag exceeds the number of stored draws per chain (",
+            n.kept, "). Using lag ", lag, " instead.", call. = FALSE)
+  }
 
   # Save different convergence statistics -------------------------------------------------------- #
 

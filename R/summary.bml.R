@@ -36,7 +36,8 @@
 #' For Cox models with piecewise baseline hazards (when \code{cox_intervals} is
 #' specified), the outcome description includes the number of intervals used.
 #'
-#' @seealso \code{\link{bml}}, \code{\link{monetPlot}}, \code{\link{mcmcDiag}}
+#' @seealso \code{\link{bml}}, \code{\link{tidy.bml}}, \code{\link{coefPlot}},
+#'   \code{\link{monetPlot}}, \code{\link{mcmcDiag}}
 #'
 #' @examples
 #' \dontrun{

@@ -14,9 +14,13 @@ by \code{R2jags::jags()}, with component \code{$jags.out$BUGSoutput}.}
 These may be exact names or patterns (e.g., a prefix like \code{"b"} that
 matches \code{"b[1]"}, \code{"b[2]"}, …).}
 
-\item{lag}{Integer specifying the lag at which to compute autocorrelation.
-Default: 50. Lower values (e.g., 10) capture short-range dependence; higher
-values assess whether the chain has mixed well over longer intervals.}
+\item{lag}{Integer specifying the lag at which to compute autocorrelation,
+in units of stored (post-thinning) samples. Default: 50. Lower values
+(e.g., 10) capture short-range dependence; higher values assess whether
+the chain has mixed well over longer intervals. If \code{lag} is greater
+than or equal to the number of stored draws per chain (e.g., because
+\code{n.thin > 1} reduced the number of stored draws), it is automatically
+lowered with a warning.}
 }
 \value{
 A \code{data.frame} with one row per diagnostic and one column per

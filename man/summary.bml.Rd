@@ -90,7 +90,8 @@ draws |>
 
 }
 \seealso{
-\code{\link{bml}}, \code{\link{monetPlot}}, \code{\link{mcmcDiag}}
+\code{\link{bml}}, \code{\link{tidy.bml}}, \code{\link{coefPlot}},
+  \code{\link{monetPlot}}, \code{\link{mcmcDiag}}
 }
 \author{
 Benjamin Rosche <benrosche@nyu.edu>

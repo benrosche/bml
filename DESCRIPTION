@@ -9,6 +9,7 @@ LazyData: true
 Depends: R (>= 4.1.0)
 Imports:
     dplyr,
+    generics,
     readr,
     tidyr,
     stringr,

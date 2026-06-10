@@ -37,5 +37,14 @@ utils::globalVariables(c(
   "lb",
   "ub",
   "j",
-  "hmname"
+  "hmname",
+
+  # tidy.bml.R / bmlCompare.R / coefPlot.R
+  "term",
+  "estimate",
+  "conf.low",
+  "conf.high",
+  "model",
+  "N",
+  "DIC"
 ))
