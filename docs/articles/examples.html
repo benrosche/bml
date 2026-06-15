@@ -70,34 +70,908 @@
 
     
     
-<p>I present three examples to demonstrate how the MMMM can be applied
-to analyze aggregation, network, and spatial analyses.</p>
-<ul>
-<li>
-<a href="#e1">Example 1: Political Parties and the Survival of
-Coalition Governments</a> (aggregation regression)</li>
-<li>
-<a href="#e2">Example 2: All Friends or Just Your Best Friend?</a>
-(network regression)</li>
-<li>
-<a href="#e3">Example 3: Air Quality and Home Values</a> (spatial
-regression)</li>
-</ul>
+<p>This vignette presents three examples that show how the
+multiple-membership multilevel model (MMMM) can be applied to network,
+spatial, and aggregation problems: peer influence in a friendship
+network, neighbourhood effects on home values, and how coalition parties
+shape government survival.</p>
+<div class="section level2">
+<h2 id="all-friends-or-just-your-best-friend-network-regression">1. All friends, or just your best friend? (network regression)<a class="anchor" aria-label="anchor" href="#all-friends-or-just-your-best-friend-network-regression"></a>
+</h2>
+<p>The core question in this example is how peer influence adds up
+across a friendship group, using smoking as the behaviour of
+interest.</p>
+<p>The data are the CILS4EU Germany Wave 1 friendship network, which
+covers classroom-level friendships in German secondary schools. Students
+nominated up to five friends and ranked them by closeness (1 = best
+friend, 5 = fifth-closest). Wave 2 smoking is predicted from Wave 1
+friends’ smoking; the one-year lag ensures a student’s future behaviour
+cannot have caused her current friends’ behaviour.</p>
+<p>The model uses the following variables:</p>
+<table class="table">
+<colgroup>
+<col width="19%">
+<col width="12%">
+<col width="67%">
+</colgroup>
+<thead><tr class="header">
+<th>Variable</th>
+<th>Role</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>ego</code></td>
+<td>id</td>
+<td>Focal student (the group in the mm structure)</td>
+</tr>
+<tr class="even">
+<td><code>alter</code></td>
+<td>id</td>
+<td>Nominated friend (the member)</td>
+</tr>
+<tr class="odd">
+<td><code>smoking_w2</code></td>
+<td>outcome</td>
+<td>Ego’s Wave 2 smoking, one year later</td>
+</tr>
+<tr class="even">
+<td><code>smoking_ego</code></td>
+<td>predictor</td>
+<td>Ego’s own Wave 1 smoking</td>
+</tr>
+<tr class="odd">
+<td><code>gender_ego</code></td>
+<td>predictor</td>
+<td>Ego’s gender</td>
+</tr>
+<tr class="even">
+<td><code>smoking_alter</code></td>
+<td>predictor</td>
+<td>Friend’s Wave 1 smoking (aggregated across friends)</td>
+</tr>
+<tr class="odd">
+<td><code>rank</code></td>
+<td>weight</td>
+<td>Friendship closeness (1 = best friend, 5 = fifth-closest)</td>
+</tr>
+<tr class="even">
+<td><code>n</code></td>
+<td>weight</td>
+<td>Number of friends nominated by the ego</td>
+</tr>
+</tbody>
+</table>
+<p>Two models are fit and compared. The economics standard for this kind
+of network problem is the linear-in-means model: every friend carries
+equal weight, so what matters is the average across all of them,
+implying that each friend exerts the same influence. The alternative is
+that influence is concentrated: a single close friend drives most of the
+effect while looser ties matter little. <code>bml</code> fits both and
+compares them directly, changing only one line of the weight
+function.</p>
 <div class="section level3">
-<h3 id="e1">Example 1: Political Parties and the Survival of Coalition
-Governments<a class="anchor" aria-label="anchor" href="#e1"></a>
+<h3 id="model-1-linear-in-means">Model 1: linear-in-means<a class="anchor" aria-label="anchor" href="#model-1-linear-in-means"></a>
 </h3>
-<p>Coming soon…</p>
+<p>Every friend receives equal weight, <code>w ~ 1/n</code>, so the peer
+term is the simple average of all nominated friends’ Wave 1 smoking.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod_lim</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>    <span class="va">smoking_w2</span> <span class="op">~</span> <span class="va">smoking_ego</span> <span class="op">+</span> <span class="va">gender_ego</span> <span class="op">+</span>     <span class="co"># outcome ~ ego-level predictors</span></span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>                                        <span class="co"># multiple-membership term (the peers)</span></span>
+<span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">alter</span>, <span class="va">ego</span><span class="op">)</span>,                   <span class="co"># member = alter (friend), group = ego</span></span>
+<span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">smoking_alter</span><span class="op">)</span>,              <span class="co"># member variable to aggregate</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,            <span class="co"># equal weights, renormalised to sum to 1</span></span>
+<span>        RE   <span class="op">=</span> <span class="cn">TRUE</span>                              <span class="co"># member-level random effect</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>    family <span class="op">=</span> <span class="st">"Gaussian"</span>,                         <span class="co"># continuous outcome</span></span>
+<span>    data   <span class="op">=</span> <span class="va">cils_long</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="e2">Example 2: All Friends or Just Your Best Friend?<a class="anchor" aria-label="anchor" href="#e2"></a>
+<h3 id="model-2-best-friend-only">Model 2: best friend only<a class="anchor" aria-label="anchor" href="#model-2-best-friend-only"></a>
 </h3>
-<p>Coming soon…</p>
+<p>Only the closest-ranked friend contributes; all others are dropped.
+<code>rank == min(rank)</code> evaluates to <code>TRUE</code> for the
+closest-ranked friend within each ego’s friend set (rank 1), placing all
+weight on that friend. With <code>c = TRUE</code> the weight is
+renormalised to 1 within each ego, so the peer term becomes that single
+friend’s smoking.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod_bf</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>    <span class="va">smoking_w2</span> <span class="op">~</span> <span class="va">smoking_ego</span> <span class="op">+</span> <span class="va">gender_ego</span> <span class="op">+</span></span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">alter</span>, <span class="va">ego</span><span class="op">)</span>,</span>
+<span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">smoking_alter</span><span class="op">)</span>,</span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">rank</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">rank</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,  <span class="co"># all weight on the closest friend</span></span>
+<span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>    family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span>
+<span>    data   <span class="op">=</span> <span class="va">cils_long</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="e3">Example 3: Air Quality and Home Values<a class="anchor" aria-label="anchor" href="#e3"></a>
+<h3 id="comparing-the-two-models">Comparing the two models<a class="anchor" aria-label="anchor" href="#comparing-the-two-models"></a>
 </h3>
-<p>Coming soon…</p>
+<p><code><a href="../reference/bmlCompare.html">bmlCompare()</a></code> lays out the coefficient estimates and fit
+statistics of several models side by side, one column per model, with
+readable labels supplied through <code>labels</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bmlCompare.html">bmlCompare</a></span><span class="op">(</span></span>
+<span>  <span class="st">"Linear-in-means"</span>  <span class="op">=</span> <span class="va">mod_lim</span>,</span>
+<span>  <span class="st">"Best friend only"</span> <span class="op">=</span> <span class="va">mod_bf</span>,</span>
+<span>  terms  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Intercept"</span>, <span class="st">"smoking_ego"</span>, <span class="st">"gender_ego"</span>, <span class="st">"smoking_alter (mm.1)"</span><span class="op">)</span>,</span>
+<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Intercept"</span>, <span class="st">"Own smoking (W1)"</span>, <span class="st">"Gender"</span>, <span class="st">"Peers' smoking (W1)"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Term</th>
+<th align="left">Linear-in-means</th>
+<th align="left">Best friend only</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Intercept</td>
+<td align="left">2.557 (2.336, 2.771)</td>
+<td align="left">2.626 (2.449, 2.798)</td>
+</tr>
+<tr class="even">
+<td align="left">Own smoking (W1)</td>
+<td align="left">0.365 (0.338, 0.391)</td>
+<td align="left">0.358 (0.334, 0.383)</td>
+</tr>
+<tr class="odd">
+<td align="left">Gender</td>
+<td align="left">0.048 (-0.042, 0.134)</td>
+<td align="left">0.052 (-0.031, 0.137)</td>
+</tr>
+<tr class="even">
+<td align="left">Peers’ smoking (W1)</td>
+<td align="left">0.042 (0.001, 0.085)</td>
+<td align="left">0.030 (0.005, 0.057)</td>
+</tr>
+<tr class="odd">
+<td align="left">N</td>
+<td align="left">4002</td>
+<td align="left">4002</td>
+</tr>
+<tr class="even">
+<td align="left">DIC</td>
+<td align="left">16866</td>
+<td align="left">15811</td>
+</tr>
+</tbody>
+</table>
+<p>Both models find a positive peer effect: students whose friends smoke
+more tend to smoke more themselves one year later, over and above their
+own Wave 1 smoking. The own-smoking coefficient (about 0.36 in both
+models) dominates, which is expected since past behaviour is the
+strongest predictor of future behaviour.</p>
+<p>The peer effect is present but modest. Under linear-in-means,
+averaging across all nominated friends gives a coefficient of about 0.04
+(CI [0.00, 0.08]), which just clears zero. Limiting to the best friend
+gives about 0.03 (CI [0.005, 0.06]): a smaller point estimate but a
+tighter interval, because the best-friend model discards the noisier
+lower-ranked ties.</p>
+<p>On fit, the best-friend model is clearly preferred (DIC 15,811 vs
+16,866, a gap of over 1,000). Focusing on the single closest friend
+describes how peer influence on smoking aggregates better than treating
+all friends as equally important.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="air-quality-and-home-values-spatial-regression">2. Air quality and home values (spatial regression)<a class="anchor" aria-label="anchor" href="#air-quality-and-home-values-spatial-regression"></a>
+</h2>
+<p>This <strong>spatial</strong> example is based on <a href="https://www.sciencedirect.com/science/article/abs/pii/0095069678900062" class="external-link">Harrison
+&amp; Rubinfeld (1978)</a>, who study the effect of air quality on home
+values, and the re-analysis by <a href="https://openjournals.wu.ac.at/region/paper_107/107.html" class="external-link">Bivand
+(2017)</a>.</p>
+<p>The first example asked how a person’s friends combine to influence
+them. This example asks the spatial version of the same aggregation
+question: how do the surrounding tracts combine to shape a
+neighbourhood’s home values?</p>
+<p>The 1970 Boston census tract data are used, treating each tract’s
+outcome as a function of its own attributes and those of its neighbours.
+The question added to the classical approach is whether every neighbour
+should count equally, or whether tracts weigh their neighbours by how
+similar they are.</p>
+<div class="section level3">
+<h3 id="data-and-spatial-weights">Data and spatial weights<a class="anchor" aria-label="anchor" href="#data-and-spatial-weights"></a>
+</h3>
+<p>The data are the 1970 Boston Standard Metropolitan Statistical Area
+census tracts shipped with <code>spData</code>. After dropping tracts
+with no housing and tracts that are entirely institutional, 506 tracts
+remain. Each tract records its median home value, the local
+nitric-oxides concentration (the air-quality measure), and a handful of
+standard housing and demographic covariates.</p>
+<p>The outcome is <code>lnCMEDV</code>, the log of median home value,
+which tames the skew in raw prices; every covariate is standardised so
+the coefficients are directly comparable. The variables of interest
+are:</p>
+<table class="table">
+<colgroup>
+<col width="14%">
+<col width="14%">
+<col width="71%">
+</colgroup>
+<thead><tr class="header">
+<th>Variable</th>
+<th>Role</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>tid</code></td>
+<td>id</td>
+<td>Tract id (1 to 506)</td>
+</tr>
+<tr class="even">
+<td><code>lnCMEDV</code></td>
+<td>outcome</td>
+<td>Log median home value, the quantity modelled</td>
+</tr>
+<tr class="odd">
+<td><code>NOX</code></td>
+<td>predictor</td>
+<td>Nitric-oxides concentration, the air-quality measure</td>
+</tr>
+<tr class="even">
+<td><code>CRIM</code></td>
+<td>predictor</td>
+<td>Per-capita crime rate</td>
+</tr>
+<tr class="odd">
+<td><code>RM</code></td>
+<td>predictor</td>
+<td>Average rooms per dwelling</td>
+</tr>
+<tr class="even">
+<td><code>DIS</code></td>
+<td>predictor</td>
+<td>Weighted distance to Boston employment centres</td>
+</tr>
+<tr class="odd">
+<td><code>AGE</code></td>
+<td>predictor</td>
+<td>Share of units built before 1940</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="baseline-bml-equal-weights">Baseline bml: equal weights<a class="anchor" aria-label="anchor" href="#baseline-bml-equal-weights"></a>
+</h3>
+<p>The baseline uses <code>w ~ 1/n</code>, giving every neighbour equal
+weight. This is the conventional MMMM: the membership structure is
+present and variable weights are permitted, but here the weights are
+fixed.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod_bml</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>    <span class="va">lnCMEDV</span> <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span> <span class="op">+</span>      <span class="co"># outcome ~ own-tract covariates</span></span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,                  <span class="co"># member = neighbour tract, group = focal tract</span></span>
+<span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">NOX_nb</span> <span class="op">+</span> <span class="va">CRIM_nb</span> <span class="op">+</span> <span class="va">RM_nb</span> <span class="op">+</span> <span class="va">DIS_nb</span> <span class="op">+</span> <span class="va">AGE_nb</span><span class="op">)</span>,  <span class="co"># neighbour covariates to aggregate</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,            <span class="co"># equal weights, normalised to sum to 1</span></span>
+<span>        RE   <span class="op">=</span> <span class="cn">TRUE</span>                              <span class="co"># neighbour-level random effect</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>    family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span>
+<span>    data   <span class="op">=</span> <span class="va">boston_df</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="parameterised-weights-similarity-across-covariates">Parameterised weights: similarity across covariates<a class="anchor" aria-label="anchor" href="#parameterised-weights-similarity-across-covariates"></a>
+</h3>
+<p>Equal weighting assumes every neighbour matters the same regardless
+of how similar it is to the focal tract. A natural alternative is that
+tracts are more strongly influenced by neighbours that resemble them, a
+spatial homophily effect. Rather than collapse similarity into a single
+number, the weight is allowed to depend on the dissimilarity in each
+covariate separately, using the functional form from Rosche (2026):</p>
+<p><span class="math display">\[
+w_{ij} = \frac{1}{1 + (n_i - 1)\exp\!\bigl(-(b_0 + b_1 \cdot
+d^{\text{CRIM}}_{ij} + b_2 \cdot d^{\text{AGE}}_{ij})\bigr)}
+\]</span></p>
+<p>Each <code>d</code> is the standardised absolute difference between a
+focal tract and its neighbour on that covariate. When all the
+<code>b</code>’s are zero this collapses to <code>1/n_i</code>, the
+equal-weight baseline. A negative coefficient means neighbours that are
+similar on that covariate (low <code>d</code>) receive more weight; a
+positive coefficient means dissimilar neighbours dominate. Letting the
+two dissimilarities enter on their own lets the model decide which kind
+of similarity drives the aggregation, instead of imposing a single
+combined measure.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod_bml_w</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>    <span class="va">lnCMEDV</span> <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span> <span class="op">+</span></span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,</span>
+<span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">NOX_nb</span> <span class="op">+</span> <span class="va">CRIM_nb</span> <span class="op">+</span> <span class="va">RM_nb</span> <span class="op">+</span> <span class="va">DIS_nb</span> <span class="op">+</span> <span class="va">AGE_nb</span><span class="op">)</span>,</span>
+<span>        <span class="co"># weight as a function of covariate dissimilarity; nests 1/n when all b's are 0</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">d_CRIM</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">d_AGE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>    family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span>
+<span>    priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"b.w.1 ~ dnorm(0, 1)"</span><span class="op">)</span>,        <span class="co"># weakly informative; prevents exp() overflow</span></span>
+<span>    data   <span class="op">=</span> <span class="va">boston_df2</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p>The estimated weight-function parameters are:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bmlCompare.html">bmlCompare</a></span><span class="op">(</span></span>
+<span>  <span class="st">"Similarity weights"</span> <span class="op">=</span> <span class="va">mod_bml_w</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"weights"</span>,</span>
+<span>  terms  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X0 (w.1)"</span>, <span class="st">"d_CRIM (w.1)"</span>, <span class="st">"d_AGE (w.1)"</span><span class="op">)</span>,</span>
+<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Weight intercept (b0)"</span>, <span class="st">"Crime dissimilarity"</span>, <span class="st">"Age dissimilarity"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Term</th>
+<th align="left">Similarity weights</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Weight intercept (b0)</td>
+<td align="left">1.594 (-0.046, 2.804)</td>
+</tr>
+<tr class="even">
+<td align="left">Crime dissimilarity</td>
+<td align="left">-1.784 (-2.543, -1.178)</td>
+</tr>
+<tr class="odd">
+<td align="left">Age dissimilarity</td>
+<td align="left">0.728 (0.098, 1.528)</td>
+</tr>
+<tr class="even">
+<td align="left">N</td>
+<td align="left">506</td>
+</tr>
+<tr class="odd">
+<td align="left">DIC</td>
+<td align="left">299</td>
+</tr>
+</tbody>
+</table>
+<p>The crime-dissimilarity coefficient is about −1.78 (CI [−2.54,
+−1.18]), clearly negative, so neighbours with similar crime levels carry
+more weight. The age-dissimilarity coefficient is about 0.73 (CI [0.10,
+1.53]), pointing the other way: neighbours with different age profiles
+carry more weight. The model picks up two kinds of similarity at once,
+in opposite directions.</p>
+</div>
+<div class="section level3">
+<h3 id="do-the-weights-actually-vary-with-similarity">Do the weights actually vary with similarity?<a class="anchor" aria-label="anchor" href="#do-the-weights-actually-vary-with-similarity"></a>
+</h3>
+<p>A direct check plots the estimated weight each neighbour received
+against the dissimilarity between that neighbour and its focal tract. If
+crime homophily drives the weights, low-<code>d_CRIM</code> pairs should
+cluster toward high weights and high-<code>d_CRIM</code> pairs toward
+low weights.</p>
+<p><img src="examples-figures/unnamed-chunk-14-1.png" alt="Estimated neighbour weight plotted against covariate dissimilarity, faceted by crime and age dissimilarity"></p>
+<p>The two panels show the similarity effects acting in opposite
+directions. The weight falls as crime dissimilarity rises (the homophily
+the negative crime coefficient pointed to), while it rises gently with
+age dissimilarity, matching the positive age coefficient. Each panel
+holds only a partial view, since every neighbour’s weight reflects both
+dissimilarities at once, but the opposing slopes are visible.</p>
+</div>
+<div class="section level3">
+<h3 id="benchmark-spatial-durbin-error-model">Benchmark: spatial Durbin error model<a class="anchor" aria-label="anchor" href="#benchmark-spatial-durbin-error-model"></a>
+</h3>
+<p>The classical spatial benchmark is the SDEM, which models a tract’s
+outcome as a function of its own covariates, its neighbours’ covariates,
+and a spatially correlated error. It fits in seconds (no MCMC) and
+serves as a yardstick for the bml models.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod_sdem</span> <span class="op">&lt;-</span> <span class="fu">errorsarlm</span><span class="op">(</span></span>
+<span>  <span class="va">lnCMEDV</span> <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span>,</span>
+<span>  data   <span class="op">=</span> <span class="va">boston</span>,</span>
+<span>  listw  <span class="op">=</span> <span class="va">boston_wlist</span>,</span>
+<span>  Durbin <span class="op">=</span> <span class="op">~</span> <span class="va">NOX</span> <span class="op">+</span> <span class="va">CRIM</span> <span class="op">+</span> <span class="va">RM</span> <span class="op">+</span> <span class="va">DIS</span> <span class="op">+</span> <span class="va">AGE</span>   <span class="co"># include neighbour-covariate effects (WX)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="model-comparison">Model comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a>
+</h3>
+<p>The two bml models and the SDEM benchmark are placed in one table.
+The SDEM’s neighbour-covariate (<code>lag.</code>) terms are matched to
+the bml neighbour effects, and all rows are given readable labels.</p>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="24%">
+<col width="24%">
+<col width="24%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Term</th>
+<th align="left">Equal weights (1/n)</th>
+<th align="left">Similarity weights</th>
+<th align="left">SDEM (benchmark)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Intercept</td>
+<td align="left">3.033 (2.997, 3.069)</td>
+<td align="left">3.022 (2.985, 3.057)</td>
+<td align="left">3.015 (2.950, 3.080)</td>
+</tr>
+<tr class="even">
+<td align="left">Air quality (NOX)</td>
+<td align="left">-0.106 (-0.162, -0.048)</td>
+<td align="left">-0.075 (-0.134, -0.015)</td>
+<td align="left">-0.112 (-0.160, -0.064)</td>
+</tr>
+<tr class="odd">
+<td align="left">Crime</td>
+<td align="left">-0.061 (-0.082, -0.040)</td>
+<td align="left">-0.054 (-0.079, -0.030)</td>
+<td align="left">-0.067 (-0.086, -0.047)</td>
+</tr>
+<tr class="even">
+<td align="left">Rooms</td>
+<td align="left">0.158 (0.138, 0.177)</td>
+<td align="left">0.165 (0.148, 0.183)</td>
+<td align="left">0.169 (0.150, 0.187)</td>
+</tr>
+<tr class="odd">
+<td align="left">Distance to employment</td>
+<td align="left">-0.097 (-0.203, 0.015)</td>
+<td align="left">-0.069 (-0.165, 0.024)</td>
+<td align="left">-0.086 (-0.169, -0.003)</td>
+</tr>
+<tr class="even">
+<td align="left">Pre-1940 share</td>
+<td align="left">-0.095 (-0.130, -0.062)</td>
+<td align="left">-0.101 (-0.130, -0.074)</td>
+<td align="left">-0.088 (-0.118, -0.057)</td>
+</tr>
+<tr class="odd">
+<td align="left">Air quality (neighbours)</td>
+<td align="left">0.018 (-0.071, 0.111)</td>
+<td align="left">-0.002 (-0.089, 0.085)</td>
+<td align="left">0.012 (-0.076, 0.101)</td>
+</tr>
+<tr class="even">
+<td align="left">Crime (neighbours)</td>
+<td align="left">-0.132 (-0.183, -0.080)</td>
+<td align="left">-0.144 (-0.217, -0.074)</td>
+<td align="left">-0.103 (-0.156, -0.050)</td>
+</tr>
+<tr class="odd">
+<td align="left">Rooms (neighbours)</td>
+<td align="left">0.072 (0.023, 0.119)</td>
+<td align="left">0.092 (0.047, 0.135)</td>
+<td align="left">0.040 (-0.006, 0.085)</td>
+</tr>
+<tr class="even">
+<td align="left">Distance (neighbours)</td>
+<td align="left">-0.013 (-0.143, 0.115)</td>
+<td align="left">-0.028 (-0.140, 0.088)</td>
+<td align="left">-0.038 (-0.148, 0.072)</td>
+</tr>
+<tr class="odd">
+<td align="left">Pre-1940 (neighbours)</td>
+<td align="left">0.007 (-0.069, 0.079)</td>
+<td align="left">0.013 (-0.052, 0.079)</td>
+<td align="left">-0.020 (-0.094, 0.055)</td>
+</tr>
+<tr class="even">
+<td align="left">Weight intercept (b0)</td>
+<td align="left">—</td>
+<td align="left">1.594 (-0.046, 2.804)</td>
+<td align="left">—</td>
+</tr>
+<tr class="odd">
+<td align="left">Crime dissimilarity</td>
+<td align="left">—</td>
+<td align="left">-1.784 (-2.543, -1.178)</td>
+<td align="left">—</td>
+</tr>
+<tr class="even">
+<td align="left">Age dissimilarity</td>
+<td align="left">—</td>
+<td align="left">0.728 (0.098, 1.528)</td>
+<td align="left">—</td>
+</tr>
+</tbody>
+</table>
+<p>Model fit (the SDEM is a maximum-likelihood model and has no DIC, so
+only the two bml models are compared on fit):</p>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Model</th>
+<th align="right">DIC</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Equal weights (1/n)</td>
+<td align="right">308</td>
+</tr>
+<tr class="even">
+<td align="left">Similarity weights</td>
+<td align="right">299</td>
+</tr>
+</tbody>
+</table>
+<p>The own and neighbour coefficients from the equal-weight bml model
+line up with the SDEM, the reassurance worth having: the bml baseline
+reproduces the classical benchmark. If equal-weight neighbour effects
+were all that was needed, <code>errorsarlm</code> would serve, and it
+would be faster. What the parameterised weight function adds is the
+aggregation itself as something to estimate, which the SDEM cannot do.
+On fit, the similarity-weighted model improves on equal weighting (DIC
+299 vs 308). The SDEM, a maximum-likelihood model, has no DIC, so it
+serves only as a coefficient yardstick.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="political-parties-and-the-survival-of-coalition-governments-micro-macro-regression">3. Political parties and the survival of coalition governments
+(micro-macro regression)<a class="anchor" aria-label="anchor" href="#political-parties-and-the-survival-of-coalition-governments-micro-macro-regression"></a>
+</h2>
+<p>The previous two examples asked how peers or neighbours combine to
+shape an outcome. This example asks the same of coalition politics: how
+do the parties in a coalition combine to determine whether the
+government survives? Each coalition government is composed of multiple
+parties, and each party brings its own features such as organisational
+traits, funding structure, and internal cohesion. The MMMM question is
+not just whether party characteristics matter, but how they aggregate
+from the party level up to the government level, and which parties weigh
+more.</p>
+<p>This example also keeps the MCMC control arguments
+(<code>n.iter</code>, <code>n.burnin</code>, <code>n.chains</code>,
+<code>seed</code>) visible in the calls, because convergence and
+posterior summaries are the focus of the final section.</p>
+<div class="section level3">
+<h3 id="the-data">The data<a class="anchor" aria-label="anchor" href="#the-data"></a>
+</h3>
+<p>The <code>coalgov</code> dataset ships with the package. Each row is
+one party’s participation in one government: 2,077 party-government
+pairs spanning 628 governments and 312 parties across 29 countries.</p>
+<table class="table">
+<colgroup>
+<col width="13%">
+<col width="12%">
+<col width="73%">
+</colgroup>
+<thead><tr class="header">
+<th>Variable</th>
+<th>Level</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>gid</code></td>
+<td>id</td>
+<td>Government identifier (the group)</td>
+</tr>
+<tr class="even">
+<td><code>pid</code></td>
+<td>id</td>
+<td>Party identifier (the member)</td>
+</tr>
+<tr class="odd">
+<td><code>dur_wkb</code></td>
+<td>outcome</td>
+<td>Government duration in days</td>
+</tr>
+<tr class="even">
+<td><code>event_wkb</code></td>
+<td>outcome</td>
+<td>1 = government fell from conflict; 0 = still standing when
+observed</td>
+</tr>
+<tr class="odd">
+<td><code>majority</code></td>
+<td>government</td>
+<td>1 = majority coalition, 0 = minority</td>
+</tr>
+<tr class="even">
+<td><code>mwc</code></td>
+<td>government</td>
+<td>1 = minimal winning coalition, 0 = oversized</td>
+</tr>
+<tr class="odd">
+<td><code>n</code></td>
+<td>government</td>
+<td>Number of parties in the coalition</td>
+</tr>
+<tr class="even">
+<td><code>finance</code></td>
+<td>party</td>
+<td>Party’s dependence on outside money rather than dues
+(standardised)</td>
+</tr>
+<tr class="odd">
+<td><code>prime</code></td>
+<td>party</td>
+<td>TRUE if the party holds the prime ministership, FALSE otherwise</td>
+</tr>
+</tbody>
+</table>
+<p>The outcome is the pair <code>(dur_wkb, event_wkb)</code>, the
+standard way survival data is recorded: a duration, plus a flag for
+whether the duration ended in the event of interest (the government
+falling) or was merely the last point at which the government was
+observed in office.</p>
+</div>
+<div class="section level3">
+<h3 id="equal-weight-baseline">Equal-weight baseline<a class="anchor" aria-label="anchor" href="#equal-weight-baseline"></a>
+</h3>
+<p>Every party contributes equally to the coalition’s financial profile.
+This is the natural starting point, where each party is assumed to
+contribute equally to the outcome.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod_eq</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>    <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span> <span class="va">mwc</span> <span class="op">+</span>   <span class="co"># survival outcome ~ government covariates</span></span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,                          <span class="co"># member = party, group = government</span></span>
+<span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,                         <span class="co"># party variable to aggregate</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,                 <span class="co"># equal weights</span></span>
+<span>        RE   <span class="op">=</span> <span class="cn">TRUE</span>                                   <span class="co"># party-level random effect</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>    family   <span class="op">=</span> <span class="st">"Weibull"</span>,                             <span class="co"># survival (duration) outcome</span></span>
+<span>    monitor  <span class="op">=</span> <span class="cn">TRUE</span>,                                  <span class="co"># store MCMC draws (needed for diagnostics/plots)</span></span>
+<span>    n.iter   <span class="op">=</span> <span class="fl">5000</span>,                                  <span class="co"># iterations per chain</span></span>
+<span>    n.burnin <span class="op">=</span> <span class="fl">500</span>,                                   <span class="co"># discard the first 500</span></span>
+<span>    n.chains <span class="op">=</span> <span class="fl">3</span>,                                     <span class="co"># number of chains</span></span>
+<span>    seed     <span class="op">=</span> <span class="fl">1</span>,                                     <span class="co"># reproducibility</span></span>
+<span>    data     <span class="op">=</span> <span class="va">coalgov</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p>The finance coefficient is negative and away from zero: coalitions
+whose parties depend more on outside money tend to fall sooner. The
+coefficient is on the log-survival-time scale, so negative means shorter
+expected duration.</p>
+<p>Before testing an alternative weighting scheme, it helps to see how
+much of the variation in government survival originates at the party
+level.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/varDecomp.html">varDecomp</a></span><span class="op">(</span><span class="va">mod_eq</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Variance decomposition (Weibull)</caption>
+<thead><tr class="header">
+<th align="left">Component</th>
+<th align="right">sigma</th>
+<th align="right">sigma_sd</th>
+<th align="right">ICC</th>
+<th align="right">ICC_sd</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Residual</td>
+<td align="right">0.83</td>
+<td align="right">0.05</td>
+<td align="right">0.63</td>
+<td align="right">0.07</td>
+</tr>
+<tr class="even">
+<td align="left">MM (sigma.mm.1)</td>
+<td align="right">1.08</td>
+<td align="right">0.16</td>
+<td align="right">0.37</td>
+<td align="right">0.07</td>
+</tr>
+</tbody>
+</table>
+<p>About 37% of the variance in government survival sits at the party
+level. Governments that share parties are more similar to each other
+than governments that do not, beyond anything the covariates explain.
+The multiple-membership structure is not just added complexity: more
+than a third of what drives coalition survival is carried by the parties
+themselves.</p>
+</div>
+<div class="section level3">
+<h3 id="letting-weights-vary-across-parties">Letting weights vary across parties<a class="anchor" aria-label="anchor" href="#letting-weights-vary-across-parties"></a>
+</h3>
+<p>Equal weighting assumes a small junior partner shapes the coalition’s
+financial profile exactly as much as the party holding the prime
+ministership. That assumption can be replaced with an estimate: the
+weight function lets the PM party carry more or less weight, with the
+amount estimated from the data.</p>
+<p>A mixing parameter dials between the PM’s party and the other
+parties. At <code>b1 = 1</code> all weight goes to the prime minister’s
+party; at <code>b1 = 0</code> a baseline aggregation rule is recovered.
+There are two natural baselines to blend against, and they ask different
+questions, so both are fit and compared.</p>
+</div>
+<div class="section level3">
+<h3 id="prime-ministers-party-against-equal-weights">Prime minister’s party against equal weights<a class="anchor" aria-label="anchor" href="#prime-ministers-party-against-equal-weights"></a>
+</h3>
+<p><span class="math display">\[
+w_{ij} = b_1 \cdot \text{prime}_{ij} + (1 - b_1)\cdot \tfrac{1}{n_i}
+\]</span></p>
+<p>This first blend puts the PM party against equal weighting. At
+<code>b1 = 1</code>, the PM party carries all the weight; at
+<code>b1 = 0</code> it is the <code>1/n</code> baseline, so the
+parameter measures how far the data pull away from equal weights toward
+the prime minister’s party.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod_pm_n</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>    <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span> <span class="va">mwc</span> <span class="op">+</span></span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
+<span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">prime</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,  <span class="co"># blend PM party vs equal weights</span></span>
+<span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>    family   <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
+<span>    priors   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"b.w.1 ~ dnorm(0, 1)"</span><span class="op">)</span>,</span>
+<span>    monitor  <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    n.iter   <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>    n.burnin <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>    n.chains <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    seed     <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    data     <span class="op">=</span> <span class="va">coalgov</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p>The weight parameter <code>prime (w.1)</code> is about 0.21, with a
+95% interval of [-0.10, 0.52]. The estimate is positive, so the data
+lean toward the prime minister’s party carrying more weight than equal
+aggregation would assign it, but the interval includes zero, so equal
+weighting cannot be ruled out. The finance effect is about -0.27 [-0.52,
+-0.03], close to the baseline’s -0.32 and still clearly negative: the
+story that coalitions reliant on outside money fall sooner holds whether
+or not the PM party is up-weighted.</p>
+</div>
+<div class="section level3">
+<h3 id="prime-minister-against-seat-share">Prime minister against seat share<a class="anchor" aria-label="anchor" href="#prime-minister-against-seat-share"></a>
+</h3>
+<p><span class="math display">\[
+w_{ij} = b_1 \cdot \text{prime}_{ij} + (1 - b_1)\cdot \text{pseat}_{ij}
+\]</span></p>
+<p>This second blend puts the PM party against seat-share
+proportionality. At <code>b1 = 0</code> weights track each party’s seat
+share, so the parameter measures how far the data pull away from
+proportionality toward the prime minister’s party.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod_pm_p</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>    <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span> <span class="va">mwc</span> <span class="op">+</span></span>
+<span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
+<span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
+<span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">prime</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="va">pseat</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,  <span class="co"># blend PM party vs seat share</span></span>
+<span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>    family   <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
+<span>    priors   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"b.w.1 ~ dnorm(0, 1)"</span><span class="op">)</span>,</span>
+<span>    monitor  <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    n.iter   <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>    n.burnin <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>    n.chains <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    seed     <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    data     <span class="op">=</span> <span class="va">coalgov</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p>Here <code>prime (w.1)</code> is about 0.12 with a 95% interval of
+[-0.23, 0.53]. The estimate is again positive with the interval spanning
+zero. The smaller point estimate and wider interval mean the pull toward
+the PM party is even weaker than in the first parameterisation. The
+finance effect changes to about -0.21 [-0.45, 0.02], its interval now
+just touching zero.</p>
+</div>
+<div class="section level3">
+<h3 id="comparing-the-models">Comparing the models<a class="anchor" aria-label="anchor" href="#comparing-the-models"></a>
+</h3>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bmlCompare.html">bmlCompare</a></span><span class="op">(</span></span>
+<span>  <span class="st">"Equal weights (1/n)"</span> <span class="op">=</span> <span class="va">mod_eq</span>,</span>
+<span>  <span class="st">"PM vs equal (1/n)"</span>   <span class="op">=</span> <span class="va">mod_pm_n</span>,</span>
+<span>  <span class="st">"PM vs seat share"</span>    <span class="op">=</span> <span class="va">mod_pm_p</span>,</span>
+<span>  terms  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"finance (mm.1)"</span>, <span class="st">"prime (w.1)"</span><span class="op">)</span>,</span>
+<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Finance"</span>, <span class="st">"PM weight (b1)"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="17%">
+<col width="27%">
+<col width="27%">
+<col width="26%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Term</th>
+<th align="left">Equal weights (1/n)</th>
+<th align="left">PM vs equal (1/n)</th>
+<th align="left">PM vs seat share</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Finance</td>
+<td align="left">-0.316 (-0.552, -0.079)</td>
+<td align="left">-0.273 (-0.517, -0.024)</td>
+<td align="left">-0.214 (-0.444, 0.024)</td>
+</tr>
+<tr class="even">
+<td align="left">PM weight (b1)</td>
+<td align="left">—</td>
+<td align="left">0.209 (-0.100, 0.511)</td>
+<td align="left">0.123 (-0.232, 0.530)</td>
+</tr>
+<tr class="odd">
+<td align="left">N</td>
+<td align="left">628</td>
+<td align="left">628</td>
+<td align="left">628</td>
+</tr>
+<tr class="even">
+<td align="left">DIC</td>
+<td align="left">3872</td>
+<td align="left">3857</td>
+<td align="left">3867</td>
+</tr>
+</tbody>
+</table>
+<p>Across both blends the weight parameter is positive but its interval
+includes zero, so the prime minister’s party does not measurably
+outweigh its partners in shaping the coalition’s financial profile,
+whether compared against equal weights or against seat share. The
+finance effect weakens slightly across the table, from -0.32 at baseline
+to -0.27 and then -0.21, staying negative throughout except for the last
+blend’s interval, which just touches zero. On fit, the
+PM-vs-equal-weights blend has the lowest DIC (3857 against the
+baseline’s 3872), with PM-vs-proportional in between (3867). The gap is
+small, and it comes from a parameter that cannot be distinguished from
+zero.</p>
+</div>
+<div class="section level3">
+<h3 id="mcmc-diagnostics">MCMC diagnostics<a class="anchor" aria-label="anchor" href="#mcmc-diagnostics"></a>
+</h3>
+<p>All models were fit with <code>monitor = TRUE</code>, which stores
+the posterior draws so convergence can be checked. The diagnostics below
+are for the PM-vs-equal-weights model; the other models behave the same
+way.</p>
+<p><code><a href="../reference/mcmcDiag.html">mcmcDiag()</a></code> reports the standard convergence statistics
+for the chosen parameters:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mcmcDiag.html">mcmcDiag</a></span><span class="op">(</span><span class="va">mod_pm_n</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.w.1"</span>, <span class="st">"b.mm.1"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left"></th>
+<th align="right">b.w.1</th>
+<th align="right">b.mm.1</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Gelman/Rubin convergence statistic</td>
+<td align="right">1.012</td>
+<td align="right">1.001</td>
+</tr>
+<tr class="even">
+<td align="left">Geweke z-score</td>
+<td align="right">-1.101</td>
+<td align="right">-0.945</td>
+</tr>
+<tr class="odd">
+<td align="left">Heidelberger/Welch p-value</td>
+<td align="right">0.256</td>
+<td align="right">0.355</td>
+</tr>
+<tr class="even">
+<td align="left">Autocorrelation (lag 50)</td>
+<td align="right">0.013</td>
+<td align="right">-0.023</td>
+</tr>
+</tbody>
+</table>
+<p>The diagnostics are clean. Both Gelman-Rubin statistics are about
+1.0, well under the 1.1 threshold; the Geweke z-scores fall within the
+usual ±2 bounds, the Heidelberger-Welch p-values exceed 0.05, and lag-50
+autocorrelation is negligible. The chains converged, are stationary, and
+mixed well.</p>
+<p><code><a href="../reference/monetPlot.html">monetPlot()</a></code> shows the posterior density (top) and the
+trace across iterations (bottom) for a single parameter — here the
+weight parameter <code>b1</code>:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/monetPlot.html">monetPlot</a></span><span class="op">(</span><span class="va">mod_pm_n</span>, <span class="st">"b.w.1"</span>, label <span class="op">=</span> <span class="st">"b1: 1 = all weight on PM party, 0 = equal weights"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="examples-figures/unnamed-chunk-28-1.png" alt="Posterior density and MCMC trace plot for the PM-party weight parameter b1"></p>
+<p>The posterior density is a single hump centred at about 0.21, just
+right of the zero line, with most of its mass to the right but a clear
+slice left of zero, so zero stays inside the 95% interval. In the trace
+panel the three chains overlap and cover the same range with no
+separation — the visual counterpart to the clean diagnostics above.</p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

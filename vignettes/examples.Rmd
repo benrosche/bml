@@ -4,7 +4,6 @@ output:
   rmarkdown::html_document:
     toc: true
     toc_float: true
-    number_sections: true
     toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{Examples}
@@ -17,22 +16,9 @@ editor_options:
 
 
 
-<style>
-/* Float the table of contents on the right-hand side */
-@media (min-width: 768px) {
-  .main-container .row > div:first-child { width: 0 !important; padding: 0 !important; }
-  .main-container .row > .toc-content {
-    width: 100% !important;
-    margin-left: 0 !important;
-    padding-right: 23%;
-  }
-  #TOC.tocify { left: auto; right: 1.5%; margin-left: 0; }
-}
-</style>
-
 This vignette presents three examples that show how the multiple-membership multilevel model (MMMM) can be applied to network, spatial, and aggregation problems: peer influence in a friendship network, neighbourhood effects on home values, and how coalition parties shape government survival.
 
-# All friends, or just your best friend? (network regression)
+# 1. All friends, or just your best friend? (network regression)
 
 The core question in this example is how peer influence adds up across a friendship group, using smoking as the behaviour of interest.
 
@@ -141,7 +127,7 @@ Limiting to the best friend gives about 0.03 (CI [0.005, 0.06]): a smaller point
 On fit, the best-friend model is clearly preferred (DIC 15,811 vs 16,866, a gap of over 1,000).
 Focusing on the single closest friend describes how peer influence on smoking aggregates better than treating all friends as equally important.
 
-# Air quality and home values (spatial regression)
+# 2. Air quality and home values (spatial regression)
 
 This **spatial** example is based on [Harrison & Rubinfeld (1978)](https://www.sciencedirect.com/science/article/abs/pii/0095069678900062), who study the effect of air quality on home values, and the re-analysis by [Bivand (2017)](https://openjournals.wu.ac.at/region/paper_107/107.html).
 
@@ -261,7 +247,7 @@ The model picks up two kinds of similarity at once, in opposite directions.
 A direct check plots the estimated weight each neighbour received against the dissimilarity between that neighbour and its focal tract.
 If crime homophily drives the weights, low-`d_CRIM` pairs should cluster toward high weights and high-`d_CRIM` pairs toward low weights.
 
-![](examples-figures/unnamed-chunk-14-1.png)
+<img src="examples-figures/unnamed-chunk-14-1.png" alt="Estimated neighbour weight plotted against covariate dissimilarity, faceted by crime and age dissimilarity"  />
 
 The two panels show the similarity effects acting in opposite directions.
 The weight falls as crime dissimilarity rises (the homophily the negative crime coefficient pointed to), while it rises gently with age dissimilarity, matching the positive age coefficient.
@@ -318,7 +304,7 @@ If equal-weight neighbour effects were all that was needed, `errorsarlm` would s
 What the parameterised weight function adds is the aggregation itself as something to estimate, which the SDEM cannot do.
 On fit, the similarity-weighted model improves on equal weighting (DIC 299 vs 308). The SDEM, a maximum-likelihood model, has no DIC, so it serves only as a coefficient yardstick.
 
-# Political parties and the survival of coalition governments (micro-macro regression)
+# 3. Political parties and the survival of coalition governments (micro-macro regression)
 
 The previous two examples asked how peers or neighbours combine to shape an outcome.
 This example asks the same of coalition politics: how do the parties in a coalition combine to determine whether the government survives?
@@ -542,7 +528,7 @@ The chains converged, are stationary, and mixed well.
 monetPlot(mod_pm_n, "b.w.1", label = "b1: 1 = all weight on PM party, 0 = equal weights")
 ```
 
-![](examples-figures/unnamed-chunk-28-1.png)
+<img src="examples-figures/unnamed-chunk-28-1.png" alt="Posterior density and MCMC trace plot for the PM-party weight parameter b1"  />
 
 The posterior density is a single hump centred at about 0.21, just right of the zero line, with most of its mass to the right but a clear slice left of zero, so zero stays inside the 95% interval.
 In the trace panel the three chains overlap and cover the same range with no separation — the visual counterpart to the clean diagnostics above.

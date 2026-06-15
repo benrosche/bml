@@ -21,8 +21,8 @@ column headers. Unnamed models are labeled with the expressions they were
 passed as (e.g., \code{"m1"}).}
 
 \item{component}{Which parameters to include; passed to \code{\link{tidy.bml}}.
-Default: \code{"fixed"} (regression coefficients). Use \code{"all"} to also
-include weight and variance parameters.}
+One of \code{"all"} (default), \code{"fixed"}, \code{"random"}, or
+\code{"weights"}.}
 
 \item{terms}{Optional character vector of term names selecting which rows to
 show and in what order (matched against the \code{term} labels from

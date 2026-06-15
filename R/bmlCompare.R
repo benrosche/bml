@@ -34,8 +34,8 @@ nameModels <- function(models, exprs) {
 #'   column headers. Unnamed models are labeled with the expressions they were
 #'   passed as (e.g., \code{"m1"}).
 #' @param component Which parameters to include; passed to \code{\link{tidy.bml}}.
-#'   Default: \code{"fixed"} (regression coefficients). Use \code{"all"} to also
-#'   include weight and variance parameters.
+#'   One of \code{"all"} (default), \code{"fixed"}, \code{"random"}, or
+#'   \code{"weights"}.
 #' @param terms Optional character vector of term names selecting which rows to
 #'   show and in what order (matched against the \code{term} labels from
 #'   \code{\link{tidy.bml}}, e.g. \code{"smoking_alter (mm.1)"}). Terms not found
@@ -138,7 +138,7 @@ bmlCompare <- function(..., component = "all", terms = NULL, labels = NULL,
   for (mn in model_names) {
     out[[mn]] <- vapply(sel_terms, function(tm) {
       v <- long$cell[long$model == mn & long$term == tm]
-      if (length(v) == 0) "—" else v[1]   # em dash for terms absent from a model
+      if (length(v) == 0) "\u2014" else v[1]   # em dash for terms absent from a model
     }, character(1))
   }
 

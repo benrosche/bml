@@ -32,13 +32,13 @@ test_that("tidy() component filtering works", {
   m <- create_test_model(monitor = FALSE)
 
   fixed <- tidy(m, component = "fixed")
-  variance <- tidy(m, component = "variance")
+  random <- tidy(m, component = "random")
   all <- tidy(m, component = "all")
 
   expect_true(all(fixed$component == "fixed"))
   expect_false(any(grepl("sigma|shape", fixed$term)))
-  expect_true(all(variance$component == "variance"))
-  expect_gte(nrow(all), nrow(fixed) + nrow(variance))
+  expect_true(all(random$component == "random"))
+  expect_gte(nrow(all), nrow(fixed) + nrow(random))
 })
 
 test_that("tidy() with conf.int = FALSE drops interval columns", {
@@ -88,15 +88,15 @@ test_that("glance() returns one-row model summary", {
 # bmlCompare()
 # ------------------------------------------------------------------------------------------------ #
 
-test_that("bmlCompare() stacks models with N and DIC", {
+test_that("bmlCompare() builds a wide term-by-model table with N and DIC", {
   m1 <- create_test_model(monitor = FALSE)
   m2 <- create_test_model(monitor = FALSE)
 
   cmp <- bmlCompare(m1, m2)
 
-  expect_named(cmp, c("model", "term", "estimate", "conf.low", "conf.high", "N", "DIC"))
-  expect_setequal(unique(cmp$model), c("m1", "m2"))
-  expect_true(all(is.finite(cmp$DIC)))
+  expect_s3_class(cmp, "bmlCompare")
+  expect_named(cmp, c("Term", "m1", "m2"))
+  expect_true(all(c("N", "DIC") %in% cmp$Term))
 })
 
 test_that("bmlCompare() respects user-supplied model names", {
@@ -105,7 +105,7 @@ test_that("bmlCompare() respects user-supplied model names", {
 
   cmp <- bmlCompare(base = m1, extended = m2)
 
-  expect_setequal(unique(cmp$model), c("base", "extended"))
+  expect_named(cmp, c("Term", "base", "extended"))
 })
 
 test_that("bmlCompare() rejects non-bml objects", {
