@@ -10,7 +10,10 @@ editor_options:
     wrap: sentence
 ---
 
-
+```{r, include = FALSE}
+knitr::opts_chunk$set(fig.path = "examples-figures/")
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
 
 I present three examples to demonstrate how the MMMM can be applied to analyze aggregation, network, and spatial analyses.
 
@@ -27,17 +30,24 @@ We use the CILS4EU Germany Wave 1 friendship network data, which covers classroo
 Students nominated up to five friends and ranked them by closeness (1 = best friend, 5 = fifth-closest).
 We predict Wave 2 smoking from Wave 1 friends' smoking, using the one-year lag so a student's future behaviour cannot have caused her current friends' behaviour.
 
-
-``` r
+```{r, message = FALSE, warning = FALSE}
+#| code-fold: true
 library(arrow)
 library(dplyr)
 library(bml)
 
 ```
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| code-fold: true
+.cils_dir  <- "/Users/komal.npn/bml/data"
+nodedat    <- read_feather(file.path(.cils_dir, "nodedat.feather"))
+edgedat    <- read_feather(file.path(.cils_dir, "edgedat.feather"))
+nodedat_w2 <- read_feather(file.path(.cils_dir, "nodedat-w2.feather"))
+```
 
+```{r, message = FALSE, warning = FALSE}
+#| code-fold: true
 
-
-``` r
 # Verify rank as an integer (1 = best friend, 5 = fifth-closest)
 edgedat <- edgedat |>
   mutate(rank = as.integer(rank))
@@ -67,8 +77,7 @@ A contention to that assumption would be that not every friend has the same leve
 Here, every friend gets equal weight, `w ~ 1/n`.
 The peer term is the simple average of all nominated friends' Wave 1 smoking.
 
-
-``` r
+```{r}
 mod_lim <-
   bml(
     smoking_w2 ~ smoking_ego + gender_ego +
@@ -85,34 +94,8 @@ mod_lim <-
     seed     = 1,
     data     = cils_long
   )
-#> module glm loaded
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 4002
-#>    Unobserved stochastic nodes: 8580
-#>    Total graph size: 113796
-#> 
-#> Initializing model
 
 summary(mod_lim)
-#> Outcome family: Gaussian (identity link) 
-#> Estimates: Posterior mean (MCMC) 
-#> Uncertainty: 95% equal-tailed credible intervals [2.5%, 97.5%] 
-#> 
-#> Level specification:
-#>   mm.1: alter, ego (RE, indep) 
-#> 
-#>                       Parameter  mean    sd     lb    ub
-#> b[1]                  Intercept 2.557 0.111  2.336 2.771
-#> b[2]                smoking_ego 0.365 0.013  0.338 0.391
-#> b[3]                 gender_ego 0.048 0.045 -0.042 0.134
-#> b.mm.1     smoking_alter (mm.1) 0.042 0.021  0.001 0.085
-#> sigma                     sigma 1.209 0.019  1.171 1.247
-#> sigma.mm.1    sigma.mm.1 (mm.1) 0.926 0.070  0.787 1.060
-#> 
-#> Model fit: DIC = 16866.38
 ```
 
 #### Model 2: best friend only
@@ -121,8 +104,7 @@ Here, only the closest-ranked friend contributes and all other friends are not c
 `rank == min(rank)` evaluates to `TRUE` for the closest-ranked friend within each ego's friend set (rank 1), putting all weight on that friend.
 With `c = TRUE` the weight is renormalised to 1 within each ego, so the peer term becomes that single friend's smoking.
 
-
-``` r
+```{r}
 mod_bf <-
   bml(
     smoking_w2 ~ smoking_ego + gender_ego +
@@ -139,41 +121,16 @@ mod_bf <-
     seed     = 1,
     data     = cils_long
   )
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 4002
-#>    Unobserved stochastic nodes: 8580
-#>    Total graph size: 113796
-#> 
-#> Initializing model
 
 summary(mod_bf)
-#> Outcome family: Gaussian (identity link) 
-#> Estimates: Posterior mean (MCMC) 
-#> Uncertainty: 95% equal-tailed credible intervals [2.5%, 97.5%] 
-#> 
-#> Level specification:
-#>   mm.1: alter, ego (RE, indep) 
-#> 
-#>                       Parameter  mean    sd     lb    ub
-#> b[1]                  Intercept 2.626 0.089  2.449 2.798
-#> b[2]                smoking_ego 0.358 0.013  0.334 0.383
-#> b[3]                 gender_ego 0.052 0.043 -0.031 0.137
-#> b.mm.1     smoking_alter (mm.1) 0.030 0.014  0.005 0.057
-#> sigma                     sigma 1.256 0.018  1.221 1.292
-#> sigma.mm.1    sigma.mm.1 (mm.1) 0.386 0.043  0.296 0.467
-#> 
-#> Model fit: DIC = 15810.53
 ```
 
 #### Comparing the two models
 
 `bml` provides `tidy()` and `glance()` methods, so we can pull estimates and fit statistics into tidy tibbles and compare the models side by side.
 
-
-``` r
+```{r}
+#| code-fold: true
 # Peer effect and fit side by side
 coef_comparison <- bind_rows(
   tidy(mod_lim) |> mutate(model = "Linear-in-means"),
@@ -183,22 +140,12 @@ coef_comparison <- bind_rows(
   select(model, estimate, conf.low, conf.high)
 
 coef_comparison
-#> # A tibble: 2 × 4
-#>   model            estimate conf.low conf.high
-#>   <chr>               <dbl>    <dbl>     <dbl>
-#> 1 Linear-in-means    0.0418 0.000536    0.0846
-#> 2 Best friend only   0.0305 0.00460     0.0571
 
 bind_rows(
   glance(mod_lim) |> mutate(model = "Linear-in-means"),
   glance(mod_bf)  |> mutate(model = "Best friend only")
 ) |>
   select(model, DIC, nobs)
-#> # A tibble: 2 × 3
-#>   model               DIC  nobs
-#>   <chr>             <dbl> <int>
-#> 1 Linear-in-means  16866.  4002
-#> 2 Best friend only 15811.  4002
 ```
 
 We can see that both models find a positive peer effect. It means that students whose friends smoke more tend to smoke more themselves one year later, over and above their own Wave 1 smoking.
@@ -224,8 +171,8 @@ The question we add to the classical modeling approach is whether it is benefici
 
 #### Data and spatial weights
 
-
-``` r
+```{r, message = FALSE, warning = FALSE}
+#| code-fold: true
 library(spData)
 library(sf)
 library(spdep)
@@ -269,8 +216,9 @@ The variables of our interest are:
 The `bml` baseline uses the weighting `w ~ 1/n`, giving every neighbour equal weight. This is the conventional MMMM where the membership structure is there and variable weights are permitted but in this case, the weights are fixed.
 To prepare the data for bml, we build the long-format data first, then we fit the model.
 
+```{r}
+#| code-fold: true
 
-``` r
 nb2df <- function(nb) {
   data.frame(
     tid    = rep(seq_along(nb), lengths(nb)),
@@ -290,8 +238,7 @@ boston_df <-
   )
 ```
 
-
-``` r
+```{r}
 mod_bml <-
   bml(
     lnCMEDV ~ NOX + CRIM + RM + DIS + AGE +
@@ -308,40 +255,8 @@ mod_bml <-
     seed     = 42,
     data     = boston_df
   )
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 506
-#>    Unobserved stochastic nodes: 1025
-#>    Total graph size: 34430
-#> 
-#> Initializing model
 
 summary(mod_bml)
-#> Outcome family: Gaussian (identity link) 
-#> Estimates: Posterior mean (MCMC) 
-#> Uncertainty: 95% equal-tailed credible intervals [2.5%, 97.5%] 
-#> 
-#> Level specification:
-#>   mm.1: tid_nb, tid (RE, indep) 
-#> 
-#>                    Parameter   mean    sd     lb     ub
-#> b[1]               Intercept  3.033 0.018  2.997  3.069
-#> b[2]                     NOX -0.106 0.029 -0.162 -0.048
-#> b[3]                    CRIM -0.061 0.011 -0.082 -0.040
-#> b[4]                      RM  0.158 0.010  0.138  0.177
-#> b[5]                     DIS -0.097 0.056 -0.203  0.015
-#> b[6]                     AGE -0.095 0.018 -0.130 -0.062
-#> b.mm.1[1]      NOX_nb (mm.1)  0.018 0.046 -0.071  0.111
-#> b.mm.1[2]     CRIM_nb (mm.1) -0.132 0.027 -0.183 -0.080
-#> b.mm.1[3]       RM_nb (mm.1)  0.072 0.024  0.023  0.119
-#> b.mm.1[4]      DIS_nb (mm.1) -0.013 0.067 -0.143  0.115
-#> b.mm.1[5]      AGE_nb (mm.1)  0.007 0.038 -0.069  0.079
-#> sigma                  sigma  0.128 0.007  0.115  0.142
-#> sigma.mm.1 sigma.mm.1 (mm.1)  0.385 0.023  0.342  0.431
-#> 
-#> Model fit: DIC = 308.4891
 ```
 
 #### Parameterised weights: similarity across covariates
@@ -359,8 +274,9 @@ When all the `b`'s are zero this collapses to `1/n_i`, the equal-weight baseline
 A negative coefficient means neighbours that are similar on that covariate (low `d`) receive more weight; a positive coefficient means dissimilar neighbours dominate.
 Letting the two dissimilarities enter on their own lets the model decide which kind of similarity drives the aggregation, instead of us imposing a single combined measure, for example by adding up the absolute differences.
 
+```{r}
+#| code-fold: true
 
-``` r
 boston_df2 <- boston_df |>
   mutate(
     d_CRIM = as.numeric(scale(log1p(abs(CRIM - CRIM_nb)))),   # log first: crime is right-skewed
@@ -368,8 +284,7 @@ boston_df2 <- boston_df |>
   )
 ```
 
-
-``` r
+```{r, warning = FALSE}
 
 mod_bml_w <-
   bml(
@@ -389,47 +304,10 @@ mod_bml_w <-
     seed     = 42,
     data     = boston_df2
   )
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 506
-#>    Unobserved stochastic nodes: 1028
-#>    Total graph size: 66708
-#> 
-#> Initializing model
 
 summary(mod_bml_w)
-#> Outcome family: Gaussian (identity link) 
-#> Estimates: Posterior mean (MCMC) 
-#> Uncertainty: 95% equal-tailed credible intervals [2.5%, 97.5%] 
-#> 
-#> Level specification:
-#>   mm.1: tid_nb, tid (RE, indep) 
-#> 
-#>                    Parameter   mean    sd     lb     ub
-#> b[1]               Intercept  3.022 0.018  2.985  3.057
-#> b[2]                     NOX -0.075 0.030 -0.134 -0.015
-#> b[3]                    CRIM -0.054 0.012 -0.079 -0.030
-#> b[4]                      RM  0.165 0.009  0.148  0.183
-#> b[5]                     DIS -0.069 0.048 -0.165  0.024
-#> b[6]                     AGE -0.101 0.014 -0.130 -0.074
-#> b.mm.1[1]      NOX_nb (mm.1) -0.002 0.045 -0.089  0.085
-#> b.mm.1[2]     CRIM_nb (mm.1) -0.144 0.036 -0.217 -0.074
-#> b.mm.1[3]       RM_nb (mm.1)  0.092 0.023  0.047  0.135
-#> b.mm.1[4]      DIS_nb (mm.1) -0.028 0.058 -0.140  0.088
-#> b.mm.1[5]      AGE_nb (mm.1)  0.013 0.033 -0.052  0.079
-#> b.w.1[1]            X0 (w.1)  1.594 0.721 -0.046  2.804
-#> b.w.1[2]        d_CRIM (w.1) -1.784 0.350 -2.543 -1.178
-#> b.w.1[3]         d_AGE (w.1)  0.728 0.368  0.098  1.528
-#> sigma                  sigma  0.102 0.006  0.092  0.114
-#> sigma.mm.1 sigma.mm.1 (mm.1)  0.373 0.021  0.334  0.415
-#> 
-#> Model fit: DIC = 298.5478
 monetPlot(mod_bml_w, "b.w.1[2]", label = "Crime-similarity weight")
 ```
-
-![plot of chunk unnamed-chunk-12](examples-figures/unnamed-chunk-12-1.png)
 
 The crime coefficient `b.w.1[2]` is −1.78 (CI [−2.54, −1.18]), clearly negative, so neighbours with similar crime levels carry more weight.
 The age coefficient `b.w.1[3]` is 0.73 (CI [0.10, 1.53]), pointing the other way, with neighbours with different age profiles carry more weight.
@@ -439,8 +317,9 @@ The model picks up two kinds of similarity at once, in opposite directions.
 
 A direct check to see this is by plotting the estimated weight each neighbour received against the crime dissimilarity between that neighbour and its focal tract. If crime homophily is driving the weights, low-`d_CRIM` pairs should cluster toward high weights and high-`d_CRIM` pairs toward low weights.
 
+```{r, fig.width = 6, fig.height = 4}
+#| code-fold: true
 
-``` r
 w_mat <- mod_bml_w$w[[1]]   # 506 x 15 matrix, NA padded
 
 weight_df <- boston_df2 |>
@@ -459,10 +338,7 @@ ggplot(weight_long, aes(x = dissimilarity, y = weight)) +
   facet_wrap(~ covariate, scales = "free_x") +
   labs(x = "Dissimilarity", y = "Estimated neighbour weight") +
   theme_minimal()
-#> `geom_smooth()` using formula = 'y ~ x'
 ```
-
-![plot of chunk unnamed-chunk-13](examples-figures/unnamed-chunk-13-1.png)
 
 The two panels show the two similarity effects taking effect in opposite directions. The weight falls as crime dissimilarity rises (the homophily the negative crime coefficient pointed to). Weight rises gently with age dissimilarity, matching the positive age coefficient. Each panel holds only a partial view, since every neighbour's weight reflects both dissimilarities at once, but the opposing slopes are visible.
 
@@ -470,8 +346,7 @@ The two panels show the two similarity effects taking effect in opposite directi
 
 The classical spatial benchmark for spatial modeling problems like this is the SDEM, which models a tract's outcome as a function of its own covariates, its neighbours' covariates, and a spatially correlated error. We can fit it as a yardstick to compare our models to.
 
-
-``` r
+```{r}
 mod_sdem <- errorsarlm(
   lnCMEDV ~ NOX + CRIM + RM + DIS + AGE,
   data   = boston,
@@ -479,40 +354,6 @@ mod_sdem <- errorsarlm(
   Durbin = ~ NOX + CRIM + RM + DIS + AGE   # include neighbour-covariate effects (WX)
 )
 summary(mod_sdem)
-#> 
-#> Call:
-#> errorsarlm(formula = lnCMEDV ~ NOX + CRIM + RM + DIS + AGE, data = boston, 
-#>     listw = boston_wlist, Durbin = ~NOX + CRIM + RM + DIS + AGE)
-#> 
-#> Residuals:
-#>        Min         1Q     Median         3Q        Max 
-#> -0.8517313 -0.0713016 -0.0070739  0.0658620  0.8967408 
-#> 
-#> Type: error 
-#> Coefficients: (asymptotic standard errors) 
-#>               Estimate Std. Error z value  Pr(>|z|)
-#> (Intercept)  3.0149076  0.0331295 91.0037 < 2.2e-16
-#> NOX         -0.1120990  0.0244750 -4.5801 4.647e-06
-#> CRIM        -0.0667568  0.0100662 -6.6318 3.317e-11
-#> RM           0.1687197  0.0094507 17.8526 < 2.2e-16
-#> DIS         -0.0863850  0.0423890 -2.0379 0.0415587
-#> AGE         -0.0876803  0.0154299 -5.6825 1.328e-08
-#> lag.NOX      0.0123545  0.0449974  0.2746 0.7836541
-#> lag.CRIM    -0.1031677  0.0269163 -3.8329 0.0001266
-#> lag.RM       0.0396613  0.0232693  1.7044 0.0882980
-#> lag.DIS     -0.0381250  0.0561561 -0.6789 0.4971937
-#> lag.AGE     -0.0196288  0.0380985 -0.5152 0.6064037
-#> 
-#> Lambda: 0.79294, LR test value: 328.64, p-value: < 2.22e-16
-#> Asymptotic standard error: 0.031295
-#>     z-value: 25.337, p-value: < 2.22e-16
-#> Wald statistic: 641.98, p-value: < 2.22e-16
-#> 
-#> Log likelihood: 187.0501 for error model
-#> ML residual variance (sigma squared): 0.023764, (sigma: 0.15416)
-#> Number of observations: 506 
-#> Number of parameters estimated: 13 
-#> AIC: -348.1, (AIC for lm: -21.461)
 ```
 
 The own and neighbour coefficients line up with the equal-weight bml model, which is the reassurance we want, as the bml baseline lines up with the classical benchmark.
@@ -523,18 +364,13 @@ What the parameterised weight function adds is the aggregation itself as somethi
 
 `bml` ships with `tidy()` and `glance()` methods, so we can pull fit statistics straight into a table without writing our own helpers.
 
-
-``` r
+```{r}
+#| code-fold: true
 bind_rows(
   glance(mod_bml)   |> mutate(model = "Equal weights (1/n)"),
   glance(mod_bml_w) |> mutate(model = "Similarity weights")
 ) |>
   select(model, DIC)
-#> # A tibble: 2 × 2
-#>   model                 DIC
-#>   <chr>               <dbl>
-#> 1 Equal weights (1/n)  308.
-#> 2 Similarity weights   299.
 ```
 
 The similarity-weighted model fits better (DIC 298.5 vs 308.5). Letting the weights depend on crime and age similarity improves on equal weighting.
@@ -546,8 +382,8 @@ Each coalition government is composed of multiple parties, and each party brings
 #### The Data
 The `coalgov` dataset ships with the package. Each row is one party's participation in one government: 2,077 party-government pairs spanning 628 governments and 312 parties across 29 countries.
 
-
-``` r
+```{r, warning=FALSE}
+#| code-fold: true
 library(bml)
 library(dplyr)
 library(ggplot2)
@@ -584,8 +420,7 @@ The outcome is the pair `(dur_wkb, event_wkb)`, which is how survival data is re
 Here, every party contributes equally to the coalition's financial profile. This is the natrul starting point, where the assumption is that each party has an equal contribution towards the outcome.
 
 
-
-``` r
+```{r}
 mod_eq <-
   bml(
     Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +
@@ -604,34 +439,8 @@ mod_eq <-
     seed     = 1,
     data     = coalgov
   )
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 873
-#>    Unobserved stochastic nodes: 1329
-#>    Total graph size: 19218
-#> 
-#> Initializing model
 
 summary(mod_eq)
-#> Outcome family: Weibull survival (duration: dur_wkb, event: event_wkb) 
-#> Estimates: Posterior mean (MCMC) 
-#> Uncertainty: 95% equal-tailed credible intervals [2.5%, 97.5%] 
-#> 
-#> Level specification:
-#>   mm.1: pid, gid (RE, indep) 
-#> 
-#>                    Parameter   mean    sd     lb     ub
-#> b[1]               Intercept  6.824 0.161  6.526  7.151
-#> b[2]                majority  0.211 0.158 -0.104  0.515
-#> b[3]                     mwc  0.494 0.151  0.198  0.794
-#> b.mm.1        finance (mm.1) -0.315 0.122 -0.554 -0.076
-#> shape                  shape  1.212 0.067  1.085  1.347
-#> sigma                  sigma  0.827 0.046  0.742  0.922
-#> sigma.mm.1 sigma.mm.1 (mm.1)  1.078 0.164  0.786  1.420
-#> 
-#> Model fit: DIC = 3867.666
 ```
 
 The finance coefficient is negative and away from zero, which means that coalitions whose parties depend more on outside money tend to fall sooner. The coefficient is on the log-survival-time scale, so negative means shorter expected duration.
@@ -639,29 +448,15 @@ The finance coefficient is negative and away from zero, which means that coaliti
 Before testing any alternative weighting scheme, we can run two checks. First, how much of the variation in government survival originates at the party level versus the government or country level.
 
 
-
-``` r
+```{r}
 varDecomp(mod_eq)
-#> Variance Decomposition
-#> Family: Weibull 
-#> 
-#>        Component sigma sigma_sd  ICC ICC_sd
-#>         Residual  0.83     0.05 0.63   0.07
-#>  MM (sigma.mm.1)  1.08     0.16 0.37   0.07
 ```
 
 Here, we see that 37% of the variance in government survival sits at the party level. Governments that share parties are more similar to each other than governments that do not, beyond anything the covariates explain. This shows that the multiple-membership structure is not just adding complexity, since more than a third of what drives coalition survival is carried by the parties themselves.
 
 Our second check is to see if the chains converge. We run the mcmcDiag()
-
-``` r
+```{r}
 mcmcDiag(mod_eq, parameters = c("b.mm.1", "sigma.mm.1"))
-#> Parameter(s): b.mm.1sigma.mm.1
-#>                                    b.mm.1 sigma.mm.1
-#> Gelman/Rubin convergence statistic  1.001      1.009
-#> Geweke z-score                     -1.629      1.001
-#> Heidelberger/Welch p-value          0.310      0.585
-#> Autocorrelation (lag 50)            0.014      0.077
 ```
 
 All four diagnostics are clean.
@@ -682,8 +477,7 @@ $$
 
 This first blend puts the PM party against equal weighting. At `b1 = 1`, PM's party carries all the weight. At `b1 = 0` it is the `1/n` baseline, so the parameter measures how far the data pull away from equal weights toward the prime minister's party.
 
-
-``` r
+```{r, warning = FALSE}
 mod_pm_n <-
   bml(
     Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +
@@ -703,57 +497,20 @@ mod_pm_n <-
     seed     = 1,
     data     = coalgov
   )
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 873
-#>    Unobserved stochastic nodes: 1330
-#>    Total graph size: 27700
-#> 
-#> Initializing model
 
 summary(mod_pm_n)
-#> Outcome family: Weibull survival (duration: dur_wkb, event: event_wkb) 
-#> Estimates: Posterior mean (MCMC) 
-#> Uncertainty: 95% equal-tailed credible intervals [2.5%, 97.5%] 
-#> 
-#> Level specification:
-#>   mm.1: pid, gid (RE, indep) 
-#> 
-#>                    Parameter   mean    sd     lb     ub
-#> b[1]               Intercept  6.811 0.153  6.517  7.125
-#> b[2]                majority  0.213 0.150 -0.088  0.500
-#> b[3]                     mwc  0.500 0.143  0.227  0.780
-#> b.mm.1        finance (mm.1) -0.273 0.126 -0.516 -0.025
-#> b.w.1            prime (w.1)  0.209 0.150 -0.096  0.516
-#> shape                  shape  1.221 0.066  1.094  1.353
-#> sigma                  sigma  0.821 0.045  0.739  0.914
-#> sigma.mm.1 sigma.mm.1 (mm.1)  1.055 0.155  0.766  1.375
-#> 
-#> Model fit: DIC = 3859.285
 ```
 
 The weight parameter `b.w.1` (prime) is 0.21, with a 95% interval [-0.10, 0.52]. The estimate is positive, so the data leans towards the prime minister's party carrying more weight than equal aggregation would assign it, but the interval includes zero, so equal weighting cannot be ruled out. The finance effect is -0.27 [-0.52, -0.03], close to one in the baseline's -0.32 and still clearly negative, so the story that coalitions reliant on outside money fall sooner holds whether or not the PM party is up-weighted.
 
-
-``` r
+```{r}
 monetPlot(mod_pm_n, "b.w.1", label = "b1: 1 = all weight on PM party, 0 = equal weights")
 ```
 
-![plot of chunk unnamed-chunk-21](examples-figures/unnamed-chunk-21-1.png)
-
 The posterior density is a single hump centred at about 0.21, just right of the solid zero line. Most of its mass lies to the right of zero, but a clear slice falls left of the line, zero stays inside the interval. The heavy horizontal bar marks the 95% interval and its left end sits left of zero. In the scan panel below, the three chains overlap and cover the same range with no separation.
 
-
-``` r
+```{r}
 mcmcDiag(mod_pm_n, parameters = c("b.w.1", "b.mm.1"))
-#> Parameter(s): b.w.1b.mm.1
-#>                                     b.w.1 b.mm.1
-#> Gelman/Rubin convergence statistic  1.012  1.001
-#> Geweke z-score                     -1.079 -0.962
-#> Heidelberger/Welch p-value          0.419  0.357
-#> Autocorrelation (lag 50)            0.027  0.072
 ```
 
 The diagnostics are clean. Gelman-Rubin is 1.01 for `b.w.1` and 1.00 for finance, both well under the 1.1 threshold. The Geweke z-scores (-1.08, -0.96) sit within the usual bounds, the Heidelberger-Welch p-values (0.42, 0.36) are above 0.05, and lag-50 autocorrelation is small (0.03, 0.07). The chains converged, are stationary, and mixed well.
@@ -766,8 +523,7 @@ $$
 
 This second blend includes the PM party against seat-share proportionality. At `b1 = 0` weights track each party's seat share, so here the parameter measures how far the data pull away from proportionality toward the prime minister's party.
 
-
-``` r
+```{r, warning = FALSE}
 mod_pm_p <-
   bml(
     Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +
@@ -787,56 +543,19 @@ mod_pm_p <-
     seed     = 1,
     data     = coalgov
   )
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 873
-#>    Unobserved stochastic nodes: 1330
-#>    Total graph size: 31493
-#> 
-#> Initializing model
 
 summary(mod_pm_p)
-#> Outcome family: Weibull survival (duration: dur_wkb, event: event_wkb) 
-#> Estimates: Posterior mean (MCMC) 
-#> Uncertainty: 95% equal-tailed credible intervals [2.5%, 97.5%] 
-#> 
-#> Level specification:
-#>   mm.1: pid, gid (RE, indep) 
-#> 
-#>                    Parameter   mean    sd     lb    ub
-#> b[1]               Intercept  6.783 0.171  6.460 7.124
-#> b[2]                majority  0.216 0.171 -0.138 0.540
-#> b[3]                     mwc  0.509 0.152  0.217 0.812
-#> b.mm.1        finance (mm.1) -0.213 0.121 -0.447 0.024
-#> b.w.1            prime (w.1)  0.124 0.194 -0.231 0.525
-#> shape                  shape  1.212 0.067  1.083 1.346
-#> sigma                  sigma  0.827 0.046  0.743 0.923
-#> sigma.mm.1 sigma.mm.1 (mm.1)  0.937 0.139  0.684 1.228
-#> 
-#> Model fit: DIC = 3862.576
 ```
 
 Here,`b.w.1` (prime) is 0.12 with a 95% interval [-0.23, 0.53]. The estimate is again positive with the interval spanning zero. The smaller point estimate with the wider interval means the pull toward the PM party is even weaker here than in the first parameterization. The finance effect has changed to -0.21 [-0.45, 0.02], its interval now just touching zero. 
 
-
-``` r
+```{r}
 monetPlot(mod_pm_p, "b.w.1", label = "b1: 1 = all weight on PM party, 0 = proportional to seats")
 ```
 
-![plot of chunk unnamed-chunk-24](examples-figures/unnamed-chunk-24-1.png)
-
 The density has the same shape but shifted closer to zero, centred at about 0.12. The scan panel again shows three well-mixed, overlapping chains.
-
-``` r
+```{r}
 mcmcDiag(mod_pm_p, parameters = c("b.w.1", "b.mm.1"))
-#> Parameter(s): b.w.1b.mm.1
-#>                                     b.w.1 b.mm.1
-#> Gelman/Rubin convergence statistic  1.005  1.008
-#> Geweke z-score                     -0.323  0.378
-#> Heidelberger/Welch p-value          0.371  0.379
-#> Autocorrelation (lag 50)            0.042 -0.032
 ```
 
 Convergence is sound. Gelman-Rubin 1.01 for `b.w.1` and for finance, Geweke z-scores near zero (-0.32, 0.38), Heidelberger-Welch p-values above 0.05 (0.37, 0.38), and negligible lag-50 autocorrelation. 
@@ -844,8 +563,8 @@ Convergence is sound. Gelman-Rubin 1.01 for `b.w.1` and for finance, Geweke z-sc
 
 ##### Comparing the models
 
-
-``` r
+```{r}
+#| code-fold: true
 # Finance and weight parameters across the baseline and both blends
 bind_rows(
   tidy(mod_eq)   |> mutate(model = "Equal weights"),
@@ -854,12 +573,6 @@ bind_rows(
 ) |>
   filter(grepl("finance|b.w.1", term)) |>
   select(model, term, estimate, conf.low, conf.high)
-#> # A tibble: 3 × 5
-#>   model             term           estimate conf.low conf.high
-#>   <chr>             <chr>             <dbl>    <dbl>     <dbl>
-#> 1 Equal weights     finance (mm.1)   -0.315   -0.554   -0.0762
-#> 2 PM vs equal (1/n) finance (mm.1)   -0.273   -0.516   -0.0254
-#> 3 PM vs seat share  finance (mm.1)   -0.213   -0.447    0.0243
 
 # Model fit
 bind_rows(
@@ -869,12 +582,6 @@ bind_rows(
 ) |>
   select(model, DIC, nobs) |>
   arrange(DIC)
-#> # A tibble: 3 × 3
-#>   model                 DIC  nobs
-#>   <chr>               <dbl> <int>
-#> 1 PM vs equal (1/n)   3859.   628
-#> 2 PM vs seat share    3863.   628
-#> 3 Equal weights (1/n) 3868.   628
 ```
 
 Across both versions the weight parameter is positive but its interval includes zero, so the prime minister's party does not measurably outweigh its partners in shaping the coalition's financial profile, based on the comparison against equal weights and against seat share. 
