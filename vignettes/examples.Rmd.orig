@@ -30,6 +30,8 @@ knitr::opts_chunk$set(
 .load <- function(name) readRDS(file.path(".fits", paste0(name, ".rds")))
 ```
 
+<a id="top"></a>
+
 This vignette presents three examples that show how the multiple-membership multilevel model (MMMM) can be applied to network, spatial, and aggregation problems: peer influence in a friendship network, neighbourhood effects on home values, and how coalition parties shape government survival.
 
 # 1. All friends, or just your best friend? (network regression)
@@ -133,6 +135,8 @@ Limiting to the best friend gives about 0.03 (CI [0.005, 0.06]): a smaller point
 
 On fit, the best-friend model is clearly preferred (DIC 15,811 vs 16,866, a gap of over 1,000).
 Focusing on the single closest friend describes how peer influence on smoking aggregates better than treating all friends as equally important.
+
+[↑ Back to top](#top)
 
 # 2. Air quality and home values (spatial regression)
 
@@ -415,6 +419,8 @@ If equal-weight neighbour effects were all that was needed, `errorsarlm` would s
 What the parameterised weight function adds is the aggregation itself as something to estimate, which the SDEM cannot do.
 On fit, the similarity-weighted model improves on equal weighting (DIC 299 vs 308). The SDEM, a maximum-likelihood model, has no DIC, so it serves only as a coefficient yardstick.
 
+[↑ Back to top](#top)
+
 # 3. Political parties and the survival of coalition governments (micro-macro regression)
 
 The previous two examples asked how peers or neighbours combine to shape an outcome.
@@ -617,3 +623,5 @@ monetPlot(mod_pm_n, "b.w.1", label = "b1: 1 = all weight on PM party, 0 = equal 
 
 The posterior density is a single hump centred at about 0.21, just right of the zero line, with most of its mass to the right but a clear slice left of zero, so zero stays inside the 95% interval.
 In the trace panel the three chains overlap and cover the same range with no separation — the visual counterpart to the clean diagnostics above.
+
+[↑ Back to top](#top)

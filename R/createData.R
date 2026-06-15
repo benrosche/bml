@@ -44,14 +44,15 @@ createData <- function(data, formula_parts) {
     mainid_name <- "mainid"
     all_mmid_names <- "mmid"
     mmid_to_blocks <- list(mmid = integer(0))
-    data <- data %>% dplyr::mutate(mmid = 1, mainid = 1)
+    data[["mmid"]] <- 1
+    data[["mainid"]] <- 1
   }
 
   if (has_hm) {
     hmid_name <- hm[[1]]$id
   } else {
     hmid_name <- "hmid"
-    data <- data %>% dplyr::mutate(hmid = 1)
+    data[["hmid"]] <- 1
   }
 
   # Rename mainid and hmid to standard names
