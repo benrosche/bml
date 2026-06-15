@@ -8,7 +8,7 @@
   x,
   conf.int = TRUE,
   conf.level = 0.95,
-  component = c("fixed", "weights", "variance", "all"),
+  component = c("all", "fixed", "random", "weights"),
   ...
 )
 }
@@ -25,10 +25,11 @@ from the posterior draws and therefore require the model to be fitted with
 
 \item{component}{Which parameters to return:
 \itemize{
-  \item \code{"fixed"} (default): regression coefficients (main, mm, and hm level)
+  \item \code{"all"} (default): all of the below
+  \item \code{"fixed"}: regression coefficients (main, mm, and hm level)
+  \item \code{"random"}: variance/scale parameters (e.g., \code{sigma},
+    \code{sigma.mm.*}, \code{sigma.hm.*}, Weibull \code{shape}, \code{tau})
   \item \code{"weights"}: weight function parameters
-  \item \code{"variance"}: variance and auxiliary parameters (e.g., sigma, shape)
-  \item \code{"all"}: all of the above
 }}
 
 \item{...}{Additional arguments (currently unused).}

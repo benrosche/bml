@@ -1,6 +1,11 @@
 ---
 title: "Examples"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{Examples}
   %\VignetteEncoding{UTF-8}
@@ -11,173 +16,157 @@ editor_options:
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(fig.path = "examples-figures/")
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::opts_chunk$set(
+  fig.path = "examples-figures/",
+  echo     = TRUE,
+  message  = FALSE,
+  warning  = FALSE,
+  comment  = "#>",
+  fig.cap  = ""        # suppress the default "plot of chunk ..." figure caption
+)
+
+# Models are fit once by fit_models.R and cached in .fits/; load them here so
+# precompiling this vignette never re-runs JAGS. (Paths are relative to the
+# vignettes/ directory, which is the working directory during precompile.R.)
+.load <- function(name) readRDS(file.path(".fits", paste0(name, ".rds")))
 ```
 
-I present three examples to demonstrate how the MMMM can be applied to analyze aggregation, network, and spatial analyses.
+<style>
+/* Float the table of contents on the right-hand side */
+@media (min-width: 768px) {
+  .main-container .row > div:first-child { width: 0 !important; padding: 0 !important; }
+  .main-container .row > .toc-content {
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding-right: 23%;
+  }
+  #TOC.tocify { left: auto; right: 1.5%; margin-left: 0; }
+}
+</style>
 
--   [Example 1: All Friends or Just Your Best Friend?](#e1) (network regression)
--   [Example 2: Air Quality and Home Values](#e2) (spatial regression)
--   [Example 3: Political Parties and the Survival of Coalition Governments](#e3) (aggregation regression)
+This vignette presents three examples that show how the multiple-membership multilevel model (MMMM) can be applied to network, spatial, and aggregation problems: peer influence in a friendship network, neighbourhood effects on home values, and how coalition parties shape government survival.
 
-### Example 1: All friends, or just your best friend? {#e1}
+# All friends, or just your best friend? (network regression)
 
-In this example, our core question is: How does peer influence add up across a friendship group?
-We look at how peers influence an individual's behavior in terms of smoking.
+The core question in this example is how peer influence adds up across a friendship group, using smoking as the behaviour of interest.
 
-We use the CILS4EU Germany Wave 1 friendship network data, which covers classroom-level friendships in German secondary schools.
+The data are the CILS4EU Germany Wave 1 friendship network, which covers classroom-level friendships in German secondary schools.
 Students nominated up to five friends and ranked them by closeness (1 = best friend, 5 = fifth-closest).
-We predict Wave 2 smoking from Wave 1 friends' smoking, using the one-year lag so a student's future behaviour cannot have caused her current friends' behaviour.
+Wave 2 smoking is predicted from Wave 1 friends' smoking; the one-year lag ensures a student's future behaviour cannot have caused her current friends' behaviour.
 
-```{r, message = FALSE, warning = FALSE}
-#| code-fold: true
-library(arrow)
+```{r, echo = FALSE}
 library(dplyr)
 library(bml)
-
-```
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| code-fold: true
-.cils_dir  <- "/Users/komal.npn/bml/data"
-nodedat    <- read_feather(file.path(.cils_dir, "nodedat.feather"))
-edgedat    <- read_feather(file.path(.cils_dir, "edgedat.feather"))
-nodedat_w2 <- read_feather(file.path(.cils_dir, "nodedat-w2.feather"))
 ```
 
-```{r, message = FALSE, warning = FALSE}
-#| code-fold: true
+The model uses the following variables:
 
-# Verify rank as an integer (1 = best friend, 5 = fifth-closest)
-edgedat <- edgedat |>
-  mutate(rank = as.integer(rank))
+| Variable        | Role      | Meaning                                                   |
+|-----------------|-----------|-----------------------------------------------------------|
+| `ego`           | id        | Focal student (the group in the mm structure)             |
+| `alter`         | id        | Nominated friend (the member)                             |
+| `smoking_w2`    | outcome   | Ego's Wave 2 smoking, one year later                      |
+| `smoking_ego`   | predictor | Ego's own Wave 1 smoking                                  |
+| `gender_ego`    | predictor | Ego's gender                                              |
+| `smoking_alter` | predictor | Friend's Wave 1 smoking (aggregated across friends)       |
+| `rank`          | weight    | Friendship closeness (1 = best friend, 5 = fifth-closest) |
+| `n`             | weight    | Number of friends nominated by the ego                    |
 
-# Build long-format: one row per (ego, alter) pair
-w2_outcome <- nodedat_w2 |> select(youthid, smoking_w2 = student_smoking)
-ego_vars   <- nodedat    |> select(youthid, smoking_ego = student_smoking,
-                                            gender_ego  = student_gender)
-alter_vars <- nodedat    |> select(youthid, smoking_alter = student_smoking)
+Two models are fit and compared.
+The economics standard for this kind of network problem is the linear-in-means model: every friend carries equal weight, so what matters is the average across all of them, implying that each friend exerts the same influence.
+The alternative is that influence is concentrated: a single close friend drives most of the effect while looser ties matter little.
+`bml` fits both and compares them directly, changing only one line of the weight function.
 
-cils_long <-
-  edgedat |>
-  inner_join(ego_vars,   by = c("youthid_from" = "youthid")) |>
-  inner_join(alter_vars, by = c("youthid_to"   = "youthid")) |>
-  inner_join(w2_outcome, by = c("youthid_from" = "youthid")) |>
-  group_by(youthid_from) |> mutate(n = n()) |> ungroup() |>
-  rename(ego = youthid_from, alter = youthid_to)
-```
+## Model 1: linear-in-means
 
-In terms of modeling, we will be fitting two different models for demonstration and we will comparing them. 
-The economics standard for this network analysis problem is the linear-in-means model: every friend carries equal weight, so what matters is the average across all of them. This would mean that every friend has equal influence on the smoking behavior of an individual. 
-A contention to that assumption would be that not every friend has the same level of influence in our lives and the weight should be proportional to their effect. So the opposite our first assumption of equal weights would be that a single close friend drives most of the influence while looser ties matter little.
-`bml` lets us fit both and compare them directly, by changing one line of the weight function.
+Every friend receives equal weight, `w ~ 1/n`, so the peer term is the simple average of all nominated friends' Wave 1 smoking.
 
-#### Model 1: linear-in-means
-
-Here, every friend gets equal weight, `w ~ 1/n`.
-The peer term is the simple average of all nominated friends' Wave 1 smoking.
-
-```{r}
+```{r, eval = FALSE}
 mod_lim <-
   bml(
-    smoking_w2 ~ smoking_ego + gender_ego +
-      mm(
-        id   = id(alter, ego),
-        vars = bml::vars(smoking_alter),
-        fn   = fn(w ~ 1/n, c = TRUE),
-        RE   = TRUE
+    smoking_w2 ~ smoking_ego + gender_ego +     # outcome ~ ego-level predictors
+      mm(                                        # multiple-membership term (the peers)
+        id   = id(alter, ego),                   # member = alter (friend), group = ego
+        vars = vars(smoking_alter),              # member variable to aggregate
+        fn   = fn(w ~ 1/n, c = TRUE),            # equal weights, renormalised to sum to 1
+        RE   = TRUE                              # member-level random effect
       ),
-    family   = "Gaussian",
-    n.iter   = 5000,
-    n.burnin = 1000,
-    n.chains = 3,
-    seed     = 1,
-    data     = cils_long
+    family = "Gaussian",                         # continuous outcome
+    data   = cils_long
   )
-
-summary(mod_lim)
 ```
 
-#### Model 2: best friend only
+```{r, echo = FALSE}
+mod_lim <- .load("mod_lim")
+```
 
-Here, only the closest-ranked friend contributes and all other friends are not considered.
-`rank == min(rank)` evaluates to `TRUE` for the closest-ranked friend within each ego's friend set (rank 1), putting all weight on that friend.
+## Model 2: best friend only
+
+Only the closest-ranked friend contributes; all others are dropped.
+`rank == min(rank)` evaluates to `TRUE` for the closest-ranked friend within each ego's friend set (rank 1), placing all weight on that friend.
 With `c = TRUE` the weight is renormalised to 1 within each ego, so the peer term becomes that single friend's smoking.
 
-```{r}
+```{r, eval = FALSE}
 mod_bf <-
   bml(
     smoking_w2 ~ smoking_ego + gender_ego +
       mm(
         id   = id(alter, ego),
-        vars = bml::vars(smoking_alter),
-        fn   = fn(w ~ rank == min(rank), c = TRUE),
+        vars = vars(smoking_alter),
+        fn   = fn(w ~ rank == min(rank), c = TRUE),  # all weight on the closest friend
         RE   = TRUE
       ),
-    family   = "Gaussian",
-    n.iter   = 5000,
-    n.burnin = 1000,
-    n.chains = 3,
-    seed     = 1,
-    data     = cils_long
+    family = "Gaussian",
+    data   = cils_long
   )
-
-summary(mod_bf)
 ```
 
-#### Comparing the two models
+```{r, echo = FALSE}
+mod_bf <- .load("mod_bf")
+```
 
-`bml` provides `tidy()` and `glance()` methods, so we can pull estimates and fit statistics into tidy tibbles and compare the models side by side.
+## Comparing the two models
+
+`bmlCompare()` lays out the coefficient estimates and fit statistics of several models side by side, one column per model, with readable labels supplied through `labels`.
 
 ```{r}
-#| code-fold: true
-# Peer effect and fit side by side
-coef_comparison <- bind_rows(
-  tidy(mod_lim) |> mutate(model = "Linear-in-means"),
-  tidy(mod_bf)  |> mutate(model = "Best friend only")
-) |>
-  filter(grepl("smoking_alter", term)) |>
-  select(model, estimate, conf.low, conf.high)
-
-coef_comparison
-
-bind_rows(
-  glance(mod_lim) |> mutate(model = "Linear-in-means"),
-  glance(mod_bf)  |> mutate(model = "Best friend only")
-) |>
-  select(model, DIC, nobs)
+bmlCompare(
+  "Linear-in-means"  = mod_lim,
+  "Best friend only" = mod_bf,
+  terms  = c("Intercept", "smoking_ego", "gender_ego", "smoking_alter (mm.1)"),
+  labels = c("Intercept", "Own smoking (W1)", "Gender", "Peers' smoking (W1)")
+)
 ```
 
-We can see that both models find a positive peer effect. It means that students whose friends smoke more tend to smoke more themselves one year later, over and above their own Wave 1 smoking.
-The own-smoking coefficient (`smoking_ego` of 0.365 in the first model and 0.358 in the second one) dominates in both models, which is expected since past behaviour is the strongest predictor of future behaviour.
+Both models find a positive peer effect: students whose friends smoke more tend to smoke more themselves one year later, over and above their own Wave 1 smoking.
+The own-smoking coefficient (about 0.36 in both models) dominates, which is expected since past behaviour is the strongest predictor of future behaviour.
 
 The peer effect is present but modest.
-Under linear-in-means, averaging across all nominated friends gives a coefficient
-of 0.04 (CI [0.00, 0.08]), which just clears zero.
-Limiting to just the best friend gives 0.03 (CI [0.005, 0.06]), which is smaller in point estimate but has a tighter in interval  which can be attributed to the fact that the best-friend model discards the noisier lower-ranked ties.
+Under linear-in-means, averaging across all nominated friends gives a coefficient of about 0.04 (CI [0.00, 0.08]), which just clears zero.
+Limiting to the best friend gives about 0.03 (CI [0.005, 0.06]): a smaller point estimate but a tighter interval, because the best-friend model discards the noisier lower-ranked ties.
 
-Looking at the DIC, the best-friend model fits better (15,811 vs 16,866), a gap of over 1000. Focusing on the single closest friend is a better description of how peer influence on smoking aggregates than treating all friends as equally important.
+On fit, the best-friend model is clearly preferred (DIC 15,811 vs 16,866, a gap of over 1,000).
+Focusing on the single closest friend describes how peer influence on smoking aggregates better than treating all friends as equally important.
 
-### Example 2: Air quality and home values {#e2}
+# Air quality and home values (spatial regression)
 
-This **spatial-analysis** example is based on [Harrison & Rubinfeld (1978)](https://www.sciencedirect.com/science/article/abs/pii/0095069678900062), who study the effect of air quality on home values, and the re-analysis by [Bivand (2017)](https://openjournals.wu.ac.at/region/paper_107/107.html).
+This **spatial** example is based on [Harrison & Rubinfeld (1978)](https://www.sciencedirect.com/science/article/abs/pii/0095069678900062), who study the effect of air quality on home values, and the re-analysis by [Bivand (2017)](https://openjournals.wu.ac.at/region/paper_107/107.html).
 
-Example 1 asked how a person's friends combine to influence them.
-This example asks a spatial version of the same aggregation question: how do the tracts(units of neighbours) around a neighbourhood combine to shape its home values? 
+The first example asked how a person's friends combine to influence them.
+This example asks the spatial version of the same aggregation question: how do the surrounding tracts combine to shape a neighbourhood's home values?
 
-We use the 1970 Boston census tract data from Harrison and Rubinfeld (1978), treating each tract's outcome as a function of its own attributes and those of its neighbours.
+The 1970 Boston census tract data are used, treating each tract's outcome as a function of its own attributes and those of its neighbours.
+The question added to the classical approach is whether every neighbour should count equally, or whether tracts weigh their neighbours by how similar they are.
 
-The question we add to the classical modeling approach is whether it is beneficial when every neighbour counts equally, or when tracts weigh their neighbours by how similar they are.
+## Data and spatial weights
 
-#### Data and spatial weights
-
-```{r, message = FALSE, warning = FALSE}
-#| code-fold: true
+```{r, echo = FALSE}
 library(spData)
 library(sf)
 library(spdep)
 library(spatialreg)
 library(ggplot2)
+library(dplyr)
 library(bml)
 
 boston <-
@@ -192,32 +181,6 @@ boston <-
 
 boston_nb    <- poly2nb(as_Spatial(boston), row.names = boston$tid)
 boston_wlist <- nb2listw(boston_nb, style = "W")
-```
-
-The data are the 1970 Boston Standard Metropolitan Statistical Area census tracts that ship with `spData`.
-After dropping tracts with no housing and tracts that are entirely institutional, 506 tracts remain.
-Each tract records its median home value, the local nitric-oxides concentration (the air-quality measure), and a handful of standard housing and demographic covariates.
-
-We model `lnCMEDV`, the log of median home value, to tame the skew in raw prices, and we standardise every covariate so the coefficients are directly comparable.
-The variables of our interest are:
-
-| Variable  | Role      | Meaning                                                  |
-|-----------|-----------|----------------------------------------------------------|
-| `tid`     | id        | Tract id (1 to 506)                                      |
-| `lnCMEDV` | outcome   | Log median home value, the quantity we model             |
-| `NOX`     | predictor | Nitric-oxides concentration, the air-quality measure     |
-| `CRIM`    | predictor | Per-capita crime rate                                    |
-| `RM`      | predictor | Average rooms per dwelling                               |
-| `DIS`     | predictor | Weighted distance to Boston employment centres           |
-| `AGE`     | predictor | Share of units built before 1940                         |
-
-#### Baseline bml: equal weights
-
-The `bml` baseline uses the weighting `w ~ 1/n`, giving every neighbour equal weight. This is the conventional MMMM where the membership structure is there and variable weights are permitted but in this case, the weights are fixed.
-To prepare the data for bml, we build the long-format data first, then we fit the model.
-
-```{r}
-#| code-fold: true
 
 nb2df <- function(nb) {
   data.frame(
@@ -236,46 +199,6 @@ boston_df <-
       rename_with(~ paste0(.x, "_nb")),
     by = c("tid_nb" = "tid_nb")
   )
-```
-
-```{r}
-mod_bml <-
-  bml(
-    lnCMEDV ~ NOX + CRIM + RM + DIS + AGE +
-      mm(
-        id   = id(tid_nb, tid),                       # member id, group id
-        vars = bml::vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
-        fn   = fn(w ~ 1/n, c = TRUE),                 # equal weights, normalised to sum 1
-        RE   = TRUE                                    # include neighbour-level random effect
-      ),
-    family   = "Gaussian",
-    n.iter   = 5000,
-    n.burnin = 500,
-    n.chains = 3,
-    seed     = 42,
-    data     = boston_df
-  )
-
-summary(mod_bml)
-```
-
-#### Parameterised weights: similarity across covariates
-
-Equal weighting assumes every neighbour matters the same regardless of how similar it is to the focal tract.
-A natural alternative is that tracts are more strongly influenced by neighbours that resemble them, a spatial homophily effect.
-Rather than collapse similarity into a single number, we let the weight depend on the dissimilarity in each covariate separately, using the functional form from Rosche (2026):
-
-$$
-w_{ij} = \frac{1}{1 + (n_i - 1)\exp\!\bigl(-(b_0 + b_1 \cdot d^{\text{CRIM}}_{ij} + b_2 \cdot d^{\text{AGE}}_{ij})\bigr)}
-$$
-
-Each `d` is the standardised absolute difference between a focal tract and its neighbour on that covariate.
-When all the `b`'s are zero this collapses to `1/n_i`, the equal-weight baseline.
-A negative coefficient means neighbours that are similar on that covariate (low `d`) receive more weight; a positive coefficient means dissimilar neighbours dominate.
-Letting the two dissimilarities enter on their own lets the model decide which kind of similarity drives the aggregation, instead of us imposing a single combined measure, for example by adding up the absolute differences.
-
-```{r}
-#| code-fold: true
 
 boston_df2 <- boston_df |>
   mutate(
@@ -284,42 +207,104 @@ boston_df2 <- boston_df |>
   )
 ```
 
-```{r, warning = FALSE}
+The data are the 1970 Boston Standard Metropolitan Statistical Area census tracts shipped with `spData`.
+After dropping tracts with no housing and tracts that are entirely institutional, 506 tracts remain.
+Each tract records its median home value, the local nitric-oxides concentration (the air-quality measure), and a handful of standard housing and demographic covariates.
 
+The outcome is `lnCMEDV`, the log of median home value, which tames the skew in raw prices; every covariate is standardised so the coefficients are directly comparable.
+The variables of interest are:
+
+| Variable  | Role      | Meaning                                              |
+|-----------|-----------|------------------------------------------------------|
+| `tid`     | id        | Tract id (1 to 506)                                  |
+| `lnCMEDV` | outcome   | Log median home value, the quantity modelled         |
+| `NOX`     | predictor | Nitric-oxides concentration, the air-quality measure |
+| `CRIM`    | predictor | Per-capita crime rate                                |
+| `RM`      | predictor | Average rooms per dwelling                           |
+| `DIS`     | predictor | Weighted distance to Boston employment centres       |
+| `AGE`     | predictor | Share of units built before 1940                     |
+
+## Baseline bml: equal weights
+
+The baseline uses `w ~ 1/n`, giving every neighbour equal weight.
+This is the conventional MMMM: the membership structure is present and variable weights are permitted, but here the weights are fixed.
+
+```{r, eval = FALSE}
+mod_bml <-
+  bml(
+    lnCMEDV ~ NOX + CRIM + RM + DIS + AGE +      # outcome ~ own-tract covariates
+      mm(
+        id   = id(tid_nb, tid),                  # member = neighbour tract, group = focal tract
+        vars = vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),  # neighbour covariates to aggregate
+        fn   = fn(w ~ 1/n, c = TRUE),            # equal weights, normalised to sum to 1
+        RE   = TRUE                              # neighbour-level random effect
+      ),
+    family = "Gaussian",
+    data   = boston_df
+  )
+```
+
+```{r, echo = FALSE}
+mod_bml <- .load("mod_bml")
+```
+
+## Parameterised weights: similarity across covariates
+
+Equal weighting assumes every neighbour matters the same regardless of how similar it is to the focal tract.
+A natural alternative is that tracts are more strongly influenced by neighbours that resemble them, a spatial homophily effect.
+Rather than collapse similarity into a single number, the weight is allowed to depend on the dissimilarity in each covariate separately, using the functional form from Rosche (2026):
+
+$$
+w_{ij} = \frac{1}{1 + (n_i - 1)\exp\!\bigl(-(b_0 + b_1 \cdot d^{\text{CRIM}}_{ij} + b_2 \cdot d^{\text{AGE}}_{ij})\bigr)}
+$$
+
+Each `d` is the standardised absolute difference between a focal tract and its neighbour on that covariate.
+When all the `b`'s are zero this collapses to `1/n_i`, the equal-weight baseline.
+A negative coefficient means neighbours that are similar on that covariate (low `d`) receive more weight; a positive coefficient means dissimilar neighbours dominate.
+Letting the two dissimilarities enter on their own lets the model decide which kind of similarity drives the aggregation, instead of imposing a single combined measure.
+
+```{r, eval = FALSE}
 mod_bml_w <-
   bml(
     lnCMEDV ~ NOX + CRIM + RM + DIS + AGE +
       mm(
         id   = id(tid_nb, tid),
-        vars = bml::vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
-        # Weight function from Rosche (2026): nests 1/n when all b's are 0
+        vars = vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
+        # weight as a function of covariate dissimilarity; nests 1/n when all b's are 0
         fn   = fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * d_CRIM + b2 * d_AGE))), c = TRUE),
         RE   = TRUE
       ),
-    family   = "Gaussian",
-    priors   = list("b.w.1 ~ dnorm(0, 1)"),   # weakly informative; prevents exp() overflow
-    n.iter   = 5000,
-    n.burnin = 500,
-    n.chains = 3,
-    seed     = 42,
-    data     = boston_df2
+    family = "Gaussian",
+    priors = list("b.w.1 ~ dnorm(0, 1)"),        # weakly informative; prevents exp() overflow
+    data   = boston_df2
   )
-
-summary(mod_bml_w)
-monetPlot(mod_bml_w, "b.w.1[2]", label = "Crime-similarity weight")
 ```
 
-The crime coefficient `b.w.1[2]` is −1.78 (CI [−2.54, −1.18]), clearly negative, so neighbours with similar crime levels carry more weight.
-The age coefficient `b.w.1[3]` is 0.73 (CI [0.10, 1.53]), pointing the other way, with neighbours with different age profiles carry more weight.
+```{r, echo = FALSE}
+mod_bml_w <- .load("mod_bml_w")
+```
+
+The estimated weight-function parameters are:
+
+```{r}
+bmlCompare(
+  "Similarity weights" = mod_bml_w,
+  component = "weights",
+  terms  = c("X0 (w.1)", "d_CRIM (w.1)", "d_AGE (w.1)"),
+  labels = c("Weight intercept (b0)", "Crime dissimilarity", "Age dissimilarity")
+)
+```
+
+The crime-dissimilarity coefficient is about −1.78 (CI [−2.54, −1.18]), clearly negative, so neighbours with similar crime levels carry more weight.
+The age-dissimilarity coefficient is about 0.73 (CI [0.10, 1.53]), pointing the other way: neighbours with different age profiles carry more weight.
 The model picks up two kinds of similarity at once, in opposite directions.
 
-#### Do the weights actually vary with similarity?
+## Do the weights actually vary with similarity?
 
-A direct check to see this is by plotting the estimated weight each neighbour received against the crime dissimilarity between that neighbour and its focal tract. If crime homophily is driving the weights, low-`d_CRIM` pairs should cluster toward high weights and high-`d_CRIM` pairs toward low weights.
+A direct check plots the estimated weight each neighbour received against the dissimilarity between that neighbour and its focal tract.
+If crime homophily drives the weights, low-`d_CRIM` pairs should cluster toward high weights and high-`d_CRIM` pairs toward low weights.
 
-```{r, fig.width = 6, fig.height = 4}
-#| code-fold: true
-
+```{r, fig.width = 6, fig.height = 4, echo = FALSE}
 w_mat <- mod_bml_w$w[[1]]   # 506 x 15 matrix, NA padded
 
 weight_df <- boston_df2 |>
@@ -334,17 +319,20 @@ weight_long <- weight_df |>
 
 ggplot(weight_long, aes(x = dissimilarity, y = weight)) +
   geom_point(alpha = 0.15, size = 0.8) +
-  geom_smooth(method = "loess", se = FALSE, color = "#2c7bb6") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "#2c7bb6") +
   facet_wrap(~ covariate, scales = "free_x") +
   labs(x = "Dissimilarity", y = "Estimated neighbour weight") +
   theme_minimal()
 ```
 
-The two panels show the two similarity effects taking effect in opposite directions. The weight falls as crime dissimilarity rises (the homophily the negative crime coefficient pointed to). Weight rises gently with age dissimilarity, matching the positive age coefficient. Each panel holds only a partial view, since every neighbour's weight reflects both dissimilarities at once, but the opposing slopes are visible.
+The two panels show the similarity effects acting in opposite directions.
+The weight falls as crime dissimilarity rises (the homophily the negative crime coefficient pointed to), while it rises gently with age dissimilarity, matching the positive age coefficient.
+Each panel holds only a partial view, since every neighbour's weight reflects both dissimilarities at once, but the opposing slopes are visible.
 
-#### Benchmark: spatial Durbin error model
+## Benchmark: spatial Durbin error model
 
-The classical spatial benchmark for spatial modeling problems like this is the SDEM, which models a tract's outcome as a function of its own covariates, its neighbours' covariates, and a spatially correlated error. We can fit it as a yardstick to compare our models to.
+The classical spatial benchmark is the SDEM, which models a tract's outcome as a function of its own covariates, its neighbours' covariates, and a spatially correlated error.
+It fits in seconds (no MCMC) and serves as a yardstick for the bml models.
 
 ```{r}
 mod_sdem <- errorsarlm(
@@ -353,138 +341,196 @@ mod_sdem <- errorsarlm(
   listw  = boston_wlist,
   Durbin = ~ NOX + CRIM + RM + DIS + AGE   # include neighbour-covariate effects (WX)
 )
-summary(mod_sdem)
 ```
 
-The own and neighbour coefficients line up with the equal-weight bml model, which is the reassurance we want, as the bml baseline lines up with the classical benchmark.
-If equal-weight neighbour effects were all we wanted, `errorsarlm` would serve, and it would be faster.
-What the parameterised weight function adds is the aggregation itself as something to estimate, which the SDEM cannot do.
+## Model comparison
 
-#### Model comparison
+The two bml models and the SDEM benchmark are placed in one table.
+The SDEM's neighbour-covariate (`lag.`) terms are matched to the bml neighbour effects, and all rows are given readable labels.
 
-`bml` ships with `tidy()` and `glance()` methods, so we can pull fit statistics straight into a table without writing our own helpers.
+```{r, echo = FALSE}
+fmt_ci <- function(est, lo, hi) sprintf("%.3f (%.3f, %.3f)", est, lo, hi)
 
-```{r}
-#| code-fold: true
-bind_rows(
-  glance(mod_bml)   |> mutate(model = "Equal weights (1/n)"),
-  glance(mod_bml_w) |> mutate(model = "Similarity weights")
+# Map bml mm-neighbour terms ("NOX_nb (mm.1)") and SDEM lag terms onto a common
+# neighbour code ("NOX (nb)") so the rows line up across model columns.
+relabel <- function(t) {
+  t <- sub(" \\(mm\\.1\\)$", "", t)                              # drop the mm tag
+  ifelse(grepl("_nb$", t), paste0(sub("_nb$", "", t), " (nb)"), t)
+}
+
+# Two bml models: fixed effects + weight parameters
+tab_bml <- bind_rows(
+  tidy(mod_bml,   component = "all") |> mutate(model = "Equal weights (1/n)"),
+  tidy(mod_bml_w, component = "all") |> mutate(model = "Similarity weights")
 ) |>
-  select(model, DIC)
+  filter(component %in% c("fixed", "weights")) |>
+  transmute(model, term = relabel(term), estimate, conf.low, conf.high)
+
+# SDEM by hand; relabel lag.X -> X (nb) to match the bml neighbour effects
+sc <- summary(mod_sdem)$Coef
+tab_sdem <- tibble::tibble(
+  term      = rownames(sc),
+  estimate  = sc[, "Estimate"],
+  conf.low  = sc[, "Estimate"] - 1.96 * sc[, "Std. Error"],
+  conf.high = sc[, "Estimate"] + 1.96 * sc[, "Std. Error"]
+) |>
+  mutate(
+    term  = sub("^\\(Intercept\\)$", "Intercept", term),
+    term  = sub("^lag\\.(.*)$", "\\1_nb", term),
+    term  = relabel(term),
+    model = "SDEM (benchmark)"
+  ) |>
+  select(model, term, estimate, conf.low, conf.high)
+
+term_levels <- c("Intercept", "NOX", "CRIM", "RM", "DIS", "AGE",
+                 "NOX (nb)", "CRIM (nb)", "RM (nb)", "DIS (nb)", "AGE (nb)",
+                 "X0 (w.1)", "d_CRIM (w.1)", "d_AGE (w.1)")
+
+label_map <- c(
+  "Intercept"    = "Intercept",
+  "NOX"          = "Air quality (NOX)",
+  "CRIM"         = "Crime",
+  "RM"           = "Rooms",
+  "DIS"          = "Distance to employment",
+  "AGE"          = "Pre-1940 share",
+  "NOX (nb)"     = "Air quality (neighbours)",
+  "CRIM (nb)"    = "Crime (neighbours)",
+  "RM (nb)"      = "Rooms (neighbours)",
+  "DIS (nb)"     = "Distance (neighbours)",
+  "AGE (nb)"     = "Pre-1940 (neighbours)",
+  "X0 (w.1)"     = "Weight intercept (b0)",
+  "d_CRIM (w.1)" = "Crime dissimilarity",
+  "d_AGE (w.1)"  = "Age dissimilarity"
+)
+
+bind_rows(tab_bml, tab_sdem) |>
+  mutate(cell = fmt_ci(estimate, conf.low, conf.high),
+         term = factor(term, levels = term_levels)) |>
+  arrange(term) |>
+  select(model, term, cell) |>
+  tidyr::pivot_wider(names_from = model, values_from = cell) |>
+  mutate(Term = label_map[as.character(term)], .keep = "unused", .before = 1) |>
+  mutate(across(-Term, ~ tidyr::replace_na(.x, "—"))) |>
+  knitr::kable()
 ```
 
-The similarity-weighted model fits better (DIC 298.5 vs 308.5). Letting the weights depend on crime and age similarity improves on equal weighting.
+Model fit (the SDEM is a maximum-likelihood model and has no DIC, so only the two bml models are compared on fit):
 
-### Example 3: Political parties and the survival of coalition governments {#e3}
-The previous two examples asked how peers or neighbours combine to shape an outcome. This example asks a similar question about coalition politics: how do the parties in a coalition combine to determine whether the government survives?
-Each coalition government is composed of multiple parties, and each party brings its own features like organisational traits, funding structure, and internal cohesion. The MMMM question is not just whether party characteristics matter, but how they aggregate from the party level up to the government level, and which parties have a greater effect.
+```{r, echo = FALSE}
+tibble::tibble(
+  Model = c("Equal weights (1/n)", "Similarity weights"),
+  DIC   = c(glance(mod_bml)$DIC, glance(mod_bml_w)$DIC)
+) |>
+  knitr::kable(digits = 0)
+```
 
-#### The Data
-The `coalgov` dataset ships with the package. Each row is one party's participation in one government: 2,077 party-government pairs spanning 628 governments and 312 parties across 29 countries.
+The own and neighbour coefficients from the equal-weight bml model line up with the SDEM, the reassurance worth having: the bml baseline reproduces the classical benchmark.
+If equal-weight neighbour effects were all that was needed, `errorsarlm` would serve, and it would be faster.
+What the parameterised weight function adds is the aggregation itself as something to estimate, which the SDEM cannot do.
+On fit, the similarity-weighted model improves on equal weighting (DIC 299 vs 308). The SDEM, a maximum-likelihood model, has no DIC, so it serves only as a coefficient yardstick.
 
-```{r, warning=FALSE}
-#| code-fold: true
-library(bml)
+# Political parties and the survival of coalition governments (micro-macro regression)
+
+The previous two examples asked how peers or neighbours combine to shape an outcome.
+This example asks the same of coalition politics: how do the parties in a coalition combine to determine whether the government survives?
+Each coalition government is composed of multiple parties, and each party brings its own features such as organisational traits, funding structure, and internal cohesion.
+The MMMM question is not just whether party characteristics matter, but how they aggregate from the party level up to the government level, and which parties weigh more.
+
+This example also keeps the MCMC control arguments (`n.iter`, `n.burnin`, `n.chains`, `seed`) visible in the calls, because convergence and posterior summaries are the focus of the final section.
+
+## The data
+
+The `coalgov` dataset ships with the package.
+Each row is one party's participation in one government: 2,077 party-government pairs spanning 628 governments and 312 parties across 29 countries.
+
+```{r, echo = FALSE}
 library(dplyr)
 library(ggplot2)
-
-data(coalgov)
-
-#The weight function will use `prime`, but it is stored as `TRUE`/`FALSE`, and `fn()` does not coerce logicals inside the formula, so we cast it to an integer first.
-coalgov$prime <- as.integer(coalgov$prime)
-
-# Pre-compute a clean smallest-party indicator for the proportional-vs-pivotal model.
-# Computing it here (rather than as (pseat == min(pseat)) inside fn()) breaks ties
-# so exactly one party is flagged per coalition, and keeps the weight function stable.
-coalgov <- coalgov |>
-  group_by(gid) |>
-  mutate(is_smallest = as.integer(pseat == min(pseat) & pid == pid[which.min(pseat)])) |>
-  ungroup()
+library(bml)
 ```
 
-| Variable    | Level        | Meaning    |
-|-------------|--------------|----------------------------------------------------------------------|
-| `gid`       | id           | Government identifier (the group)                                    |
-| `pid`       | id           | Party identifier (the member)                                        |
-| `dur_wkb`   | outcome      | Government duration in days                                          |
-| `event_wkb` | outcome      | 1 = government fell from conflict; 0 = still standing when observed  |
-| `majority`  | government   | 1 = majority coalition, 0 = minority                                |
-| `mwc`       | government   | 1 = minimal winning coalition, 0 = oversized                        |
-| `n`         | government   | Number of parties in the coalition                                  |
-| `finance`   | party        | Party's dependence on outside money rather than dues (standardised) |
-| `prime`     | party        | TRUE if the party holds the prime ministership, FALSE otherwise     |
+| Variable    | Level      | Meaning                                                             |
+|-------------|------------|---------------------------------------------------------------------|
+| `gid`       | id         | Government identifier (the group)                                   |
+| `pid`       | id         | Party identifier (the member)                                       |
+| `dur_wkb`   | outcome    | Government duration in days                                         |
+| `event_wkb` | outcome    | 1 = government fell from conflict; 0 = still standing when observed |
+| `majority`  | government | 1 = majority coalition, 0 = minority                                |
+| `mwc`       | government | 1 = minimal winning coalition, 0 = oversized                        |
+| `n`         | government | Number of parties in the coalition                                  |
+| `finance`   | party      | Party's dependence on outside money rather than dues (standardised) |
+| `prime`     | party      | TRUE if the party holds the prime ministership, FALSE otherwise     |
 
-The outcome is the pair `(dur_wkb, event_wkb)`, which is how survival data is recorded: a duration, plus a flag for whether the duration ended in the event of interest (the government falling) or was merely the last point at which we observed a government still in office.
+The outcome is the pair `(dur_wkb, event_wkb)`, the standard way survival data is recorded: a duration, plus a flag for whether the duration ended in the event of interest (the government falling) or was merely the last point at which the government was observed in office.
 
-#### Equal-weight baseline
-Here, every party contributes equally to the coalition's financial profile. This is the natrul starting point, where the assumption is that each party has an equal contribution towards the outcome.
+## Equal-weight baseline
 
+Every party contributes equally to the coalition's financial profile.
+This is the natural starting point, where each party is assumed to contribute equally to the outcome.
 
-```{r}
+```{r, eval = FALSE}
 mod_eq <-
   bml(
-    Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +
+    Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +   # survival outcome ~ government covariates
       mm(
-        id   = id(pid, gid),
-        vars = vars(finance),
-        fn   = fn(w ~ 1/n, c = TRUE),
-        RE   = TRUE
+        id   = id(pid, gid),                          # member = party, group = government
+        vars = vars(finance),                         # party variable to aggregate
+        fn   = fn(w ~ 1/n, c = TRUE),                 # equal weights
+        RE   = TRUE                                   # party-level random effect
       ),
-    family   = "Weibull",
-    monitor  = TRUE,
-    n.iter   = 5000,
-    n.burnin = 500,
-    n.thin   = 1,
-    n.chains = 3,
-    seed     = 1,
+    family   = "Weibull",                             # survival (duration) outcome
+    monitor  = TRUE,                                  # store MCMC draws (needed for diagnostics/plots)
+    n.iter   = 5000,                                  # iterations per chain
+    n.burnin = 500,                                   # discard the first 500
+    n.chains = 3,                                     # number of chains
+    seed     = 1,                                     # reproducibility
     data     = coalgov
   )
-
-summary(mod_eq)
 ```
 
-The finance coefficient is negative and away from zero, which means that coalitions whose parties depend more on outside money tend to fall sooner. The coefficient is on the log-survival-time scale, so negative means shorter expected duration.
+```{r, echo = FALSE}
+mod_eq <- .load("mod_eq")
+```
 
-Before testing any alternative weighting scheme, we can run two checks. First, how much of the variation in government survival originates at the party level versus the government or country level.
+The finance coefficient is negative and away from zero: coalitions whose parties depend more on outside money tend to fall sooner.
+The coefficient is on the log-survival-time scale, so negative means shorter expected duration.
 
+Before testing an alternative weighting scheme, it helps to see how much of the variation in government survival originates at the party level.
 
 ```{r}
 varDecomp(mod_eq)
 ```
 
-Here, we see that 37% of the variance in government survival sits at the party level. Governments that share parties are more similar to each other than governments that do not, beyond anything the covariates explain. This shows that the multiple-membership structure is not just adding complexity, since more than a third of what drives coalition survival is carried by the parties themselves.
+About 37% of the variance in government survival sits at the party level.
+Governments that share parties are more similar to each other than governments that do not, beyond anything the covariates explain.
+The multiple-membership structure is not just added complexity: more than a third of what drives coalition survival is carried by the parties themselves.
 
-Our second check is to see if the chains converge. We run the mcmcDiag()
-```{r}
-mcmcDiag(mod_eq, parameters = c("b.mm.1", "sigma.mm.1"))
-```
+## Letting weights vary across parties
 
-All four diagnostics are clean.
-The Gelman-Rubin statistic sits at around 1.00 for both parameters, well below the 1.1 threshold, confirming the three chains converged to the same posterior.
-Geweke z-scores and Heidelberger-Welch (p-values above 0.05) show no evidence of non-stationarity, and autocorrelation at lag 50 is negligible, indicating the chains mixed well.
+Equal weighting assumes a small junior partner shapes the coalition's financial profile exactly as much as the party holding the prime ministership.
+That assumption can be replaced with an estimate: the weight function lets the PM party carry more or less weight, with the amount estimated from the data.
 
-#### Letting weights vary based on the parties
+A mixing parameter dials between the PM's party and the other parties.
+At `b1 = 1` all weight goes to the prime minister's party; at `b1 = 0` a baseline aggregation rule is recovered.
+There are two natural baselines to blend against, and they ask different questions, so both are fit and compared.
 
-Equal weighting assumes a small junior/smaller partners shape the coalition's financial profile exactly as much as the party holding the prime ministership. We can replace that assumption with an estimate. The weight function lets the PM party carry more or less weight, with the amount estimated from the data.
-
-We frame this with mixing parameters, that can be used to dial between PM's party and other parties. At `b1 = 1`, all weight goes to the prime minister's party. At `b1 = 0`, we recover a baseline aggregation rule. There are two natural baselines to blend against, and they ask different questions, so we fit both and compare.
-
-##### Prime minister's party against equal weights
+## Prime minister's party against equal weights
 
 $$
 w_{ij} = b_1 \cdot \text{prime}_{ij} + (1 - b_1)\cdot \tfrac{1}{n_i}
 $$
 
-This first blend puts the PM party against equal weighting. At `b1 = 1`, PM's party carries all the weight. At `b1 = 0` it is the `1/n` baseline, so the parameter measures how far the data pull away from equal weights toward the prime minister's party.
+This first blend puts the PM party against equal weighting.
+At `b1 = 1`, the PM party carries all the weight; at `b1 = 0` it is the `1/n` baseline, so the parameter measures how far the data pull away from equal weights toward the prime minister's party.
 
-```{r, warning = FALSE}
+```{r, eval = FALSE}
 mod_pm_n <-
   bml(
     Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +
       mm(
         id   = id(pid, gid),
         vars = vars(finance),
-        fn   = fn(w ~ b1 * prime + (1 - b1) * (1/n), c = TRUE),
+        fn   = fn(w ~ b1 * prime + (1 - b1) * (1/n), c = TRUE),  # blend PM party vs equal weights
         RE   = TRUE
       ),
     family   = "Weibull",
@@ -492,45 +538,37 @@ mod_pm_n <-
     monitor  = TRUE,
     n.iter   = 5000,
     n.burnin = 500,
-    n.thin   = 1,
     n.chains = 3,
     seed     = 1,
     data     = coalgov
   )
-
-summary(mod_pm_n)
 ```
 
-The weight parameter `b.w.1` (prime) is 0.21, with a 95% interval [-0.10, 0.52]. The estimate is positive, so the data leans towards the prime minister's party carrying more weight than equal aggregation would assign it, but the interval includes zero, so equal weighting cannot be ruled out. The finance effect is -0.27 [-0.52, -0.03], close to one in the baseline's -0.32 and still clearly negative, so the story that coalitions reliant on outside money fall sooner holds whether or not the PM party is up-weighted.
-
-```{r}
-monetPlot(mod_pm_n, "b.w.1", label = "b1: 1 = all weight on PM party, 0 = equal weights")
+```{r, echo = FALSE}
+mod_pm_n <- .load("mod_pm_n")
 ```
 
-The posterior density is a single hump centred at about 0.21, just right of the solid zero line. Most of its mass lies to the right of zero, but a clear slice falls left of the line, zero stays inside the interval. The heavy horizontal bar marks the 95% interval and its left end sits left of zero. In the scan panel below, the three chains overlap and cover the same range with no separation.
+The weight parameter `prime (w.1)` is about 0.21, with a 95% interval of [-0.10, 0.52].
+The estimate is positive, so the data lean toward the prime minister's party carrying more weight than equal aggregation would assign it, but the interval includes zero, so equal weighting cannot be ruled out.
+The finance effect is about -0.27 [-0.52, -0.03], close to the baseline's -0.32 and still clearly negative: the story that coalitions reliant on outside money fall sooner holds whether or not the PM party is up-weighted.
 
-```{r}
-mcmcDiag(mod_pm_n, parameters = c("b.w.1", "b.mm.1"))
-```
-
-The diagnostics are clean. Gelman-Rubin is 1.01 for `b.w.1` and 1.00 for finance, both well under the 1.1 threshold. The Geweke z-scores (-1.08, -0.96) sit within the usual bounds, the Heidelberger-Welch p-values (0.42, 0.36) are above 0.05, and lag-50 autocorrelation is small (0.03, 0.07). The chains converged, are stationary, and mixed well.
-
-##### Prime minister against seat share
+## Prime minister against seat share
 
 $$
 w_{ij} = b_1 \cdot \text{prime}_{ij} + (1 - b_1)\cdot \text{pseat}_{ij}
 $$
 
-This second blend includes the PM party against seat-share proportionality. At `b1 = 0` weights track each party's seat share, so here the parameter measures how far the data pull away from proportionality toward the prime minister's party.
+This second blend puts the PM party against seat-share proportionality.
+At `b1 = 0` weights track each party's seat share, so the parameter measures how far the data pull away from proportionality toward the prime minister's party.
 
-```{r, warning = FALSE}
+```{r, eval = FALSE}
 mod_pm_p <-
   bml(
     Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +
       mm(
         id   = id(pid, gid),
         vars = vars(finance),
-        fn   = fn(w ~ b1 * prime + (1 - b1) * pseat, c = TRUE),
+        fn   = fn(w ~ b1 * prime + (1 - b1) * pseat, c = TRUE),  # blend PM party vs seat share
         RE   = TRUE
       ),
     family   = "Weibull",
@@ -538,56 +576,58 @@ mod_pm_p <-
     monitor  = TRUE,
     n.iter   = 5000,
     n.burnin = 500,
-    n.thin   = 1,
     n.chains = 3,
     seed     = 1,
     data     = coalgov
   )
-
-summary(mod_pm_p)
 ```
 
-Here,`b.w.1` (prime) is 0.12 with a 95% interval [-0.23, 0.53]. The estimate is again positive with the interval spanning zero. The smaller point estimate with the wider interval means the pull toward the PM party is even weaker here than in the first parameterization. The finance effect has changed to -0.21 [-0.45, 0.02], its interval now just touching zero. 
+```{r, echo = FALSE}
+mod_pm_p <- .load("mod_pm_p")
+```
+
+Here `prime (w.1)` is about 0.12 with a 95% interval of [-0.23, 0.53].
+The estimate is again positive with the interval spanning zero.
+The smaller point estimate and wider interval mean the pull toward the PM party is even weaker than in the first parameterisation.
+The finance effect changes to about -0.21 [-0.45, 0.02], its interval now just touching zero.
+
+## Comparing the models
 
 ```{r}
-monetPlot(mod_pm_p, "b.w.1", label = "b1: 1 = all weight on PM party, 0 = proportional to seats")
+bmlCompare(
+  "Equal weights (1/n)" = mod_eq,
+  "PM vs equal (1/n)"   = mod_pm_n,
+  "PM vs seat share"    = mod_pm_p,
+  terms  = c("finance (mm.1)", "prime (w.1)"),
+  labels = c("Finance", "PM weight (b1)")
+)
 ```
 
-The density has the same shape but shifted closer to zero, centred at about 0.12. The scan panel again shows three well-mixed, overlapping chains.
+Across both blends the weight parameter is positive but its interval includes zero, so the prime minister's party does not measurably outweigh its partners in shaping the coalition's financial profile, whether compared against equal weights or against seat share.
+The finance effect weakens slightly across the table, from -0.32 at baseline to -0.27 and then -0.21, staying negative throughout except for the last blend's interval, which just touches zero.
+On fit, the PM-vs-equal-weights blend has the lowest DIC (3857 against the baseline's 3872), with PM-vs-proportional in between (3867).
+The gap is small, and it comes from a parameter that cannot be distinguished from zero.
+
+## MCMC diagnostics
+
+All models were fit with `monitor = TRUE`, which stores the posterior draws so convergence can be checked.
+The diagnostics below are for the PM-vs-equal-weights model; the other models behave the same way.
+
+`mcmcDiag()` reports the standard convergence statistics for the chosen parameters:
+
 ```{r}
-mcmcDiag(mod_pm_p, parameters = c("b.w.1", "b.mm.1"))
+mcmcDiag(mod_pm_n, parameters = c("b.w.1", "b.mm.1"))
 ```
 
-Convergence is sound. Gelman-Rubin 1.01 for `b.w.1` and for finance, Geweke z-scores near zero (-0.32, 0.38), Heidelberger-Welch p-values above 0.05 (0.37, 0.38), and negligible lag-50 autocorrelation. 
+The diagnostics are clean.
+Both Gelman-Rubin statistics are about 1.0, well under the 1.1 threshold; the Geweke z-scores fall within the usual ±2 bounds, the Heidelberger-Welch p-values exceed 0.05, and lag-50 autocorrelation is negligible.
+The chains converged, are stationary, and mixed well.
 
-
-##### Comparing the models
+`monetPlot()` shows the posterior density (top) and the trace across iterations (bottom) for a single parameter — here the weight parameter `b1`:
 
 ```{r}
-#| code-fold: true
-# Finance and weight parameters across the baseline and both blends
-bind_rows(
-  tidy(mod_eq)   |> mutate(model = "Equal weights"),
-  tidy(mod_pm_n) |> mutate(model = "PM vs equal (1/n)"),
-  tidy(mod_pm_p) |> mutate(model = "PM vs seat share")
-) |>
-  filter(grepl("finance|b.w.1", term)) |>
-  select(model, term, estimate, conf.low, conf.high)
-
-# Model fit
-bind_rows(
-  glance(mod_eq)   |> mutate(model = "Equal weights (1/n)"),
-  glance(mod_pm_n) |> mutate(model = "PM vs equal (1/n)"),
-  glance(mod_pm_p) |> mutate(model = "PM vs seat share")
-) |>
-  select(model, DIC, nobs) |>
-  arrange(DIC)
+monetPlot(mod_pm_n, "b.w.1", label = "b1: 1 = all weight on PM party, 0 = equal weights")
 ```
 
-Across both versions the weight parameter is positive but its interval includes zero, so the prime minister's party does not measurably outweigh its partners in shaping the coalition's financial profile, based on the comparison against equal weights and against seat share. 
-The finance effect weakens slightly across the table, from -0.32 at baseline to -0.27 and then -0.21, staying negative throughout except for the last version's interval that just touched zero. 
-On fit, PM vs Equal Weights has the lowest DIC (3859 against the baseline's 3868), with PM vs Proportional in between (3863). The gap is small and it comes from a parameter we cannot distinguish from zero.
-
-
-
-
+The posterior density is a single hump centred at about 0.21, just right of the zero line, with most of its mass to the right but a clear slice left of zero, so zero stays inside the 95% interval.
+In the trace panel the three chains overlap and cover the same range with no separation — the visual counterpart to the clean diagnostics above.

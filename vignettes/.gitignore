@@ -1,2 +1,10 @@
 *.html
 *.R
+!precompile.R
+!fit_models.R
+
+# Cached model fits used to precompile examples.Rmd (regenerate with fit_models.R)
+/.fits/
+
+/.quarto/
+**/*.quarto_ipynb

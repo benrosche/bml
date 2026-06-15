@@ -35,10 +35,11 @@ generics::glance
 #'   \code{monitor = TRUE}.
 #' @param component Which parameters to return:
 #'   \itemize{
-#'     \item \code{"fixed"} (default): regression coefficients (main, mm, and hm level)
+#'     \item \code{"all"} (default): all of the below
+#'     \item \code{"fixed"}: regression coefficients (main, mm, and hm level)
+#'     \item \code{"random"}: variance/scale parameters (e.g., \code{sigma},
+#'       \code{sigma.mm.*}, \code{sigma.hm.*}, Weibull \code{shape}, \code{tau})
 #'     \item \code{"weights"}: weight function parameters
-#'     \item \code{"variance"}: variance and auxiliary parameters (e.g., sigma, shape)
-#'     \item \code{"all"}: all of the above
 #'   }
 #' @param ... Additional arguments (currently unused).
 #'
@@ -75,7 +76,7 @@ generics::glance
 #' @author Benjamin Rosche \email{benrosche@@nyu.edu}
 #' @export
 tidy.bml <- function(x, conf.int = TRUE, conf.level = 0.95,
-                     component = c("fixed", "weights", "variance", "all"), ...) {
+                     component = c("all", "fixed", "random", "weights"), ...) {
 
   component <- match.arg(component)
 
@@ -89,7 +90,7 @@ tidy.bml <- function(x, conf.int = TRUE, conf.level = 0.95,
   comp <- dplyr::case_when(
     stringr::str_detect(jagsnames, "^b\\.w\\.") ~ "weights",
     stringr::str_detect(jagsnames, "^(b\\[|b\\.mm\\.|b\\.hm\\.|fix\\.)") ~ "fixed",
-    stringr::str_detect(jagsnames, "^(sigma|shape|tau)") ~ "variance",
+    stringr::str_detect(jagsnames, "^(sigma|shape|tau)") ~ "random",
     TRUE ~ "other"
   )
 

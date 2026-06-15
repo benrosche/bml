@@ -219,3 +219,9 @@ print.bml_varDecomp <- function(x, ...) {
   class(print_df) <- "data.frame"
   print(print_df, row.names = FALSE)
 }
+
+#' @exportS3Method knitr::knit_print
+knit_print.bml_varDecomp <- function(x, ...) {
+  cap <- paste0("Variance decomposition (", attr(x, "family"), ")")
+  knitr::knit_print(knitr::kable(`class<-`(x, "data.frame"), caption = cap), ...)
+}

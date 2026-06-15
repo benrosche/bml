@@ -103,7 +103,16 @@ mcmcDiag <- function(bml.out, parameters, lag = 50) {
   # Extract mcmc.list from bml.out --------------------------------------------------------------- #
 
   crMCMC <- function(bml.out, parameter, regex=TRUE) {
-    m <- coda::as.mcmc.list(bml.out$jags.out$BUGSoutput)
+    # Build the mcmc.list directly from sims.array so this works on a reloaded
+    # (readRDS) fit too: coda::as.mcmc.list() would need R2jags's
+    # as.mcmc.list.bugs S3 method, which is only registered while R2jags is loaded.
+    sa <- bml.out$jags.out$BUGSoutput$sims.array        # [iter, chain, parameter]
+    m <- coda::mcmc.list(lapply(seq_len(dim(sa)[2]), function(ch) {
+      x <- sa[, ch, , drop = FALSE]
+      dim(x) <- dim(x)[c(1, 3)]
+      colnames(x) <- dimnames(sa)[[3]]
+      coda::mcmc(x)
+    }))
     vars <- colnames(m[[1]])
 
     # Escape regex metacharacters
@@ -201,7 +210,7 @@ mcmcDiag <- function(bml.out, parameters, lag = 50) {
     ) %>%
     ungroup()
 
-  return(
+  res <-
     gelman_rubin %>%
       left_join(geweke, by = "Parameter") %>%
       left_join(heidel, by = "Parameter") %>%
@@ -210,6 +219,19 @@ mcmcDiag <- function(bml.out, parameters, lag = 50) {
       tibble::column_to_rownames("Parameter") %>%
       t() %>%
       as.data.frame()
-  )
 
+  class(res) <- c("bml_mcmcDiag", class(res))
+  res
+
+}
+
+#' @exportS3Method print bml_mcmcDiag
+print.bml_mcmcDiag <- function(x, ...) {
+  print(`class<-`(x, "data.frame"), ...)
+  invisible(x)
+}
+
+#' @exportS3Method knitr::knit_print
+knit_print.bml_mcmcDiag <- function(x, ...) {
+  knitr::knit_print(knitr::kable(`class<-`(x, "data.frame")), ...)
 }

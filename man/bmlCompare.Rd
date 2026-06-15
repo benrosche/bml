@@ -2,35 +2,66 @@
 % Please edit documentation in R/bmlCompare.R
 \name{bmlCompare}
 \alias{bmlCompare}
-\title{Compare fitted bml models in a tidy table}
+\title{Compare fitted bml models in a publication-style table}
 \usage{
-bmlCompare(..., conf.level = 0.95, component = "fixed")
+bmlCompare(
+  ...,
+  component = "all",
+  terms = NULL,
+  labels = NULL,
+  stats = c("N", "DIC"),
+  digits = 3,
+  conf.level = 0.95
+)
 }
 \arguments{
 \item{...}{Fitted \code{bml} model objects, optionally named
-(e.g., \code{bmlCompare(base = m1, weighted = m2)}). Unnamed models are
-labeled with the expressions they were passed as (e.g., \code{"m1"}).}
+(e.g., \code{bmlCompare(base = m1, weighted = m2)}). The names become the
+column headers. Unnamed models are labeled with the expressions they were
+passed as (e.g., \code{"m1"}).}
+
+\item{component}{Which parameters to include; passed to \code{\link{tidy.bml}}.
+Default: \code{"fixed"} (regression coefficients). Use \code{"all"} to also
+include weight and variance parameters.}
+
+\item{terms}{Optional character vector of term names selecting which rows to
+show and in what order (matched against the \code{term} labels from
+\code{\link{tidy.bml}}, e.g. \code{"smoking_alter (mm.1)"}). Terms not found
+are skipped with a warning. Default \code{NULL}: all terms in
+\code{component}, in their natural order.}
+
+\item{labels}{Optional character vector renaming the rows for display. Must be
+the same length as the selected \code{terms} (so supply \code{terms} when
+using \code{labels}). Default \code{NULL}: keep the original term labels.}
+
+\item{stats}{Goodness-of-fit rows to append, in order. Any of \code{"N"}
+(main-level units), \code{"n.members"} (member-level units), and
+\code{"DIC"}. Default: \code{c("N", "DIC")}. Use \code{character(0)} for none.}
+
+\item{digits}{Number of decimal places for the estimate and interval bounds.
+Default: 3.}
 
 \item{conf.level}{Width of the equal-tailed credible interval. Default: 0.95.
 Other levels require the models to be fitted with \code{monitor = TRUE}
 (see \code{\link{tidy.bml}}).}
-
-\item{component}{Which parameters to include; passed to \code{\link{tidy.bml}}.
-Default: \code{"fixed"} (regression coefficients).}
 }
 \value{
-A \code{tibble} with columns \code{model}, \code{term},
-  \code{estimate}, \code{conf.low}, \code{conf.high}, \code{N} (number of
-  main-level units), and \code{DIC}.
+A \code{data.frame} whose first column \code{Term} holds the term
+  labels (and the requested \code{stats} labels), followed by one character
+  column per model containing \code{estimate (conf.low, conf.high)} cells.
 }
 \description{
-Stacks the tidy coefficient tables of one or more fitted \code{\link{bml}}
-models into a single long table with one row per model and term, including
-model-level information (N and DIC) for easy comparison.
+Builds a side-by-side regression table from one or more fitted
+\code{\link{bml}} models: one row per term, one column per model, with cells
+formatted as \code{estimate (conf.low, conf.high)}. Goodness-of-fit rows
+(e.g. \code{N} and \code{DIC}) are appended at the bottom. The result is a
+\code{data.frame} of character cells, ready to pass to
+\code{knitr::kable()}, \code{gt::gt()}, etc.
 
-For publication-style side-by-side regression tables, the \pkg{broom}
-methods \code{\link{tidy.bml}} and \code{\link{glance.bml}} also make
-\code{modelsummary::modelsummary(list(m1, m2))} work directly on bml models.
+For the underlying numeric values (e.g. to build custom tables or plots) use
+the \pkg{broom} methods \code{\link{tidy.bml}} and \code{\link{glance.bml}}
+directly; they also make \code{modelsummary::modelsummary(list(m1, m2))} work
+on bml models.
 }
 \examples{
 \dontrun{
@@ -49,8 +80,14 @@ m2 <- bml(
   data = coalgov
 )
 
-bmlCompare(m1, m2)
-bmlCompare(equal = m1, seatshare = m2)
+bmlCompare("Equal" = m1, "Seat share" = m2)
+
+# Select and relabel specific rows
+bmlCompare(
+  "Equal" = m1, "Seat share" = m2,
+  terms  = c("majority", "cohesion (mm.1)"),
+  labels = c("Majority", "Cohesion")
+) |> knitr::kable()
 }
 
 }
