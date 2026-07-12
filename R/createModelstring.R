@@ -2,23 +2,67 @@
 # Function createModelstring
 # ================================================================================================ #
 #
-# Programmatically constructs the complete JAGS model string for Bayesian multiple-membership
-# multilevel models. This function builds the model from scratch based on the formula specification,
-# generating appropriate code for:
-#   - MM level: Weight functions and variable contributions for each mm() block
-#   - HM level: Random/fixed effects for each hm() block
-#   - Main level: Linear predictor assembly and likelihood
-#
-# The function supports:
-#   - Multiple mm() and hm() blocks with flexible configurations
-#   - Fixed coefficients via fix() syntax
-#   - Autoregressive random effects (ar = TRUE)
-#   - Multiple outcome families (Gaussian, Binomial, Weibull, Cox)
-#   - Custom priors
+# Programmatically constructs the complete JAGS model string.
+#   - MM level: weight functions, group-level feature nodes F.k (one per block), member REs/FEs
+#   - HM level: unit random/fixed effects (re()/fe() grammar)
+#   - Main level: linear predictor (features enter with coefficients b.fn.k; named-feature
+#     interactions with b.int), likelihood, log_lik for loo/waic
+#   - Priors: emitted from the resolved prior table (prior() system); raw JAGS strings are
+#     applied as regex replacements at the end (escape hatch)
 #
 # ================================================================================================ #
 
-createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm, DIR, monitor, modelfile, cox_intervals = NULL) {
+createModelstring <- function(family, prior_spec, mm_blocks, main, hm_blocks, interactions,
+                              monitor, cox_intervals = NULL) {
+
+  overrides <- prior_spec$overrides %||% list()
+  raw_priors <- prior_spec$raw %||% character(0)
+
+  # ========================================================================================== #
+  # Prior helpers
+  # ========================================================================================== #
+
+  # Distribution for a node: user override or default
+  pdist <- function(node, default) {
+    overrides[[node]] %||% default
+  }
+
+  # Emit an sd-type prior: default is precision-scale dscaled.gamma; an override is a
+  # distribution on the SD itself, with the precision derived.
+  sd_prior_lines <- function(sigma_node, tau_node) {
+    ov <- overrides[[sigma_node]]
+    if (is.null(ov)) {
+      c(paste0("  ", tau_node, " ~ dscaled.gamma(25, 1)"),
+        paste0("  ", sigma_node, " <- 1/sqrt(", tau_node, ")"))
+    } else {
+      c(paste0("  ", sigma_node, " ~ ", ov),
+        paste0("  ", tau_node, " <- pow(", sigma_node, ", -2)"))
+    }
+  }
+
+  # Direct-sigma prior (for the correlated-RE separation strategy): SD sampled directly.
+  sd_direct_line <- function(sigma_node) {
+    ov <- overrides[[sigma_node]]
+    if (is.null(ov)) {
+      # half-Cauchy(25): same marginal as dscaled.gamma(25, 1)
+      paste0("  ", sigma_node, " ~ dt(0, ", format(1 / 25^2), ", 1)T(0,)")
+    } else {
+      paste0("  ", sigma_node, " ~ ", ov)
+    }
+  }
+
+  # Correlation prior: rho = 2*z - 1, z ~ dbeta(eta, eta); lkj(eta) maps onto eta.
+  cor_prior_lines <- function(rho_node) {
+    ov <- overrides[[rho_node]] %||% "__lkj__(1)"
+    eta <- sub("^__lkj__\\((.*)\\)$", "\\1", ov)
+    if (identical(eta, ov)) {
+      # not an lkj spec: user gave a direct distribution on rho
+      paste0("  ", rho_node, " ~ ", ov)
+    } else {
+      c(paste0("  z.", rho_node, " ~ dbeta(", eta, ", ", eta, ")"),
+        paste0("  ", rho_node, " <- 2 * z.", rho_node, " - 1"))
+    }
+  }
 
   # ========================================================================================== #
   # Flags
@@ -26,14 +70,28 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
 
   has_mm <- !is.null(mm_blocks) && length(mm_blocks) > 0
   has_hm <- !is.null(hm_blocks) && length(hm_blocks) > 0
-  has_mm_RE <- has_mm && attr(mm_blocks, "has_RE")
-  has_mm_vars <- has_mm && attr(mm_blocks, "has_vars")
-
-  n.mmblocks <- if (has_mm) length(mm_blocks) else 0
-  n.hmblocks <- if (has_hm) length(hm_blocks) else 0
+  has_int <- length(interactions %||% list()) > 0
 
   mainvars <- main$vars
   lhs <- main$lhs
+
+  # Per-block computation mode
+  w_in_jags <- function(block) length(block$w$params) > 0
+  # Features must be computed in JAGS when the weights are parametric or fn has estimated params
+  f_in_jags <- function(block) {
+    (length(block$feature_labels) > 0) &&
+      (w_in_jags(block) || length(block$fn$est_params) > 0)
+  }
+  has_features <- function(block) length(block$feature_labels) > 0
+
+  # Shape-parameter reference: literal for fixed values, node for estimated
+  fn_param_ref <- function(block, k, pname) {
+    if (pname %in% names(block$fn$est_params)) {
+      paste0("fn.", pname, ".", k)
+    } else {
+      format(block$fn$fixed_params[[pname]])
+    }
+  }
 
   # ========================================================================================== #
   # Build model string programmatically
@@ -46,7 +104,7 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
   add("")
 
   # ------------------------------------------------------------------------------------------ #
-  # MM level: mm() blocks - Weight functions and contributions
+  # MM level
   # ------------------------------------------------------------------------------------------ #
 
   if (has_mm) {
@@ -54,147 +112,318 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
     add("  # ==================== MM Level: Multiple Membership ==================== #")
     add("")
 
-    # Get grouping info (needed throughout mm level processing)
     all_mmid_names <- attr(mm_blocks, "all_mmid_names")
     mmid_to_blocks <- attr(mm_blocks, "mmid_to_blocks")
 
-    # Weight functions and mm variable contributions for each block
     for (k in seq_along(mm_blocks)) {
       block <- mm_blocks[[k]]
-      fn <- block$fn
-      g <- block$mmid_group  # Which mmid group this block belongs to
+      g <- block$mmid_group
+      rng <- function(v) paste0(v, ".", g, "[j]")
+      idx_range <- paste0("mmi1.", g, "[j]:mmi2.", g, "[j]")
 
-      # Phase 2 Optimization: Skip weight computation if no parameters (weights pre-computed in R)
-      if (length(fn$params) == 0) {
-        add("  # Weights for mm block ", k, " (pre-computed in R)")
-        add("  # w.", k, "[i] passed as data")
+      # ------------------------- Weights ------------------------- #
+      if (!w_in_jags(block)) {
+        add("  # Weights for mm block ", k, " (pre-computed in R, passed as data)")
       } else {
         add("  # Weight function for mm block ", k, " (mmid group ", g, ")")
 
-        # Build the weight function string for JAGS
-        fn_string <- fn$string
-
-        # Replace parameters with indexed b.w.k
-        for (p in seq_along(fn$params)) {
-          fn_string <- gsub(paste0("\\b", fn$params[p], "\\b"),
-                           paste0("b.w.", k, "[", p, "]"), fn_string)
+        fn_string <- block$w$string
+        for (p in seq_along(block$w$params)) {
+          fn_string <- gsub(paste0("\\b", block$w$params[p], "\\b"),
+                            paste0("b.w.", k, "[", p, "]"), fn_string)
+        }
+        for (v in seq_along(block$w$vars)) {
+          fn_string <- gsub(paste0("\\b", block$w$vars[v], "\\b"),
+                            paste0("X.w.", k, "[i,", v, "]"), fn_string)
         }
 
-        # Replace variables with indexed X.w.k
-        for (v in seq_along(fn$vars)) {
-          fn_string <- gsub(paste0("\\b", fn$vars[v], "\\b"),
-                           paste0("X.w.", k, "[i,", v, "]"), fn_string)
-        }
-
-        if (fn$constraint) {
-          # Accumulator pattern optimization for constrained weights
-          # Step 1: Compute unnormalized weights (use group-specific n.mm.g)
+        if (block$w$constraint) {
           add("  for (i in 1:n.mm.", g, ") {")
           add("    uw.", k, "[i] <- ", fn_string)
           add("  }")
           add("")
-
-          # Step 2: Cumulative sum (accumulator pattern)
-          add("  # Accumulator: compute cumulative sums for efficient group sums")
+          add("  # Accumulator: cumulative sums for efficient group sums")
           add("  cum.uw.", k, "[1] <- 0")
           add("  for (i in 1:n.mm.", g, ") {")
           add("    cum.uw.", k, "[i+1] <- cum.uw.", k, "[i] + uw.", k, "[i]")
           add("  }")
           add("")
-
-          # Step 3: Group sums (one per group, not per member) - use group-specific mmi1.g, mmi2.g
-          add("  # Group sums (computed once per group)")
           add("  for (j in 1:n.main) {")
           add("    sum.uw.", k, "[j] <- cum.uw.", k, "[mmi2.", g, "[j]+1] - cum.uw.", k, "[mmi1.", g, "[j]]")
           add("  }")
           add("")
-
-          # Step 4: Normalize using pre-computed group sums - use group-specific grp.mm.g
-          add("  # Normalized weights using pre-computed group sums")
           add("  for (i in 1:n.mm.", g, ") {")
           add("    w.", k, "[i] <- uw.", k, "[i] / sum.uw.", k, "[grp.mm.", g, "[i]]")
           add("  }")
-          add("")
         } else {
           add("  for (i in 1:n.mm.", g, ") {")
           add("    w.", k, "[i] <- ", fn_string)
           add("  }")
-          add("")
         }
       }
+      add("")
 
-      # mm variable contributions (free variables only - fixed are pre-computed)
-      if (!is.null(block$vars) && length(block$vars) > 0) {
-        add("  # MM-level variables for block ", k, " (mmid group ", g, ")")
-        add("  for (i in 1:n.mm.", g, ") {")
-        add("    mm.vars.", k, "[i] <- inprod(X.mm.", k, "[i,], b.mm.", k, ")")
-        add("  }")
+      # ------------------------- Features ------------------------- #
+      if (has_features(block)) {
+        n_feat <- length(block$feature_labels)
+
+        if (!f_in_jags(block)) {
+          add("  # Feature(s) for mm block ", k, " [",
+              paste(block$feature_labels, collapse = ", "), "] (pre-computed in R)")
+        } else {
+          add("  # Feature(s) for mm block ", k, " [",
+              paste(block$feature_labels, collapse = ", "), "]")
+          type <- block$fn$type
+          xref <- function(col = 1) paste0("X.mm.", k, "[i,", col, "]")
+          xref_j <- function(col = 1) paste0("X.mm.", k, "[", idx_range, ",", col, "]")
+          w_i <- paste0("w.", k, "[i]")
+          w_j <- paste0("w.", k, "[", idx_range, "]")
+          grp_i <- paste0("grp.mm.", g, "[i]")
+
+          if (type == "sum") {
+            add("  for (j in 1:n.main) {")
+            if (n_feat == 1) {
+              add("    F.", k, "[j] <- inprod(", w_j, ", ", xref_j(1), ")")
+            } else {
+              add("    for (x in 1:n.Xmm.", k, ") {")
+              add("      F.", k, "[j,x] <- inprod(", w_j, ", X.mm.", k, "[", idx_range, ", x])")
+              add("    }")
+            }
+            add("  }")
+
+          } else if (type == "var") {
+            m <- block$fn$moment %||% 2
+            add("  for (j in 1:n.main) {")
+            add("    A.", k, "[j] <- inprod(", w_j, ", ", xref_j(1), ")")
+            add("  }")
+            add("  for (i in 1:n.mm.", g, ") {")
+            add("    v.", k, "[i] <- ", w_i, " * pow(", xref(1), " - A.", k, "[", grp_i, "], ", m, ")")
+            add("  }")
+            add("  for (j in 1:n.main) {")
+            add("    F.", k, "[j] <- sum(v.", k, "[", idx_range, "])")
+            add("  }")
+
+          } else if (type %in% c("hhi", "effn")) {
+            add("  for (j in 1:n.main) {")
+            if (type == "hhi") {
+              add("    F.", k, "[j] <- inprod(", w_j, ", ", w_j, ")")
+            } else {
+              add("    F.", k, "[j] <- 1 / inprod(", w_j, ", ", w_j, ")")
+            }
+            add("  }")
+
+          } else if (type == "entropy") {
+            add("  for (i in 1:n.mm.", g, ") {")
+            add("    e.", k, "[i] <- ", w_i, " * log(", w_i, ")")
+            add("  }")
+            add("  for (j in 1:n.main) {")
+            add("    F.", k, "[j] <- -sum(e.", k, "[", idx_range, "])")
+            add("  }")
+
+          } else if (type == "threshold") {
+            cref <- fn_param_ref(block, k, "c")
+            kref <- fn_param_ref(block, k, "kappa")
+            add("  for (i in 1:n.mm.", g, ") {")
+            add("    s.", k, "[i] <- ", w_i, " * ilogit(", kref, " * (", xref(1), " - ", cref, "))")
+            add("  }")
+            add("  for (j in 1:n.main) {")
+            add("    F.", k, "[j] <- sum(s.", k, "[", idx_range, "])")
+            add("  }")
+
+          } else if (type == "smax") {
+            kref <- fn_param_ref(block, k, "kappa")
+            add("  for (i in 1:n.mm.", g, ") {")
+            add("    e.", k, "[i] <- ", w_i, " * exp(", kref, " * ", xref(1), ")")
+            add("  }")
+            add("  for (j in 1:n.main) {")
+            add("    F.", k, "[j] <- (1 / ", kref, ") * log(sum(e.", k, "[", idx_range, "]))")
+            add("  }")
+
+          } else if (type == "gmean") {
+            pref <- fn_param_ref(block, k, "p")
+            add("  for (i in 1:n.mm.", g, ") {")
+            add("    e.", k, "[i] <- ", w_i, " * pow(", xref(1), ", ", pref, ")")
+            add("  }")
+            add("  for (j in 1:n.main) {")
+            add("    F.", k, "[j] <- pow(sum(e.", k, "[", idx_range, "]), 1 / ", pref, ")")
+            add("  }")
+
+          } else if (type == "cov") {
+            add("  for (j in 1:n.main) {")
+            add("    A1.", k, "[j] <- inprod(", w_j, ", ", xref_j(1), ")")
+            add("    A2.", k, "[j] <- inprod(", w_j, ", ", xref_j(2), ")")
+            add("  }")
+            add("  for (i in 1:n.mm.", g, ") {")
+            add("    v.", k, "[i] <- ", w_i, " * (", xref(1), " - A1.", k, "[", grp_i, "]) * (",
+                xref(2), " - A2.", k, "[", grp_i, "])")
+            add("  }")
+            add("  for (j in 1:n.main) {")
+            add("    F.", k, "[j] <- sum(v.", k, "[", idx_range, "])")
+            add("  }")
+
+          } else if (type == "expr") {
+            # DSL: one accumulator pass per E() node (inner nodes first)
+            graph <- block$fn$graph
+            subs <- c()
+            for (a in seq_along(block$attr_cols)) {
+              col <- match(block$attr_cols[a], block$vars)
+              subs[block$attr_cols[a]] <- paste0("X.mm.", k, "[i,", col, "]")
+            }
+            subs["w"] <- w_i
+            for (pn in names(block$fn$est_params)) {
+              subs[pn] <- paste0("fn.", pn, ".", k)
+            }
+            for (pn in names(block$fn$fixed_params %||% list())) {
+              subs[pn] <- format(block$fn$fixed_params[[pn]])
+            }
+            for (e in seq_along(graph$enodes)) {
+              subs[paste0(".E", e)] <- paste0("E", e, ".", k, "[", grp_i, "]")
+            }
+
+            for (e in seq_along(graph$enodes)) {
+              body <- dsl_deparse_jags(graph$enodes[[e]]$body, subs)
+              add("  for (i in 1:n.mm.", g, ") {")
+              add("    t", e, ".", k, "[i] <- ", w_i, " * ", body)
+              add("  }")
+              add("  for (j in 1:n.main) {")
+              add("    E", e, ".", k, "[j] <- sum(t", e, ".", k, "[", idx_range, "])")
+              add("  }")
+            }
+            # Top level: group scalar
+            subs_top <- subs
+            for (e in seq_along(graph$enodes)) {
+              subs_top[paste0(".E", e)] <- paste0("E", e, ".", k, "[j]")
+            }
+            top <- dsl_deparse_jags(graph$top, subs_top)
+            add("  for (j in 1:n.main) {")
+            add("    F.", k, "[j] <- ", top)
+            add("  }")
+          }
+        }
+        add("")
+
+        # Priors for feature coefficients
+        add("  # Prior(s) for the feature coefficient(s) of mm block ", k)
+        for (x in seq_len(n_feat)) {
+          node <- paste0("b.fn.", k, "[", x, "]")
+          add("  ", node, " ~ ", pdist(node, "dnorm(0, 0.0001)"))
+        }
+        add("")
+      }
+
+      # ------------------------- fn shape-parameter priors ------------------------- #
+      if (length(block$fn$est_params) > 0) {
+        add("  # Priors for fn shape parameters of mm block ", k)
+        for (pn in names(block$fn$est_params)) {
+          node <- paste0("fn.", pn, ".", k)
+          add("  ", node, " ~ ", pdist(node, block$fn$est_params[[pn]]$default))
+        }
+        add("")
+      }
+
+      # ------------------------- Weight-parameter priors ------------------------- #
+      if (length(block$w$params) > 0) {
+        add("  # Priors for weight parameters of mm block ", k)
+        for (p in seq_along(block$w$params)) {
+          node <- paste0("b.w.", k, "[", p, "]")
+          add("  ", node, " ~ ", pdist(node, "dnorm(0, 0.0001)"))
+        }
+        add("")
+      }
+
+      # ------------------------- Member fixed effects (fe) ------------------------- #
+      if (!is.null(block$FE)) {
+        fe <- block$FE
+        add("  # Member-level fixed effects for mm block ", k, " (unit 1 = reference)")
+        if (fe$intercept) {
+          add("  alpha.mm.", k, "[1] <- 0")
+          add("  for (u in 2:n.umm.", g, ") {")
+          add("    alpha.mm.", k, "[u] ~ dnorm(0, 0.0001)")
+          add("  }")
+        }
+        for (s in seq_along(fe$slopes)) {
+          add("  alphas.mm.", k, ".s", s, "[1] <- 0")
+          add("  for (u in 2:n.umm.", g, ") {")
+          add("    alphas.mm.", k, ".s", s, "[u] ~ dnorm(0, 0.0001)")
+          add("  }")
+        }
         add("")
       }
     }
 
-    # Random effects - per mmid group
+    # ------------------------- Random effects (per mmid group) ------------------------- #
     for (g in seq_along(all_mmid_names)) {
       block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
-      has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
+      re_block_idx <- block_indices[sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$RE))]
+      if (length(re_block_idx) == 0) next
+      re_block <- mm_blocks[[re_block_idx[1]]]
+      re_spec <- re_block$RE
+      any_ar_in_group <- any(sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$ar)))
+      n_slopes <- length(re_spec$slopes)
 
-      if (has_re_in_group) {
-        # Check if any block in this group uses AR
-        any_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
+      add("  # MM-level random effects (mmid group ", g, ")")
 
-        add("  # MM-level random effects (mmid group ", g, ")")
-        add("  for (i in 1:n.umm.", g, ") {")
-        if (any_ar_in_group) {
-          add("    re.mm.", g, "[i,1] ~ dnorm(0, tau.mm.", g, ")")
-          add("    for (t in 2:n.GPNi.", g, "[i]) {")
-          add("      re.mm.", g, "[i,t] ~ dnorm(re.mm.", g, "[i,t-1], tau.mm.", g, ")")
-          add("    }")
+      if (any_ar_in_group) {
+        # AR random walk (intercept-only, validated upstream). For a time-indexed
+        # walk the step precision is scaled by the normalized time gap:
+        # u_t ~ N(u_{t-1}, sigma^2 * gap[i,t])  <=>  precision tau / gap[i,t]
+        step_prec <- if (!is.null(re_spec$ar) && !is.null(re_spec$ar$time)) {
+          paste0("tau.mm.", g, " / gap.mm.", g, "[i,t]")
         } else {
+          paste0("tau.mm.", g)
+        }
+        add("  for (i in 1:n.umm.", g, ") {")
+        add("    re.mm.", g, "[i,1] ~ dnorm(0, tau.mm.", g, ")")
+        add("    for (t in 2:n.GPNi.", g, "[i]) {")
+        add("      re.mm.", g, "[i,t] ~ dnorm(re.mm.", g, "[i,t-1], ", step_prec, ")")
+        add("    }")
+        add("  }")
+        add("")
+        add("  # Extract AR random effects for each mm observation (mmid group ", g, ")")
+        add("  for (i in 1:n.mm.", g, ") {")
+        add("    re.mm.", g, ".i[i] <- re.mm.", g, "[mmid.", g, "[i], n.GPn.", g, "[i]]")
+        add("  }")
+        add("")
+        add(sd_prior_lines(paste0("sigma.mm.", g), paste0("tau.mm.", g)))
+
+      } else if (isTRUE(re_spec$cor) && n_slopes == 1) {
+        # Correlated intercept + slope (2x2, separation strategy)
+        add("  zero.mm.", g, "[1] <- 0")
+        add("  zero.mm.", g, "[2] <- 0")
+        add("  Sigma.u.", g, "[1,1] <- pow(sigma.mm.", g, ", 2)")
+        add("  Sigma.u.", g, "[1,2] <- rho.mm.", g, " * sigma.mm.", g, " * sigma.mm.", g, ".s1")
+        add("  Sigma.u.", g, "[2,1] <- Sigma.u.", g, "[1,2]")
+        add("  Sigma.u.", g, "[2,2] <- pow(sigma.mm.", g, ".s1, 2)")
+        add("  for (i in 1:n.umm.", g, ") {")
+        add("    u.mm.", g, "[i,1:2] ~ dmnorm.vcov(zero.mm.", g, ", Sigma.u.", g, ")")
+        add("    re.mm.", g, "[i] <- u.mm.", g, "[i,1]")
+        add("    re.mm.", g, ".s1[i] <- u.mm.", g, "[i,2]")
+        add("  }")
+        add(sd_direct_line(paste0("sigma.mm.", g)))
+        add(sd_direct_line(paste0("sigma.mm.", g, ".s1")))
+        add(cor_prior_lines(paste0("rho.mm.", g)))
+
+      } else {
+        # Independent intercept and/or slopes
+        if (re_spec$intercept) {
+          add("  for (i in 1:n.umm.", g, ") {")
           add("    re.mm.", g, "[i] ~ dnorm(0, tau.mm.", g, ")")
-        }
-        add("  }")
-        add("")
-
-        # If AR, extract the appropriate RE value for each mm observation
-        if (any_ar_in_group) {
-          add("  # Extract AR random effects for each mm observation (mmid group ", g, ")")
-          add("  for (i in 1:n.mm.", g, ") {")
-          add("    re.mm.", g, ".i[i] <- re.mm.", g, "[mmid.", g, "[i], n.GPn.", g, "[i]]")
           add("  }")
-          add("")
+          add(sd_prior_lines(paste0("sigma.mm.", g), paste0("tau.mm.", g)))
         }
-
-        add("  # MM-level variance (mmid group ", g, ")")
-        add("  tau.mm.", g, " ~ dscaled.gamma(25, 1)")
-        add("  sigma.mm.", g, " <- 1/sqrt(tau.mm.", g, ")")
-        add("")
-      }
-    }
-
-    # Priors for b.mm and b.w for each block
-    for (k in seq_along(mm_blocks)) {
-      block <- mm_blocks[[k]]
-
-      if (!is.null(block$vars) && length(block$vars) > 0) {
-        add("  # Priors for b.mm.", k)
-        add("  for (x in 1:n.Xmm.", k, ") {")
-        add("    b.mm.", k, "[x] ~ dnorm(0, 0.0001)")
-        add("  }")
-        add("")
-      }
-
-      if (length(block$fn$params) > 0) {
-        add("  # Priors for b.w.", k)
-        for (p in seq_along(block$fn$params)) {
-          add("  b.w.", k, "[", p, "] ~ dnorm(0, 0.0001)")
+        for (s in seq_len(n_slopes)) {
+          add("  for (i in 1:n.umm.", g, ") {")
+          add("    re.mm.", g, ".s", s, "[i] ~ dnorm(0, tau.mm.", g, ".s", s, ")")
+          add("  }")
+          add(sd_prior_lines(paste0("sigma.mm.", g, ".s", s), paste0("tau.mm.", g, ".s", s)))
         }
-        add("")
       }
+      add("")
     }
   }
 
   # ------------------------------------------------------------------------------------------ #
-  # HM level: hm() blocks
+  # HM level
   # ------------------------------------------------------------------------------------------ #
 
   if (has_hm) {
@@ -205,189 +434,225 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
     for (k in seq_along(hm_blocks)) {
       block <- hm_blocks[[k]]
 
-      if (block$type == "RE") {
+      if (!is.null(block$RE)) {
+        re_spec <- block$RE
+        n_slopes <- length(re_spec$slopes)
+
         add("  # HM-level random effects (hm block ", k, ")")
 
-        # Check if this block uses AR
-        if (block$ar) {
-          # AR: 2D indexing for time-varying effects
-          add("  for (k in 1:n.hm) {")
-          add("    re.hm.", k, "[k,1] ~ dnorm(0, tau.hm.", k, ")")
-          add("    for (t in 2:n.HMNi[k]) {")
-          add("      re.hm.", k, "[k,t] ~ dnorm(re.hm.", k, "[k,t-1], tau.hm.", k, ")")
+        if (!is.null(block$ar)) {
+          # Time-indexed walk: step precision scaled by the normalized time gap
+          step_prec <- if (!is.null(block$ar$time)) {
+            paste0("tau.hm.", k, " / gap.hm.", k, "[c,t]")
+          } else {
+            paste0("tau.hm.", k)
+          }
+          add("  for (c in 1:n.hm) {")
+          add("    re.hm.", k, "[c,1] ~ dnorm(0, tau.hm.", k, ")")
+          add("    for (t in 2:n.HMNi[c]) {")
+          add("      re.hm.", k, "[c,t] ~ dnorm(re.hm.", k, "[c,t-1], ", step_prec, ")")
           add("    }")
           add("  }")
-          add("")
+          add(sd_prior_lines(paste0("sigma.hm.", k), paste0("tau.hm.", k)))
 
-          # For AR, compute hm.k at main level (to access time-varying RE)
-          add("  # HM-level effects computed at main level (AR)")
-          add("  for (j in 1:n.main) {")
-
-          # Build hm.k expression at main level
-          hm_terms <- c()
-          if (!is.null(block$vars) && length(block$vars) > 0) {
-            hm_terms <- c(hm_terms, paste0("inprod(X.hm.", k, "[hmid[j],], b.hm.", k, ")"))
-          }
-          # Phase 1 Optimization: use pre-computed offset for fixed contributions
-          if (!is.null(block$vars_fixed) && length(block$vars_fixed) > 0) {
-            hm_terms <- c(hm_terms, paste0("offset.hm.", k, "[hmid[j]]"))
-          }
-          hm_terms <- c(hm_terms, paste0("re.hm.", k, "[hmid[j], n.HMn[j]]"))
-
-          add("    hm.", k, "[j] <- ", paste(hm_terms, collapse = " + "))
+        } else if (isTRUE(re_spec$cor) && n_slopes == 1) {
+          add("  zero.hm.", k, "[1] <- 0")
+          add("  zero.hm.", k, "[2] <- 0")
+          add("  Sigma.u.hm.", k, "[1,1] <- pow(sigma.hm.", k, ", 2)")
+          add("  Sigma.u.hm.", k, "[1,2] <- rho.hm.", k, " * sigma.hm.", k, " * sigma.hm.", k, ".s1")
+          add("  Sigma.u.hm.", k, "[2,1] <- Sigma.u.hm.", k, "[1,2]")
+          add("  Sigma.u.hm.", k, "[2,2] <- pow(sigma.hm.", k, ".s1, 2)")
+          add("  for (c in 1:n.hm) {")
+          add("    u.hm.", k, "[c,1:2] ~ dmnorm.vcov(zero.hm.", k, ", Sigma.u.hm.", k, ")")
+          add("    re.hm.", k, "[c] <- u.hm.", k, "[c,1]")
+          add("    re.hm.", k, ".s1[c] <- u.hm.", k, "[c,2]")
           add("  }")
+          add(sd_direct_line(paste0("sigma.hm.", k)))
+          add(sd_direct_line(paste0("sigma.hm.", k, ".s1")))
+          add(cor_prior_lines(paste0("rho.hm.", k)))
+
         } else {
-          # Non-AR: 1D indexing for constant effects at hm level
-          add("  for (k in 1:n.hm) {")
-
-          # Build hm.k expression
-          hm_terms <- c()
-          if (!is.null(block$vars) && length(block$vars) > 0) {
-            hm_terms <- c(hm_terms, paste0("inprod(X.hm.", k, "[k,], b.hm.", k, ")"))
+          if (re_spec$intercept) {
+            add("  for (c in 1:n.hm) {")
+            add("    re.hm.", k, "[c] ~ dnorm(0, tau.hm.", k, ")")
+            add("  }")
+            add(sd_prior_lines(paste0("sigma.hm.", k), paste0("tau.hm.", k)))
           }
-          # Phase 1 Optimization: use pre-computed offset for fixed contributions
-          if (!is.null(block$vars_fixed) && length(block$vars_fixed) > 0) {
-            hm_terms <- c(hm_terms, paste0("offset.hm.", k, "[k]"))
+          for (s in seq_len(n_slopes)) {
+            add("  for (c in 1:n.hm) {")
+            add("    re.hm.", k, ".s", s, "[c] ~ dnorm(0, tau.hm.", k, ".s", s, ")")
+            add("  }")
+            add(sd_prior_lines(paste0("sigma.hm.", k, ".s", s), paste0("tau.hm.", k, ".s", s)))
           }
-          hm_terms <- c(hm_terms, paste0("re.hm.", k, "[k]"))
-
-          add("    hm.", k, "[k] <- ", paste(hm_terms, collapse = " + "))
-          add("    re.hm.", k, "[k] ~ dnorm(0, tau.hm.", k, ")")
-
-          add("  }")
         }
         add("")
 
-        add("  # HM-level variance (hm block ", k, ")")
-        add("  tau.hm.", k, " ~ dscaled.gamma(25, 1)")
-        add("  sigma.hm.", k, " <- 1/sqrt(tau.hm.", k, ")")
-        add("")
-
-        if (!is.null(block$vars) && length(block$vars) > 0) {
-          add("  # Priors for b.hm.", k)
-          add("  for (x in 1:n.Xhm.", k, ") {")
-          add("    b.hm.", k, "[x] ~ dnorm(0, 0.0001)")
+      } else if (!is.null(block$FE)) {
+        fe <- block$FE
+        add("  # HM-level fixed effects (hm block ", k, "; unit 1 = reference)")
+        if (fe$intercept) {
+          add("  alpha.hm.", k, "[1] <- 0")
+          add("  for (c in 2:n.hm) {")
+          add("    alpha.hm.", k, "[c] ~ dnorm(0, 0.0001)")
           add("  }")
-          add("")
         }
-
-      } else {
-        # Fixed effects
-        add("  # HM-level fixed effects (hm block ", k, ")")
-        add("  for (k in 1:n.hm) {")
-
-        # Build hm.k expression
-        hm_terms <- c()
-        if (!is.null(block$vars) && length(block$vars) > 0) {
-          hm_terms <- c(hm_terms, paste0("inprod(X.hm.", k, "[k,], b.hm.", k, ")"))
-        }
-        # Phase 1 Optimization: use pre-computed offset for fixed contributions
-        if (!is.null(block$vars_fixed) && length(block$vars_fixed) > 0) {
-          hm_terms <- c(hm_terms, paste0("offset.hm.", k, "[k]"))
-        }
-
-        add("    hm.", k, "[k] <- ", paste(hm_terms, collapse = " + "))
-        add("  }")
-        add("")
-
-        if (!is.null(block$vars) && length(block$vars) > 0) {
-          add("  # Priors for b.hm.", k, " (fixed effects)")
-          add("  for (x in 1:n.Xhm.", k, ") {")
-          add("    b.hm.", k, "[x] ~ dnorm(0, 0.0001)")
+        for (s in seq_along(fe$slopes)) {
+          add("  alphas.hm.", k, ".s", s, "[1] <- 0")
+          add("  for (c in 2:n.hm) {")
+          add("    alphas.hm.", k, ".s", s, "[c] ~ dnorm(0, 0.0001)")
           add("  }")
-          add("")
         }
+        add("")
       }
     }
   }
 
   # ------------------------------------------------------------------------------------------ #
-  # Main level: Main model
+  # Main level
   # ------------------------------------------------------------------------------------------ #
 
   add("  # ==================== Main Level: Main Model ==================== #")
   add("")
 
-  # Build the linear predictor
   add("  for (j in 1:n.main) {")
   add("")
 
-  # Aggregate mm contributions
+  # Aggregate mm RE/FE/offset contributions (member-level parts that stay inside the sum)
+  mm_agg_needed <- FALSE
   if (has_mm) {
-    add("    # Aggregate mm-level contributions")
-    add("    mm.agg[j] <- sum(")
+    all_mmid_names <- attr(mm_blocks, "all_mmid_names")
+    mmid_to_blocks <- attr(mm_blocks, "mmid_to_blocks")
 
-    mm_terms <- c()
-
+    mm_terms_lines <- c()
     for (k in seq_along(mm_blocks)) {
       block <- mm_blocks[[k]]
-      g <- block$mmid_group  # Which mmid group this block belongs to
-
-      # Check if any block in this mmid group uses AR
+      g <- block$mmid_group
+      idx_range <- paste0("mmi1.", g, "[j]:mmi2.", g, "[j]")
       block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
-      any_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
+      any_ar_in_group <- any(sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$ar)))
 
       terms_k <- c()
 
-      # Use group-specific indices: mmi1.g, mmi2.g
-      idx_range <- paste0("mmi1.", g, "[j]:mmi2.", g, "[j]")
-
-      # Variables contribution (free)
-      if (!is.null(block$vars) && length(block$vars) > 0) {
-        terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * mm.vars.", k, "[", idx_range, "]"))
-      }
-
-      # Variables contribution (fixed) - Phase 1 Optimization: use pre-computed offset
+      # fixed-coefficient offsets (fix() in vars)
       if (!is.null(block$vars_fixed) && length(block$vars_fixed) > 0) {
         terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * offset.mm.", k, "[", idx_range, "]"))
       }
 
-      # RE contribution - use group-specific re.mm.g and mmid.g
-      if (block$RE) {
+      # random effects (weighted aggregation)
+      if (!is.null(block$RE)) {
+        re_spec <- block$RE
         if (any_ar_in_group) {
-          # Use pre-extracted re.mm.g.i which has AR values at mm-level
           terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * re.mm.", g, ".i[", idx_range, "]"))
         } else {
-          terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * re.mm.", g, "[mmid.", g, "[", idx_range, "]]"))
+          if (re_spec$intercept) {
+            terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * re.mm.", g,
+                                         "[mmid.", g, "[", idx_range, "]]"))
+          }
+          for (s in seq_along(re_spec$slopes)) {
+            terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * re.mm.", g, ".s", s,
+                                         "[mmid.", g, "[", idx_range, "]] * X.re.", g,
+                                         "[", idx_range, ",", s, "]"))
+          }
+        }
+      }
+
+      # member fixed effects
+      if (!is.null(block$FE)) {
+        fe <- block$FE
+        if (fe$intercept) {
+          terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * alpha.mm.", k,
+                                       "[mmid.", g, "[", idx_range, "]]"))
+        }
+        for (s in seq_along(fe$slopes)) {
+          terms_k <- c(terms_k, paste0("w.", k, "[", idx_range, "] * alphas.mm.", k, ".s", s,
+                                       "[mmid.", g, "[", idx_range, "]] * X.fe.", k,
+                                       "[", idx_range, ",", s, "]"))
         }
       }
 
       if (length(terms_k) > 0) {
-        mm_terms <- c(mm_terms, paste0("      ", paste(terms_k, collapse = " + ")))
+        mm_terms_lines <- c(mm_terms_lines, paste0("      ", paste(terms_k, collapse = " + ")))
       }
     }
 
-    add(paste(mm_terms, collapse = " +\n"), ")")
-    add("")
+    if (length(mm_terms_lines) > 0) {
+      mm_agg_needed <- TRUE
+      add("    # Aggregate mm-level random/fixed member contributions")
+      add("    mm.agg[j] <- sum(")
+      add(paste(mm_terms_lines, collapse = " +\n"), ")")
+      add("")
+    }
   }
 
   # Build mu[j]
   mu_terms <- c()
 
-  # Main-level covariates (including intercept X0 as column of 1s in X.main)
   if (length(mainvars) > 0) {
     mu_terms <- c(mu_terms, "inprod(X.main[j,], b)")
   }
-
-  # Main-level fixed covariates - Phase 1 Optimization: use pre-computed offset
   if (!is.null(main$vars_fixed) && length(main$vars_fixed) > 0) {
     mu_terms <- c(mu_terms, "offset.main[j]")
   }
 
-  # MM-level aggregated
+  # Block features with their coefficients
   if (has_mm) {
+    for (k in seq_along(mm_blocks)) {
+      block <- mm_blocks[[k]]
+      if (!has_features(block)) next
+      n_feat <- length(block$feature_labels)
+      if (n_feat == 1) {
+        mu_terms <- c(mu_terms, paste0("b.fn.", k, "[1] * F.", k, "[j]"))
+      } else {
+        mu_terms <- c(mu_terms, paste0("inprod(F.", k, "[j,], b.fn.", k, ")"))
+      }
+    }
+  }
+
+  # Named-feature interactions
+  if (has_int) {
+    for (t in seq_along(interactions)) {
+      int <- interactions[[t]]
+      if (int$type == "macro") {
+        col_idx <- match(int$var, mainvars)
+        mu_terms <- c(mu_terms, paste0("b.int[", t, "] * F.", int$block1,
+                                       "[j] * X.main[j,", col_idx, "]"))
+      } else {
+        mu_terms <- c(mu_terms, paste0("b.int[", t, "] * F.", int$block1,
+                                       "[j] * F.", int$block2, "[j]"))
+      }
+    }
+  }
+
+  if (mm_agg_needed) {
     mu_terms <- c(mu_terms, "mm.agg[j]")
   }
 
-  # HM-level contributions
+  # HM contributions
   if (has_hm) {
     for (k in seq_along(hm_blocks)) {
-      # For AR blocks, hm.k is computed at main level (indexed by j)
-      # For non-AR blocks, hm.k is computed at hm level (indexed by hmid[j])
-      if (hm_blocks[[k]]$ar && hm_blocks[[k]]$type == "RE") {
-        mu_terms <- c(mu_terms, paste0("hm.", k, "[j]"))
-      } else {
-        mu_terms <- c(mu_terms, paste0("hm.", k, "[hmid[j]]"))
+      block <- hm_blocks[[k]]
+      if (!is.null(block$RE)) {
+        re_spec <- block$RE
+        if (!is.null(block$ar)) {
+          mu_terms <- c(mu_terms, paste0("re.hm.", k, "[hmid[j], n.HMn[j]]"))
+        } else {
+          if (re_spec$intercept) {
+            mu_terms <- c(mu_terms, paste0("re.hm.", k, "[hmid[j]]"))
+          }
+          for (s in seq_along(re_spec$slopes)) {
+            mu_terms <- c(mu_terms, paste0("re.hm.", k, ".s", s, "[hmid[j]] * X.re.hm.", k,
+                                           "[j,", s, "]"))
+          }
+        }
+      } else if (!is.null(block$FE)) {
+        fe <- block$FE
+        if (fe$intercept) {
+          mu_terms <- c(mu_terms, paste0("alpha.hm.", k, "[hmid[j]]"))
+        }
+        for (s in seq_along(fe$slopes)) {
+          mu_terms <- c(mu_terms, paste0("alphas.hm.", k, ".s", s, "[hmid[j]] * X.re.hm.", k,
+                                         "[j,", s, "]"))
+        }
       }
     }
   }
@@ -400,12 +665,14 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
     add("    Y[j] ~ dnorm(mu[j], tau)")
     if (monitor) {
       add("    pred[j] ~ dnorm(mu[j], tau)")
+      add("    log_lik[j] <- logdensity.norm(Y[j], mu[j], tau)")
     }
   } else if (family == "Binomial") {
     add("    logit(p[j]) <- mu[j]")
     add("    Y[j] ~ dbern(p[j])")
     if (monitor) {
       add("    pred[j] ~ dbern(p[j])")
+      add("    log_lik[j] <- logdensity.bern(Y[j], p[j])")
     }
   } else if (family == "Weibull") {
     add("    lambda[j] <- exp(-mu[j] * shape)")
@@ -416,13 +683,11 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
     }
   } else if (family == "Cox") {
     if (!is.null(cox_intervals) && is.numeric(cox_intervals) && cox_intervals > 0) {
-      # Piecewise constant baseline hazard
       add("    for (k in 1:n.intervals) {")
       add("      dN_interval[j,k] ~ dpois(Idt[j,k])")
       add("      Idt[j,k] <- Y_interval[j,k] * exp(mu[j]) * lambda0[k]")
       add("    }")
     } else {
-      # Original: all unique event times
       add("    for (k in 1:n.tu) {")
       add("      dN[j,k] ~ dpois(Idt[j,k])")
       add("      Idt[j,k] <- Y[j,k] * exp(mu[j]) * dL0[k]")
@@ -439,30 +704,35 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
 
   add("  # Main-level priors")
 
-  # Intercept and coefficients
   n_main_params <- length(mainvars)
   if (n_main_params > 0) {
-    add("  for (x in 1:", n_main_params, ") {")
-    add("    b[x] ~ dnorm(0, 0.0001)")
-    add("  }")
+    for (x in seq_len(n_main_params)) {
+      node <- paste0("b[", x, "]")
+      add("  ", node, " ~ ", pdist(node, "dnorm(0, 0.0001)"))
+    }
   }
 
-  # Variance
+  # Interaction coefficients
+  if (has_int) {
+    for (t in seq_along(interactions)) {
+      node <- paste0("b.int[", t, "]")
+      add("  ", node, " ~ ", pdist(node, "dnorm(0, 0.0001)"))
+    }
+  }
+
+  # Family parameters
   if (family == "Gaussian") {
-    add("  tau ~ dscaled.gamma(25, 1)")
-    add("  sigma <- 1/sqrt(tau)")
+    add(sd_prior_lines("sigma", "tau"))
   } else if (family == "Weibull") {
-    add("  shape ~ dexp(0.001)")
+    add("  shape ~ ", pdist("shape", "dexp(0.001)"))
     add("  tau <- pow(shape, -2)  # approximate")
     add("  sigma <- 1/shape")
   } else if (family == "Cox") {
     if (!is.null(cox_intervals) && is.numeric(cox_intervals) && cox_intervals > 0) {
-      # Piecewise constant baseline hazard
       add("  for (k in 1:n.intervals) {")
       add("    lambda0[k] ~ dgamma(c, d)")
       add("  }")
     } else {
-      # Original: all unique event times
       add("  for (k in 1:n.tu) {")
       add("    dL0[k] ~ dgamma(c, d)")
       add("  }")
@@ -472,40 +742,31 @@ createModelstring <- function(family, priors, mm_blocks, main, hm_blocks, mm, hm
 
   add("}")
 
-  # Join lines
   modelstring <- paste(lines, collapse = "\n")
 
   # ========================================================================================== #
-  # Apply user-specified priors
+  # Raw-string prior escape hatch (regex replacement, as before)
   # ========================================================================================== #
 
-  if (!is.null(priors)) {
-    for (i in seq_along(priors)) {
-      # Extract full param (e.g., b.w.1 or b.w.1[1])
-      full_param <- stringr::str_extract(priors[i], "^[^~<]+") %>% trimws()
+  if (length(raw_priors) > 0) {
+    for (i in seq_along(raw_priors)) {
+      full_param <- stringr::str_extract(raw_priors[i], "^[^~<]+") %>% trimws()
 
-      # Check if full_param is indexed (e.g., b.w.1[1])
       if (stringr::str_detect(full_param, "\\[")) {
-        # Replace prior for one specific parameter
         full_param_escaped <- stringr::str_replace_all(full_param, "(\\[|\\]|\\.)", "\\\\\\1")
         pattern <- paste0("(?m)^([ \\t]*)", full_param_escaped, "\\s*(~|<-)\\s*[^\\n]*")
-        modelstring <- stringr::str_replace(modelstring, pattern, paste0("\\1", priors[i]))
+        modelstring <- stringr::str_replace(modelstring, pattern, paste0("\\1", raw_priors[i]))
       } else {
-        # Replace prior for all indices of a parameter
-        base_param <- stringr::str_extract(priors[i], "^[^~<]+") %>% trimws()
-        operator <- stringr::str_extract(priors[i], "(~|<-)")
-        rhs <- stringr::str_extract(priors[i], "(?<=~|<-).*") %>% trimws()
+        base_param <- stringr::str_extract(raw_priors[i], "^[^~<]+") %>% trimws()
+        operator <- stringr::str_extract(raw_priors[i], "(~|<-)")
+        rhs <- stringr::str_extract(raw_priors[i], "(?<=~|<-).*") %>% trimws()
         escaped <- stringr::str_replace_all(base_param, "(\\.|\\[|\\])", "\\\\\\1")
         pattern <- paste0("(?m)^([ \\t]*)(", escaped, "(?:\\[[^\\]]+\\])?)\\s*(~|<-)\\s*[^\\n]*")
-        modelstring <- stringr::str_replace_all(modelstring, pattern, paste0("\\1\\2 ", operator, " ", rhs))
+        modelstring <- stringr::str_replace_all(modelstring, pattern,
+                                                paste0("\\1\\2 ", operator, " ", rhs))
       }
     }
   }
 
-  # ========================================================================================== #
-  # Save or return
-  # ========================================================================================== #
-
   return(modelstring)
-
 }

@@ -8,7 +8,7 @@
   x,
   conf.int = TRUE,
   conf.level = 0.95,
-  component = c("all", "fixed", "random", "weights"),
+  component = c("all", "fixed", "random", "weights", "fn"),
   ...
 )
 }
@@ -26,10 +26,12 @@ from the posterior draws and therefore require the model to be fitted with
 \item{component}{Which parameters to return:
 \itemize{
   \item \code{"all"} (default): all of the below
-  \item \code{"fixed"}: regression coefficients (main, mm, and hm level)
-  \item \code{"random"}: variance/scale parameters (e.g., \code{sigma},
-    \code{sigma.mm.*}, \code{sigma.hm.*}, Weibull \code{shape}, \code{tau})
-  \item \code{"weights"}: weight function parameters
+  \item \code{"fixed"}: all class-\code{"b"} coefficients (main-formula
+    terms, block features, interactions)
+  \item \code{"random"}: variance parameters (\code{sd(...)},
+    \code{cor(...)}, \code{sigma}, Weibull \code{shape})
+  \item \code{"weights"}: weight-model parameters (\code{w[...]})
+  \item \code{"fn"}: aggregation-function shape parameters (\code{fn[...]})
 }}
 
 \item{...}{Additional arguments (currently unused).}
@@ -59,8 +61,8 @@ data(coalgov)
 
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
-  family = "Weibull",
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+  family = weibull(),
   data = coalgov
 )
 

@@ -157,7 +157,7 @@ subject to the normalization constraint $\sum_{k \in p[i]} w_{ik} = 1$ for all $
 In `bml`, this is specified via:
 
 ```r
-fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x1 + b2 * x2))))
+w(~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x1 + b2 * x2))))
 ```
 
 where:
@@ -193,13 +193,13 @@ $$w_{ik} = \beta_1^{(w)} \cdot x_{ik}^{(w)} + (1 - \beta_1^{(w)}) \cdot \mathbb{
 In `bml`:
 
 ```r
-fn(
-  w ~ b1 * x + (1 - b1) * (x == min(x)),
-  c = TRUE
+w(
+  ~ b1 * x + (1 - b1) * (x == min(x)),
+  scale = TRUE
 )
 ```
 
-The parameter $\beta_1^{(w)}$ controls the mixture between aggregation mechanisms. When $\beta_1^{(w)} = 1$, weights are proportional to $x_{ik}^{(w)}$ (mean-like aggregation); when $\beta_1^{(w)} = 0$, all weight is assigned to the member with the minimum value. Intermediate values yield a convex combination of both. Replacing min() with max() tests whether the highest-valued member dominates. To preserve this interpretation, $\beta_1^{(w)}$ should be constrained to $[0,1]$, e.g., via priors = list("b1~dunif(0,1)").
+The parameter $\beta_1^{(w)}$ controls the mixture between aggregation mechanisms. When $\beta_1^{(w)} = 1$, weights are proportional to $x_{ik}^{(w)}$ (mean-like aggregation); when $\beta_1^{(w)} = 0$, all weight is assigned to the member with the minimum value. Intermediate values yield a convex combination of both. Replacing min() with max() tests whether the highest-valued member dominates. To preserve this interpretation, $\beta_1^{(w)}$ should be constrained to $[0,1]$, e.g., via `prior = "b.w.1[1] ~ dunif(0,1)"` (a raw JAGS prior string) or `prior(uniform(0, 1), class = "w")`. Note that the smooth-max family `fn("smax", kappa = est())` offers a one-parameter alternative for the mean-vs-extremes question that keeps the weights in their measurement role (see `?fn`, section "Adjudicating between aggregation functions").
 
 **2. Mean vs. Sum:** Are member effects *contextual* (mean aggregation: $\sum_k w_{ik} = 1$) or *autonomous* (sum aggregation: $\sum_k w_{ik} = n_i$)?
 
@@ -208,9 +208,9 @@ $$w_{ik} = \frac{1}{1 + (n_i - 1) \exp\left(-\beta_0^{(w)}\right)}$$
 In `bml`:
 
 ```r
-fn(
-  w ~ 1 / (1 + (n - 1) * exp(-b0)),
-  c = FALSE
+w(
+  ~ 1 / (1 + (n - 1) * exp(-b0)),
+  scale = FALSE
 )
 ```
 
@@ -225,13 +225,58 @@ $$
 In `bml`:
 
 ```r
-fn(
-  w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x1 + b2 * x2))),
-  c = TRUE
+w(
+  ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x1 + b2 * x2))),
+  scale = TRUE
 )
 ```
 
 This weight function tests whether member attributes $x_1, x_2$ (e.g., size, organization, power) generate disproportionate influence via $\beta_1^{(w)}, \beta_2^{(w)}$.
+
+## Emergent Aggregation Functions
+
+The weights $w_{ik}$ define a within-group *measure* over members; the aggregation function `fn()` chooses which function of that measure (and of the member attributes) enters the group-level equation. `fn("sum")` — the additive weighted mean $A_x = \sum_k w_{ik} x_{ik}$ — is the default and recovers everything above. The *emergent* types read properties of the whole member set:
+
+| `fn()` | feature | question |
+|---|---|---|
+| `fn("var")`, `fn("var", moment = p)` | $\sum_k w_k (x_k - A_x)^p$ | distributional spread / shape |
+| `fn("hhi")`, `fn("effn")`, `fn("entropy")` | $\sum_k w_k^2$, its inverse, $-\sum_k w_k \log w_k$ | dominance / concentration of the weights |
+| `fn("threshold", c =, kappa =)` | $\sum_k w_k\, \mathrm{ilogit}(\kappa (x_k - c))$ | critical mass above a cutpoint; `c = est()` estimates it |
+| `fn("smax", kappa =)` | $\frac{1}{\kappa}\log \sum_k w_k e^{\kappa x_k}$ | smooth max/min; `kappa = est()` estimates the aggregation function itself ($\kappa<0$: min, $\kappa \to 0$: mean, $\kappa>0$: max) |
+| `fn("gmean", p = est())` | $(\sum_k w_k x_k^p)^{1/p}$ | CES/power mean; members as substitutes vs complements ($x > 0$) |
+| `fn("cov")` | $\sum_k w_k (x_k - A_x)(z_k - A_z)$ | within-member pairing of two attributes |
+
+Each block emits a group-level *feature* whose coefficient is an ordinary main-model coefficient (labeled by the feature name, e.g. `V_x`). Blocks stack: combine mean + variance + concentration in one model. Shape parameters (`c`, `kappa`, `p`) are reported in their own "Function parameters" section and take priors via `prior(..., class = "fn")`.
+
+**Who counts vs. how contributions combine.** Parameters that act on *external* member characteristics (importance, size) belong in `w()`; parameters that act on the *effect attribute* (whatever is in `vars()`) belong in `fn()`. Building weights from the attribute being aggregated (`w(~ exp(om * x))` with `vars(x)`) is near-equivalent to `fn("smax")` — the exponentially tilted mean is the derivative of the log-sum-exp — and `bml` warns when a variable appears in both.
+
+### User-written reductions: the expression DSL
+
+Beyond the named types, `fn()` accepts a one-sided formula in a restricted expression DSL. `E(e)` is the expectation $\sum_k w_k e_k$ under the normalized weights; member-level quantities are the `vars()` attributes and the reserved symbol `w`; whitelisted operations (`+ - * / ^`, `exp`, `log`, `ilogit`, `pow`) transpile to JAGS. Any other symbol is a free shape parameter (the same one-parameter rule as `w()`).
+
+```r
+fn(~ E((x - E(x))^2))                                    # variance, written out
+fn(~ E(ilogit(kappa * (x - c1)) - ilogit(kappa * (x - c2))))  # band: mass between two levels
+fn(~ E(x^a / (c^a + x^a)))                               # Hill / saturating dose-response (x > 0)
+fn(~ E((x - E(x)) * (z - E(z))) /
+     (E((x - E(x))^2) * E((z - E(z))^2))^0.5)            # correlation
+fn(~ E(log(x)))                                          # log-mean / geometric mean (x > 0)
+```
+
+Identification note: shape parameters reach the outcome only through `coefficient x feature` — if the feature's coefficient is near zero they are unidentified, and a free parameter that *multiplies* an attribute inside a nonlinear `E()` is confounded with the coefficient (a warning fires). Treat inner parameters as cutpoints/sharpness, not slopes.
+
+### Named blocks and interactions
+
+Every block has a name (auto-generated, e.g. `A_x`, `V_x`, or set via `name =`). Single-feature blocks can be referenced in main-formula interactions:
+
+```r
+Y ~ education + Ax:education +                        # cross-level: feature x macro variable
+  mm(name = Ax, id = id(k, i), vars = vars(x), w = w(~ 1/n))
+
+Y ~ Ax:Vx + mm(name = Ax, ...) + mm(name = Vx, ...)   # block x block
+```
+
+The macro variable must also appear as a main effect, and must be group-constant (a within-group-varying moderator is a member-paired interaction and belongs in `vars(x:z)`). A bare, non-interacted block reference errors — the block's main effect already enters through the block itself.
 
 ## Generalized Outcomes
 
@@ -243,10 +288,10 @@ The model structure extends to non-Gaussian outcomes via generalized linear and 
 \text{logit}\left(P(y_i^{(g)} = 1)\right) = \theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)} \tag{9}
 \end{equation}
 
-In `bml`, specify `family = "Binomial"`:
+In `bml`, specify `family = bernoulli()`:
 
 ```r
-bml(y ~ 1 + x1 + mm(...) + hm(...), family = "Binomial", data = d)
+bml(y ~ 1 + x1 + mm(...) + hm(...), data = d, family = bernoulli())
 ```
 
 **Weibull Survival Model:**
@@ -257,10 +302,10 @@ bml(y ~ 1 + x1 + mm(...) + hm(...), family = "Binomial", data = d)
 
 where $t_i$ is survival time, $\epsilon_i$ follows an extreme value distribution, and $\sigma$ is the scale parameter related to the Weibull shape parameter.
 
-In `bml`, specify `family = "Weibull"` with a `Surv()` outcome:
+In `bml`, specify `family = weibull()` with a `Surv()` outcome:
 
 ```r
-bml(Surv(time, event) ~ 1 + x1 + mm(...) + hm(...), family = "Weibull", data = d)
+bml(Surv(time, event) ~ 1 + x1 + mm(...) + hm(...), data = d, family = weibull())
 ```
 
 **Cox Proportional Hazards Model:**
@@ -271,10 +316,10 @@ h(t_i) = h_0(t) \exp\left(\theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)}\
 
 where $h_0(t)$ is the baseline hazard function, estimated non-parametrically or as a piecewise constant function.
 
-In `bml`, specify `family = "Cox"`. The optional `cox_intervals` argument controls the number of intervals for the piecewise constant baseline hazard:
+In `bml`, specify `family = cox()`. The optional `intervals` argument controls the number of intervals for the piecewise constant baseline hazard:
 
 ```r
-bml(Surv(time, event) ~ 1 + x1 + mm(...) + hm(...), family = "Cox", cox_intervals = 10, data = d)
+bml(Surv(time, event) ~ 1 + x1 + mm(...) + hm(...), data = d, family = cox(intervals = 10))
 ```
 
 All outcome types support the full multilevel and multiple-membership structure, including parameterizable weight functions.
@@ -308,9 +353,9 @@ Since the model is estimated via MCMC, the ICCs inherit full posterior distribut
 ```r
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
-    hm(id = id(cid), type = "RE"),
-  family = "Weibull",
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+    hm(id = id(cid)),
+  family = weibull(),
   data = coalgov
 )
 
@@ -337,15 +382,22 @@ where $b$ indexes MM blocks, each with its own weight function $w_{ik}^{(b)} = f
 **Example:** Model the effect of the cohesion of the party with the largest seat share while the party random effects are specified with equal weights:
 
 ```r
-mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ pseat == max(pseat)), RE = FALSE) +
-mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)
+mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ pseat == max(pseat)), RE = FALSE) +
+mm(id = id(pid, gid), vars = NULL, w = w(~ 1/n), RE = TRUE)
 ```
 
 **Important:** For any given `id(pid, gid)` combination, only one `mm()` block may include `RE = TRUE` within the same model.
 
 ### Autoregressive Random Effects
 
-Member random effects may evolve over time rather than remain constant. The `ar = TRUE` option specifies a random walk process:
+Member random effects may evolve over time rather than remain constant. The autoregressive walk is part of the effects grammar — it is specified inside `re()`, since it is a property of the random effect:
+
+```r
+RE = re(1, ar = TRUE)        # random walk over participation order
+RE = re(1, ar = year)        # random walk over calendar time (gap-scaled)
+```
+
+With `ar = TRUE`, the effect follows a random walk across the member's successive group participations:
 
 \begin{equation}
 u_{ik}^{(p)} \sim \begin{cases}
@@ -356,6 +408,14 @@ N(u_{g[i,k],k}^{(p)}, \sigma_{u^{(p)}}^2) & \text{if } g[i,k] \neq \emptyset
 
 where $g[i,k]$ returns the most recent previous group in which member $k$ participated. For $g[i,k] = \emptyset$ (first participation), the effect is drawn from the prior.
 
+**Time-indexed walk.** Passing a (numeric) time variable instead of `TRUE` — `re(1, ar = year)` — orders each member's participations by that variable and scales the step variance by the elapsed time, so that unobserved heterogeneity drifts more over long gaps than short ones:
+
+\begin{equation}
+u_{t} \sim N\!\left(u_{t-1},\; \sigma_{u^{(p)}}^2 \cdot \Delta_t / \bar{\Delta}\right) \tag{17a}
+\end{equation}
+
+where $\Delta_t$ is the time gap between the member's consecutive participations and $\bar{\Delta}$ the average gap in the data. The normalization by $\bar{\Delta}$ means equal spacing reproduces the `ar = TRUE` model exactly, and $\sigma_{u^{(p)}}$ keeps its interpretation as the innovation standard deviation per average step. Time values must be unique within each member (a zero gap would make the step variance zero).
+
 **Interpretation:** Autoregressive effects capture dynamics where a member's unobserved heterogeneity changes across successive group participations. The variance $\sigma_{u^{(p)}}^2$ now represents the *innovation variance* governing temporal change.
 
 **Example:** A party's propensity to destabilize governments may evolve as its leadership, organization, or electoral fortunes change.
@@ -363,8 +423,11 @@ where $g[i,k]$ returns the most recent previous group in which member $k$ partic
 **Usage:**
 
 ```r
-mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE, ar = TRUE)
+mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = re(1, ar = TRUE))
+hm(id = id(cid), RE = re(1, ar = year))    # also available at the nesting level
 ```
+
+The walk requires an intercept-only random effect (`re(1, ar = ...)`; it does not combine with random slopes or `cor = TRUE`).
 
 ### Opposition Members
 
@@ -379,8 +442,8 @@ where superscripts $(g)$ and $(o)$ denote member and non-member effects, respect
 In `bml`, this is specified using two `mm()` blocks with different mmid variables — one for members ($k \in p[i]$) and one for non-members ($k \notin p[i]$):
 
 ```r
-mm(id = id(pid_g, gid), vars = vars(x1, x2), fn = fn(w ~ 1/n), RE = TRUE) +
-mm(id = id(pid_o, gid), vars = vars(x1, x2), fn = fn(w ~ 1/n), RE = TRUE)
+mm(id = id(pid_g, gid), vars = vars(x1, x2), w = w(~ 1/n), RE = TRUE) +
+mm(id = id(pid_o, gid), vars = vars(x1, x2), w = w(~ 1/n), RE = TRUE)
 ```
 
 **Data format:** Since the two `mm()` blocks use different member ID variables (`pid_g` and `pid_o`), the data should be in a stacked long format where each member gets its own row, with `NA` in the mmid column it does not belong to:

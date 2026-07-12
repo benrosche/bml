@@ -22,8 +22,9 @@ A \code{bml_id} object containing the variable names as character strings.
 \description{
 Helper function used within \code{\link{mm}} and \code{\link{hm}} to specify
 the identifier variables that define memberships and nesting structures. In
-multiple-membership models, \code{id()} links member-level units (e.g., party
-IDs) to group-level units (e.g., government IDs). In hierarchical models,
+multiple-membership models, \code{id()} links member-level units (e.g., task
+IDs) to group-level units (e.g., occupation IDs) in long format: one row per
+membership, any number of members per group. In hierarchical models,
 \code{id()} specifies the nesting-level identifier (e.g., country ID).
 }
 \examples{

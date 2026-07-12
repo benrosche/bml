@@ -16,3 +16,7 @@
 ^README\.html$
 ^backup$
 ^vignettes/\.fits$
+^bml-emergent-terms-plan\.md$
+^bml-brms-alignment-plan\.md$
+^micro_macro_framework_slides\.qmd$
+^data/.*\.feather$

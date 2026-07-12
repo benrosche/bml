@@ -46,9 +46,9 @@
 #' # Fit model
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
-#'     hm(id = id(cid), type = "RE"),
-#'   family = "Weibull",
+#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+#'     hm(id = id(cid)),
+#'   family = weibull(),
 #'   data = coalgov
 #' )
 #'
@@ -128,12 +128,36 @@ print.bml_summary <- function(x, ...) {
     cat("\n")
   }
 
-  # Remove custom class and print as data frame
   class(x) <- setdiff(class(x), "bml_summary")
-  print(x, ...)
+
+  # Print by section: coefficients / weights / fn shape params / variance
+  comp <- x$component
+  if (!is.null(comp)) {
+    xp <- x
+    xp$component <- NULL
+
+    sections <- list(
+      "Coefficients (class \"b\"):" = comp == "fixed",
+      "Weight parameters (class \"w\"):" = comp == "weights",
+      "Function parameters (class \"fn\"):" = comp == "fn",
+      "Variance parameters:" = comp == "random",
+      "Other parameters:" = !comp %in% c("fixed", "weights", "fn", "random")
+    )
+
+    for (title in names(sections)) {
+      rows <- sections[[title]]
+      if (any(rows)) {
+        cat(title, "\n")
+        print(xp[rows, , drop = FALSE], ...)
+        cat("\n")
+      }
+    }
+  } else {
+    print(x, ...)
+  }
 
   # Print DIC at the bottom
   if (!is.null(dic_value)) {
-    cat("\nModel fit: DIC =", dic_value, "\n")
+    cat("Model fit: DIC =", dic_value, "\n")
   }
 }

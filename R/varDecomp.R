@@ -74,9 +74,9 @@
 #'
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
-#'     hm(id = id(cid), type = "RE"),
-#'   family = "Weibull",
+#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+#'     hm(id = id(cid)),
+#'   family = weibull(),
 #'   data = coalgov
 #' )
 #'
@@ -124,7 +124,7 @@ varDecomp <- function(model, uncertainty = "sd", r = 2) {
       re_block_k <- NULL
       for (k in seq_along(model$input$mm)) {
         block <- model$input$mm[[k]]
-        if (block$RE && !is.null(block$mmid_group) && block$mmid_group == g) {
+        if (!is.null(block$RE) && !isFALSE(block$RE) && !is.null(block$mmid_group) && block$mmid_group == g) {
           re_block_k <- k
           break
         }

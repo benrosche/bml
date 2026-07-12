@@ -36,10 +36,12 @@ generics::glance
 #' @param component Which parameters to return:
 #'   \itemize{
 #'     \item \code{"all"} (default): all of the below
-#'     \item \code{"fixed"}: regression coefficients (main, mm, and hm level)
-#'     \item \code{"random"}: variance/scale parameters (e.g., \code{sigma},
-#'       \code{sigma.mm.*}, \code{sigma.hm.*}, Weibull \code{shape}, \code{tau})
-#'     \item \code{"weights"}: weight function parameters
+#'     \item \code{"fixed"}: all class-\code{"b"} coefficients (main-formula
+#'       terms, block features, interactions)
+#'     \item \code{"random"}: variance parameters (\code{sd(...)},
+#'       \code{cor(...)}, \code{sigma}, Weibull \code{shape})
+#'     \item \code{"weights"}: weight-model parameters (\code{w[...]})
+#'     \item \code{"fn"}: aggregation-function shape parameters (\code{fn[...]})
 #'   }
 #' @param ... Additional arguments (currently unused).
 #'
@@ -53,8 +55,8 @@ generics::glance
 #'
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
-#'   family = "Weibull",
+#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+#'   family = weibull(),
 #'   data = coalgov
 #' )
 #'
@@ -76,7 +78,7 @@ generics::glance
 #' @author Benjamin Rosche \email{benrosche@@nyu.edu}
 #' @export
 tidy.bml <- function(x, conf.int = TRUE, conf.level = 0.95,
-                     component = c("all", "fixed", "random", "weights"), ...) {
+                     component = c("all", "fixed", "random", "weights", "fn"), ...) {
 
   component <- match.arg(component)
 
@@ -87,12 +89,19 @@ tidy.bml <- function(x, conf.int = TRUE, conf.level = 0.95,
   rt <- x$reg.table
   jagsnames <- rownames(rt)
 
-  comp <- dplyr::case_when(
-    stringr::str_detect(jagsnames, "^b\\.w\\.") ~ "weights",
-    stringr::str_detect(jagsnames, "^(b\\[|b\\.mm\\.|b\\.hm\\.|fix\\.)") ~ "fixed",
-    stringr::str_detect(jagsnames, "^(sigma|shape|tau)") ~ "random",
-    TRUE ~ "other"
-  )
+  # component classification is computed in formatJags and stored on reg.table;
+  # fall back to name-based classification for older objects
+  if (!is.null(rt$component)) {
+    comp <- rt$component
+  } else {
+    comp <- dplyr::case_when(
+      stringr::str_detect(jagsnames, "^b\\.w\\.") ~ "weights",
+      stringr::str_detect(jagsnames, "^fn\\.") ~ "fn",
+      stringr::str_detect(jagsnames, "^(b\\[|b\\.fn\\.|b\\.int|fix\\.)") ~ "fixed",
+      stringr::str_detect(jagsnames, "^(sigma|shape|tau|rho)") ~ "random",
+      TRUE ~ "other"
+    )
+  }
 
   out <- tibble::tibble(
     term = rt$Parameter,
@@ -145,7 +154,7 @@ tidy.bml <- function(x, conf.int = TRUE, conf.level = 0.95,
 #'     \item \code{n.members}: Number of member-level units across mm blocks
 #'     \item \code{DIC}: Deviance Information Criterion
 #'     \item \code{family}: Outcome family
-#'     \item \code{n.iter}, \code{n.chains}: MCMC settings
+#'     \item \code{iter}, \code{chains}: MCMC settings
 #'   }
 #'
 #' @examples
@@ -168,7 +177,7 @@ glance.bml <- function(x, ...) {
     n.members = x$input$n.mm,
     DIC = as.numeric(attr(x$reg.table, "DIC")),
     family = x$input$family,
-    n.iter = x$input$n.iter,
-    n.chains = x$input$n.chains
+    iter = x$input$iter,
+    chains = x$input$chains
   )
 }

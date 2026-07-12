@@ -2,7 +2,8 @@
 # Function createJagsVars
 # ================================================================================================ #
 
-createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, monitor, modelfile, n.chains, inits, cox_intervals = NULL) {
+createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, interactions,
+                           monitor, chains, inits, cox_intervals = NULL) {
 
   # Unpack main ------------------------------------------------------------------------------ #
 
@@ -14,8 +15,15 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
 
   has_mm <- !is.null(mm_blocks) && length(mm_blocks) > 0
   has_hm <- !is.null(hm_blocks) && length(hm_blocks) > 0
-  has_mm_RE <- has_mm && attr(mm_blocks, "has_RE")
-  has_mm_vars <- has_mm && attr(mm_blocks, "has_vars")
+  has_int <- length(interactions %||% list()) > 0
+
+  # R-side equivalents of the JAGS math functions (for precomputation)
+  r_math_env <- list(
+    ilogit = stats::plogis, logit = stats::qlogis,
+    probit = stats::qnorm, iprobit = stats::pnorm,
+    cloglog = function(x) log(-log(1 - x)), icloglog = function(x) 1 - exp(-exp(x)),
+    pow = function(a, b) a^b, log10 = log10
+  )
 
   # ========================================================================================== #
   # Create IDs
@@ -25,49 +33,40 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   hmid   <- if (has_hm) maindat %>% dplyr::pull(hmid) else c()
   n.main <- length(mainid)
 
-  # Get mmid grouping info
   all_mmid_names <- if (has_mm) attr(mm_blocks, "all_mmid_names") else c()
   mmid_to_blocks <- if (has_mm) attr(mm_blocks, "mmid_to_blocks") else list()
   n_mmid_groups <- length(all_mmid_names)
 
-  # Per-group structures
-  mmid_list   <- list()  # mmid.g vectors
-  mmi1_list   <- list()  # mmi1.g vectors
-  mmi2_list   <- list()  # mmi2.g vectors
-  mmn_list    <- list()  # mmn.g vectors
-  grp.mm_list <- list()  # grp.mm.g vectors
-  n.mm_list   <- list()  # n.mm.g scalars
-  n.umm_list  <- list()  # n.umm.g scalars
+  mmid_list   <- list()
+  mmi1_list   <- list()
+  mmi2_list   <- list()
+  mmn_list    <- list()
+  grp.mm_list <- list()
+  n.mm_list   <- list()
+  n.umm_list  <- list()
 
-  # AR structures per group
   n.GPN_list  <- list()
   n.GPNi_list <- list()
   n.GPn_list  <- list()
+  # per group: normalized time-gap matrix for time-indexed AR walks (NULL when not used)
+  gap.mm_list <- vector("list", n_mmid_groups)
 
   if (has_mm) {
     for (g in seq_along(all_mmid_names)) {
-      mmid_col <- paste0("mmid.", g)
-
-      # Get blocks in this group
       block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
-
-      # Get block data for this group (use first block's wdat which has mmid, mainid)
-      # We need to get the unique mmid values for this group
       first_block <- mm_blocks[[block_indices[1]]]
-      block_data <- first_block$wdat %>%
-        dplyr::arrange(mainid, mmid)
+      # wdat is already in the canonical (mainid, mmid) order from createData
+      block_data <- first_block$wdat
 
       mmid_list[[g]] <- block_data %>% dplyr::pull(mmid)
       n.mm_list[[g]] <- length(mmid_list[[g]])
       n.umm_list[[g]] <- length(unique(mmid_list[[g]]))
 
-      # Compute per-mainid counts and indices for this group
       group_counts <- block_data %>%
         dplyr::group_by(mainid) %>%
         dplyr::summarise(mmn = dplyr::n(), .groups = "drop") %>%
         dplyr::arrange(mainid)
 
-      # Match to main units (some main units may have 0 members in this group)
       mmn_full <- rep(0, n.main)
       mmn_full[group_counts$mainid] <- group_counts$mmn
       mmn_list[[g]] <- mmn_full
@@ -75,23 +74,48 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
       mmi2_list[[g]] <- cumsum(mmn_list[[g]])
       mmi1_list[[g]] <- mmi2_list[[g]] - mmn_list[[g]] + 1
 
-      # Group mapping for accumulator pattern
       grp.mm_list[[g]] <- rep(1:n.main, times = mmn_list[[g]])
 
-      # AR structures for this group
       n.GPN_list[[g]]  <- block_data %>% dplyr::count(mmid) %>% dplyr::pull(n) %>% max()
       n.GPNi_list[[g]] <- block_data %>% dplyr::count(mmid) %>% dplyr::pull(n)
-      n.GPn_list[[g]]  <- block_data %>% dplyr::group_by(mmid) %>% dplyr::mutate(n = dplyr::row_number()) %>% dplyr::pull(n)
+
+      # participation index: by time within member when the walk is time-indexed,
+      # otherwise by row order (canonical (mainid, mmid) order)
+      re_idx_g <- block_indices[sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$RE))]
+      ar_spec_g <- if (length(re_idx_g) > 0) mm_blocks[[re_idx_g[1]]]$ar else NULL
+
+      if (!is.null(ar_spec_g) && !is.null(ar_spec_g$time)) {
+        ardat_g <- mm_blocks[[re_idx_g[1]]]$ardat  # canonical order, aligned with block_data
+        n.GPn_list[[g]] <- stats::ave(ardat_g$artime, ardat_g$mmid,
+                                      FUN = function(t) rank(t, ties.method = "first"))
+
+        # normalized gap matrix [member, walk step]; step variance = sigma^2 * gap
+        n_umm_g <- n.umm_list[[g]]
+        n_GPN_g <- n.GPN_list[[g]]
+        gap_mat <- matrix(1, nrow = n_umm_g, ncol = max(n_GPN_g, 2))
+        times_by_member <- split(ardat_g$artime, ardat_g$mmid)
+        all_gaps <- unlist(lapply(times_by_member, function(t) diff(sort(t))))
+        mean_gap <- if (length(all_gaps) > 0) mean(all_gaps) else 1
+        if (mean_gap <= 0) mean_gap <- 1
+        for (m in names(times_by_member)) {
+          t_sorted <- sort(times_by_member[[m]])
+          if (length(t_sorted) >= 2) {
+            gap_mat[as.integer(m), 2:length(t_sorted)] <- diff(t_sorted) / mean_gap
+          }
+        }
+        gap.mm_list[[g]] <- gap_mat
+      } else {
+        n.GPn_list[[g]] <- block_data %>% dplyr::group_by(mmid) %>%
+          dplyr::mutate(n = dplyr::row_number()) %>% dplyr::pull(n)
+      }
     }
   }
 
-  # For backward compatibility, create non-grouped aliases for single-mmid case
+  # Backward-compatible aliases for the first group
   mmid   <- if (has_mm && n_mmid_groups >= 1) mmid_list[[1]] else c()
   mmn    <- if (has_mm && n_mmid_groups >= 1) mmn_list[[1]] else c()
   mmi1   <- if (has_mm && n_mmid_groups >= 1) mmi1_list[[1]] else c()
   mmi2   <- if (has_mm && n_mmid_groups >= 1) mmi2_list[[1]] else c()
-  mmi1.mm <- if (has_mm && n_mmid_groups >= 1) rep(mmi1, mmn) else c()
-  mmi2.mm <- if (has_mm && n_mmid_groups >= 1) rep(mmi2, mmn) else c()
 
   # ========================================================================================== #
   # Create Ns
@@ -101,116 +125,203 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   n.umm  <- if (has_mm && n_mmid_groups >= 1) n.umm_list[[1]] else 0
   n.hm   <- if (has_hm) length(unique(hmid)) else 0
 
-  # Map mm-level observation to its main group index (for accumulator optimization)
-  grp.mm <- if (has_mm && n_mmid_groups >= 1) grp.mm_list[[1]] else c()
-
-  # For autoregressive RE - mm level (backward compatibility)
   n.GPN  <- if (has_mm && n_mmid_groups >= 1) n.GPN_list[[1]] else c()
   n.GPNi <- if (has_mm && n_mmid_groups >= 1) n.GPNi_list[[1]] else c()
   n.GPn  <- if (has_mm && n_mmid_groups >= 1) n.GPn_list[[1]] else c()
 
-  # For autoregressive RE - hm level
   n.HMN  <- if (has_hm) maindat %>% dplyr::count(hmid) %>% dplyr::pull(n) %>% max() else c()
   n.HMNi <- if (has_hm) maindat %>% dplyr::count(hmid) %>% dplyr::pull(n) else c()
-  n.HMn  <- if (has_hm) maindat %>% dplyr::group_by(hmid) %>% dplyr::mutate(n = row_number()) %>% dplyr::pull(n) else c()
+  n.HMn  <- if (has_hm) maindat %>% dplyr::group_by(hmid) %>%
+    dplyr::mutate(n = row_number()) %>% dplyr::pull(n) else c()
 
-  # Number of mm blocks
+  # Time-indexed hm AR walk: order each unit's observations by time and build gaps.
+  # The walk position vector n.HMn is shared across hm blocks, so at most one hm block
+  # can define a time-indexed ordering.
+  gap.hm_list <- vector("list", if (has_hm) length(hm_blocks) else 0)
+  if (has_hm) {
+    ar_time_blocks <- which(sapply(hm_blocks, function(b) {
+      !is.null(b$ar) && !is.null(b$ar$time)
+    }))
+    if (length(ar_time_blocks) > 1) {
+      stop("Only one hm() block can carry a time-indexed AR walk (the walk ordering ",
+           "is shared across hm blocks).", call. = FALSE)
+    }
+    if (length(ar_time_blocks) == 1) {
+      k_ar <- ar_time_blocks[1]
+      artime <- hm_blocks[[k_ar]]$artime
+      dup <- duplicated(data.frame(hmid = hmid, t = artime))
+      if (any(dup)) {
+        stop("re(ar = ", hm_blocks[[k_ar]]$ar$time, "): duplicated time values within a ",
+             "nesting unit (a zero time gap makes the random-walk step variance zero).",
+             call. = FALSE)
+      }
+      n.HMn <- stats::ave(artime, hmid, FUN = function(t) rank(t, ties.method = "first"))
+
+      gap_mat <- matrix(1, nrow = n.hm, ncol = max(n.HMN, 2))
+      times_by_unit <- split(artime, hmid)
+      all_gaps <- unlist(lapply(times_by_unit, function(t) diff(sort(t))))
+      mean_gap <- if (length(all_gaps) > 0) mean(all_gaps) else 1
+      if (mean_gap <= 0) mean_gap <- 1
+      for (u in names(times_by_unit)) {
+        t_sorted <- sort(times_by_unit[[u]])
+        if (length(t_sorted) >= 2) {
+          gap_mat[as.integer(u), 2:length(t_sorted)] <- diff(t_sorted) / mean_gap
+        }
+      }
+      gap.hm_list[[k_ar]] <- gap_mat
+    }
+  }
+
   n.mmblocks <- if (has_mm) length(mm_blocks) else 0
 
   # ========================================================================================== #
-  # Create X matrices for mm() blocks
+  # Per-block computation modes and matrices
   # ========================================================================================== #
 
-  X.mm       <- list()
-  X.mm.fix   <- list()
-  fix.mm     <- list()
-  offset.mm  <- list()
-  X.w        <- list()
-  w.precomp  <- list()  # Phase 2: Pre-computed weights
-  w.is.precomp <- list()  # Phase 2: Flag for whether weights are pre-computed
-  n.Xmm      <- list()
-  n.Xmm.fix  <- list()
-  n.Xw       <- list()
+  n_blocks <- if (has_mm) length(mm_blocks) else 0
+
+  X.mm       <- vector("list", n_blocks)
+  offset.mm  <- vector("list", n_blocks)
+  X.w        <- vector("list", n_blocks)
+  X.re       <- vector("list", n_mmid_groups)  # per mmid group: RE slope covariates
+  X.fe       <- vector("list", n_blocks)       # per block: FE slope covariates
+  w.precomp  <- vector("list", n_blocks)
+  w.is.precomp <- as.list(rep(FALSE, n_blocks))
+  F.precomp  <- vector("list", n_blocks)
+  F.is.precomp <- as.list(rep(FALSE, n_blocks))
+  n.Xmm      <- as.list(rep(0, n_blocks))
+  n.Xw       <- as.list(rep(0, n_blocks))
+
+  w_in_jags <- function(block) length(block$w$params) > 0
+  f_in_jags <- function(block) {
+    (length(block$feature_labels) > 0) &&
+      (w_in_jags(block) || length(block$fn$est_params) > 0)
+  }
 
   if (has_mm) {
     for (i in seq_along(mm_blocks)) {
       block <- mm_blocks[[i]]
+      g <- block$mmid_group
 
-      # Free variables matrix for this block
+      # Member attribute design matrix
       if (!is.null(block$vars) && length(block$vars) > 0) {
         X.mm[[i]] <- block$dat %>% dplyr::select(all_of(block$vars)) %>% as.matrix()
         n.Xmm[[i]] <- ncol(X.mm[[i]])
-      } else {
-        X.mm[[i]] <- NULL
-        n.Xmm[[i]] <- 0
       }
 
-      # Fixed variables matrix for this block
+      # Fixed-coefficient offset
       if (!is.null(block$dat_fixed)) {
         var_names <- sapply(block$vars_fixed, function(x) x$var)
-        X.mm.fix[[i]] <- block$dat_fixed %>% dplyr::select(all_of(var_names)) %>% as.matrix()
-        fix.mm[[i]] <- block$fix_values
-        n.Xmm.fix[[i]] <- length(fix.mm[[i]])
-
-        # Phase 1 Optimization: Pre-compute fixed coefficient contributions
-        offset.mm[[i]] <- as.vector(X.mm.fix[[i]] %*% fix.mm[[i]])
-      } else {
-        X.mm.fix[[i]] <- NULL
-        fix.mm[[i]] <- NULL
-        n.Xmm.fix[[i]] <- 0
-        offset.mm[[i]] <- NULL
+        X_fix <- block$dat_fixed %>% dplyr::select(all_of(var_names)) %>% as.matrix()
+        offset.mm[[i]] <- as.vector(X_fix %*% block$fix_values)
       }
 
-      # Weight matrix for this block
-      wvars <- block$fn$vars
+      # Weight covariate matrix
+      wvars <- block$w$vars
       if (length(wvars) > 0) {
         X.w[[i]] <- block$wdat %>% dplyr::select(all_of(wvars)) %>% as.matrix()
         n.Xw[[i]] <- ncol(X.w[[i]])
-      } else {
-        X.w[[i]] <- NULL
-        n.Xw[[i]] <- 0
       }
 
-      # Phase 2 Optimization: Pre-compute weights if weight function has no parameters
-      if (length(block$fn$params) == 0) {
-        # Weight function is deterministic - pre-compute in R
-        fn_string <- block$fn$string
-
-        # Replace variables with actual values from X.w
-        uw <- rep(NA, n.mm)
-        for (j in 1:n.mm) {
-          fn_eval <- fn_string
-          for (v in seq_along(wvars)) {
-            fn_eval <- gsub(paste0("\\b", wvars[v], "\\b"), X.w[[i]][j, v], fn_eval)
-          }
-          uw[j] <- eval(parse(text = fn_eval))
-        }
-
-        # Normalize if constrained
-        if (block$fn$constraint) {
-          w.precomp[[i]] <- rep(NA, n.mm)
-          for (j in 1:n.mm) {
-            sum_uw <- sum(uw[mmi1.mm[j]:mmi2.mm[j]])
-            w.precomp[[i]][j] <- uw[j] / sum_uw
-          }
+      # ---------------- Weight precomputation (no free parameters) ---------------- #
+      if (!w_in_jags(block)) {
+        wdat_env <- c(as.list(block$wdat), r_math_env)
+        uw <- eval(parse(text = block$w$string), envir = wdat_env, enclos = baseenv())
+        if (length(uw) == 1) uw <- rep(uw, nrow(block$wdat))
+        uw <- as.numeric(uw)
+        if (block$w$constraint) {
+          sum_uw <- stats::ave(uw, block$wdat$mainid, FUN = sum)
+          w.precomp[[i]] <- uw / sum_uw
         } else {
           w.precomp[[i]] <- uw
         }
-
         w.is.precomp[[i]] <- TRUE
-      } else {
-        w.precomp[[i]] <- NULL
-        w.is.precomp[[i]] <- FALSE
+      }
+
+      # ---------------- Feature precomputation (fast path) ---------------- #
+      if (length(block$feature_labels) > 0 && !f_in_jags(block)) {
+
+        wv <- w.precomp[[i]]
+        grp <- block$wdat$mainid
+        n_feat <- length(block$feature_labels)
+        fnobj <- block$fn
+        type <- fnobj$type
+
+        group_sum <- function(v) {
+          out <- rep(0, n.main)
+          s <- tapply(v, grp, sum)
+          out[as.numeric(names(s))] <- as.numeric(s)
+          out
+        }
+
+        if (type == "sum") {
+          Fmat <- sapply(seq_len(ncol(X.mm[[i]])), function(x) group_sum(wv * X.mm[[i]][, x]))
+          F.precomp[[i]] <- if (n_feat == 1) as.vector(Fmat) else Fmat
+        } else if (type == "var") {
+          m <- fnobj$moment %||% 2
+          A <- group_sum(wv * X.mm[[i]][, 1])
+          F.precomp[[i]] <- group_sum(wv * (X.mm[[i]][, 1] - A[grp])^m)
+        } else if (type == "hhi") {
+          F.precomp[[i]] <- group_sum(wv^2)
+        } else if (type == "effn") {
+          F.precomp[[i]] <- 1 / group_sum(wv^2)
+        } else if (type == "entropy") {
+          F.precomp[[i]] <- -group_sum(wv * log(wv))
+        } else if (type == "threshold") {
+          cv <- fnobj$fixed_params$c
+          kv <- fnobj$fixed_params$kappa
+          F.precomp[[i]] <- group_sum(wv * stats::plogis(kv * (X.mm[[i]][, 1] - cv)))
+        } else if (type == "smax") {
+          kv <- fnobj$fixed_params$kappa
+          F.precomp[[i]] <- (1 / kv) * log(group_sum(wv * exp(kv * X.mm[[i]][, 1])))
+        } else if (type == "gmean") {
+          pv <- fnobj$fixed_params$p
+          F.precomp[[i]] <- group_sum(wv * X.mm[[i]][, 1]^pv)^(1 / pv)
+        } else if (type == "cov") {
+          A1 <- group_sum(wv * X.mm[[i]][, 1])
+          A2 <- group_sum(wv * X.mm[[i]][, 2])
+          F.precomp[[i]] <- group_sum(wv * (X.mm[[i]][, 1] - A1[grp]) * (X.mm[[i]][, 2] - A2[grp]))
+        } else if (type == "expr") {
+          fixedp <- lapply(fnobj$fixed_params %||% list(), identity)
+          Fv <- rep(NA_real_, n.main)
+          for (j in unique(grp)) {
+            rows <- which(grp == j)
+            member_env <- list(w = wv[rows])
+            for (a in seq_along(block$attr_cols)) {
+              col <- match(block$attr_cols[a], block$vars)
+              member_env[[block$attr_cols[a]]] <- X.mm[[i]][rows, col]
+            }
+            Fv[j] <- dsl_eval_group(fnobj$graph, member_env, fixedp)
+          }
+          Fv[is.na(Fv)] <- 0
+          F.precomp[[i]] <- Fv
+        }
+        F.is.precomp[[i]] <- TRUE
+      }
+
+      # ---------------- FE slope covariates ---------------- #
+      if (!is.null(block$FE) && length(block$FE$slopes) > 0) {
+        X.fe[[i]] <- block$redat %>% dplyr::select(all_of(block$FE$slopes)) %>% as.matrix()
+      }
+    }
+
+    # RE slope covariates: one matrix per mmid group (from the RE-carrying block)
+    for (g in seq_along(all_mmid_names)) {
+      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
+      re_idx <- block_indices[sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$RE))]
+      if (length(re_idx) > 0) {
+        rb <- mm_blocks[[re_idx[1]]]
+        if (length(rb$RE$slopes) > 0) {
+          X.re[[g]] <- rb$redat %>% dplyr::select(all_of(rb$RE$slopes)) %>% as.matrix()
+        }
       }
     }
   }
 
   # ========================================================================================== #
-  # Create X matrices for main and hm levels
+  # Main and HM matrices
   # ========================================================================================== #
 
-  # Main level - free variables (including intercept X0 if present)
-  # With model.matrix(), X0 is a column of 1s representing the intercept
   if (length(mainvars) > 0) {
     X.main <- maindat %>% dplyr::select(all_of(mainvars)) %>% as.matrix()
     n.Xmain <- ncol(X.main)
@@ -219,88 +330,90 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     n.Xmain <- 0
   }
 
-  # Main level - fixed variables
   if (!is.null(main$dat_fixed)) {
     var_names <- sapply(main$vars_fixed, function(x) x$var)
-    # Handle X0 specially
     var_names_data <- if ("X0" %in% var_names) c("X0", var_names[var_names != "X0"]) else var_names
     X.main.fix <- main$dat_fixed %>% dplyr::select(all_of(var_names_data)) %>% as.matrix()
-    fix.main <- main$fix_values
-    n.Xmain.fix <- length(fix.main)
-
-    # Phase 1 Optimization: Pre-compute fixed coefficient contributions
-    offset.main <- as.vector(X.main.fix %*% fix.main)
+    offset.main <- as.vector(X.main.fix %*% main$fix_values)
+    n.Xmain.fix <- length(main$fix_values)
   } else {
-    X.main.fix <- NULL
-    fix.main <- NULL
-    n.Xmain.fix <- 0
     offset.main <- NULL
+    n.Xmain.fix <- 0
   }
 
-  # HM level
-  X.hm      <- list()
-  X.hm.fix  <- list()
-  fix.hm    <- list()
-  offset.hm <- list()
-  n.Xhm     <- list()
-  n.Xhm.fix <- list()
-
+  # HM slope covariates (main-level values)
+  X.re.hm <- vector("list", if (has_hm) length(hm_blocks) else 0)
   if (has_hm) {
     for (i in seq_along(hm_blocks)) {
       block <- hm_blocks[[i]]
-
-      # Free variables
-      if (!is.null(block$vars) && length(block$vars) > 0) {
-        X.hm[[i]] <- block$dat %>% dplyr::select(all_of(block$vars)) %>% as.matrix()
-        n.Xhm[[i]] <- ncol(X.hm[[i]])
-      } else {
-        X.hm[[i]] <- NULL
-        n.Xhm[[i]] <- 0
-      }
-
-      # Fixed variables
-      if (!is.null(block$dat_fixed)) {
-        var_names <- sapply(block$vars_fixed, function(x) x$var)
-        X.hm.fix[[i]] <- block$dat_fixed %>% dplyr::select(all_of(var_names)) %>% as.matrix()
-        fix.hm[[i]] <- block$fix_values
-        n.Xhm.fix[[i]] <- length(fix.hm[[i]])
-
-        # Phase 1 Optimization: Pre-compute fixed coefficient contributions
-        offset.hm[[i]] <- as.vector(X.hm.fix[[i]] %*% fix.hm[[i]])
-      } else {
-        X.hm.fix[[i]] <- NULL
-        fix.hm[[i]] <- NULL
-        n.Xhm.fix[[i]] <- 0
-        offset.hm[[i]] <- NULL
+      eff <- block$RE %||% block$FE
+      if (!is.null(eff) && length(eff$slopes) > 0) {
+        X.re.hm[[i]] <- block$slopedat %>%
+          dplyr::arrange(mainid) %>%
+          dplyr::select(all_of(eff$slopes)) %>% as.matrix()
       }
     }
   }
 
   # ========================================================================================== #
-  # Build jags.params
+  # Build jags.params (monitors)
   # ========================================================================================== #
 
   jags.params <- c()
 
-  # MM-level parameters - per mmid group with RE
   if (has_mm) {
+    # RE variance/effect monitors per mmid group
     for (g in seq_along(all_mmid_names)) {
       block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
-      has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
-      if (has_re_in_group) {
-        jags.params <- c(jags.params, paste0("sigma.mm.", g))
-        if (monitor) jags.params <- c(jags.params, paste0("re.mm.", g))
+      re_idx <- block_indices[sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$RE))]
+      if (length(re_idx) > 0) {
+        re_spec <- mm_blocks[[re_idx[1]]]$RE
+        if (re_spec$intercept || any(sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$ar)))) {
+          jags.params <- c(jags.params, paste0("sigma.mm.", g))
+        }
+        for (s in seq_along(re_spec$slopes)) {
+          jags.params <- c(jags.params, paste0("sigma.mm.", g, ".s", s))
+        }
+        if (isTRUE(re_spec$cor) && length(re_spec$slopes) == 1) {
+          jags.params <- c(jags.params, paste0("rho.mm.", g))
+        }
+        if (monitor) {
+          jags.params <- c(jags.params, paste0("re.mm.", g))
+          for (s in seq_along(re_spec$slopes)) {
+            jags.params <- c(jags.params, paste0("re.mm.", g, ".s", s))
+          }
+        }
+      }
+    }
+
+    # Feature coefficients, shape params, weight params, weights, FE
+    for (i in seq_along(mm_blocks)) {
+      block <- mm_blocks[[i]]
+      if (length(block$feature_labels) > 0) {
+        jags.params <- c(jags.params, paste0("b.fn.", i))
+      }
+      for (pn in names(block$fn$est_params)) {
+        jags.params <- c(jags.params, paste0("fn.", pn, ".", i))
+      }
+      if (length(block$w$params) > 0) {
+        jags.params <- c(jags.params, paste0("b.w.", i))
+      }
+      # weights can only be monitored when they are model nodes (not pre-computed data)
+      if (monitor && w_in_jags(block)) {
+        jags.params <- c(jags.params, paste0("w.", i))
+      }
+      if (!is.null(block$FE) && block$FE$showFE) {
+        if (block$FE$intercept) jags.params <- c(jags.params, paste0("alpha.mm.", i))
+        for (s in seq_along(block$FE$slopes)) {
+          jags.params <- c(jags.params, paste0("alphas.mm.", i, ".s", s))
+        }
       }
     }
   }
 
-  # b.mm for each mm block with variables
-  if (has_mm) {
-    for (i in seq_along(mm_blocks)) {
-      if (!is.null(mm_blocks[[i]]$vars) && length(mm_blocks[[i]]$vars) > 0) {
-        jags.params <- c(jags.params, paste0("b.mm.", i))
-      }
-    }
+  # Interaction coefficients
+  if (has_int) {
+    jags.params <- c(jags.params, "b.int")
   }
 
   # Main-level parameters
@@ -311,126 +424,40 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     jags.params <- c(jags.params, "b")
   }
   if (monitor) {
-    jags.params <- c(jags.params, "pred")
+    jags.params <- c(jags.params, "pred", "mu")
+    if (family %in% c("Gaussian", "Binomial")) {
+      jags.params <- c(jags.params, "log_lik")
+    }
   }
 
   # HM-level parameters
   if (has_hm) {
     for (i in seq_along(hm_blocks)) {
       block <- hm_blocks[[i]]
-      if (block$type == "RE") {
-        jags.params <- c(jags.params, paste0("sigma.hm.", i))
-        if (monitor) jags.params <- c(jags.params, paste0("re.hm.", i))
-      }
-      if (n.Xhm[[i]] > 0 && (block$type == "RE" || block$showFE)) {
-        jags.params <- c(jags.params, paste0("b.hm.", i))
+      if (!is.null(block$RE)) {
+        if (block$RE$intercept || !is.null(block$ar)) {
+          jags.params <- c(jags.params, paste0("sigma.hm.", i))
+        }
+        for (s in seq_along(block$RE$slopes)) {
+          jags.params <- c(jags.params, paste0("sigma.hm.", i, ".s", s))
+        }
+        if (isTRUE(block$RE$cor) && length(block$RE$slopes) == 1) {
+          jags.params <- c(jags.params, paste0("rho.hm.", i))
+        }
+        if (monitor) {
+          jags.params <- c(jags.params, paste0("re.hm.", i))
+          for (s in seq_along(block$RE$slopes)) {
+            jags.params <- c(jags.params, paste0("re.hm.", i, ".s", s))
+          }
+        }
+      } else if (!is.null(block$FE) && block$FE$showFE) {
+        if (block$FE$intercept) jags.params <- c(jags.params, paste0("alpha.hm.", i))
+        for (s in seq_along(block$FE$slopes)) {
+          jags.params <- c(jags.params, paste0("alphas.hm.", i, ".s", s))
+        }
       }
     }
   }
-
-  # Weight parameters for each mm block
-  if (has_mm) {
-    for (i in seq_along(mm_blocks)) {
-      block <- mm_blocks[[i]]
-      if (length(block$fn$params) > 0) {
-        jags.params <- c(jags.params, paste0("b.w.", i))
-      }
-      if (monitor) {
-        jags.params <- c(jags.params, paste0("w.", i))
-      }
-    }
-  }
-
-  # ========================================================================================== #
-  # Build jags.data
-  # ========================================================================================== #
-
-  jags.data <- c()
-
-  # MM-level data
-  if (has_mm) {
-    jags.data <- c(jags.data, "n.mmblocks")
-
-    # Per-mmid-group indices
-    for (g in seq_along(all_mmid_names)) {
-      jags.data <- c(jags.data,
-        paste0("mmi1.", g),
-        paste0("mmi2.", g)
-      )
-
-      # Check if any block in this group has RE
-      block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
-
-      # n.mm.g is only needed in the model string when there are weight params, vars, or AR
-      needs_n_mm <- any(sapply(block_indices, function(i) {
-        length(mm_blocks[[i]]$fn$params) > 0 ||
-        (!is.null(mm_blocks[[i]]$vars) && length(mm_blocks[[i]]$vars) > 0) ||
-        mm_blocks[[i]]$ar
-      }))
-      if (needs_n_mm) {
-        jags.data <- c(jags.data, paste0("n.mm.", g))
-      }
-      has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
-      if (has_re_in_group) {
-        jags.data <- c(jags.data, paste0("mmid.", g), paste0("n.umm.", g))
-      }
-
-      # Check if any block in this group has constraint
-      has_constraint_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$fn$constraint))
-      if (has_constraint_in_group) {
-        jags.data <- c(jags.data, paste0("grp.mm.", g))
-      }
-
-      # Check if any block in this group has AR
-      has_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
-      if (has_ar_in_group) {
-        jags.data <- c(jags.data, paste0("n.GPn.", g), paste0("n.GPNi.", g))
-      }
-    }
-
-    for (i in seq_along(mm_blocks)) {
-      block <- mm_blocks[[i]]
-
-      # X.mm for this block
-      if (n.Xmm[[i]] > 0) {
-        jags.data <- c(jags.data, paste0("X.mm.", i), paste0("n.Xmm.", i))
-      }
-
-      # X.w for this block
-      if (n.Xw[[i]] > 0) {
-        jags.data <- c(jags.data, paste0("X.w.", i))
-      }
-    }
-
-    # AR data if any block uses it
-    if (any(sapply(mm_blocks, function(b) b$ar))) {
-      jags.data <- c(jags.data, "n.GPn", "n.GPNi")
-    }
-  }
-
-  # Main-level data
-  jags.data <- c(jags.data, "n.main")
-  if (n.Xmain > 0) {
-    jags.data <- c(jags.data, "X.main", "n.Xmain")
-  }
-
-  # HM-level data
-  if (has_hm) {
-    jags.data <- c(jags.data, "hmid", "n.hm")
-    for (i in seq_along(hm_blocks)) {
-      if (n.Xhm[[i]] > 0) {
-        jags.data <- c(jags.data, paste0("X.hm.", i), paste0("n.Xhm.", i))
-      }
-    }
-
-    # AR data for hm blocks
-    if (any(sapply(hm_blocks, function(b) b$ar))) {
-      jags.data <- c(jags.data, "n.HMn", "n.HMNi")
-    }
-  }
-
-  # Remove duplicates
-  jags.data <- unique(jags.data)
 
   # ========================================================================================== #
   # Family-specific data and inits
@@ -439,7 +466,6 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
   if (family %in% c("Gaussian", "Binomial")) {
 
     Y <- maindat %>% dplyr::rename(Y = all_of(lhs)) %>% dplyr::pull(Y)
-    jags.data <- c(jags.data, "Y")
     jags.inits <- list()
     Ys <- list(Y = Y)
 
@@ -458,7 +484,6 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     event <- maindat %>% dplyr::rename(ev = all_of(lhs[2])) %>% dplyr::pull(ev)
     censored <- 1 - event
 
-    jags.data <- c(jags.data, "t", "ct.lb", "censored")
     jags.params <- c(jags.params, "shape")
 
     t.init <- t
@@ -473,24 +498,19 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     t <- maindat %>% dplyr::rename(t = all_of(lhs[1]), ev = all_of(lhs[2])) %>% dplyr::pull(t)
     event <- maindat %>% dplyr::rename(ev = all_of(lhs[2])) %>% dplyr::pull(ev)
 
-    # Check if piecewise constant baseline hazard is requested
     if (!is.null(cox_intervals) && is.numeric(cox_intervals) && cox_intervals > 0) {
 
-      # Piecewise constant baseline hazard approach
       n.intervals <- as.integer(cox_intervals)
 
-      # Create interval breaks based on quantiles of event times
       event_times <- t[event == 1]
       if (length(event_times) == 0) {
         stop("No events observed in the data. Cox model cannot be estimated.")
       }
 
-      # Use quantiles to create intervals
       time_breaks <- quantile(event_times, probs = seq(0, 1, length.out = n.intervals + 1))
-      time_breaks[1] <- 0  # Start from 0
-      time_breaks[length(time_breaks)] <- max(t) + 1  # Extend beyond max time
+      time_breaks[1] <- 0
+      time_breaks[length(time_breaks)] <- max(t) + 1
 
-      # For each individual, compute time at risk and events in each interval
       Y_interval <- matrix(data = 0, nrow = n.main, ncol = n.intervals)
       dN_interval <- matrix(data = 0, nrow = n.main, ncol = n.intervals)
 
@@ -502,21 +522,14 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
           interval_start <- time_breaks[k]
           interval_end <- time_breaks[k + 1]
 
-          # Time at risk in this interval
-          # Individual contributes risk time from when they enter until they leave/event/censor
           if (t_j <= interval_start) {
-            # Event/censor happened at or before this interval started
             Y_interval[j, k] <- 0
           } else if (t_j > interval_end) {
-            # Individual was at risk for the entire interval (event/censor happens later)
             Y_interval[j, k] <- interval_end - interval_start
           } else {
-            # Individual was at risk for part of the interval (event/censor at t_j)
             Y_interval[j, k] <- t_j - interval_start
           }
 
-          # Event in this interval: use (start, end] to match time-at-risk logic
-          # This ensures dN=1 only when Y>0 (individual had time at risk in this interval)
           if (event_j == 1) {
             if (t_j > interval_start && t_j <= interval_end) {
               dN_interval[j, k] <- 1
@@ -525,7 +538,6 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
         }
       }
 
-      jags.data <- c(jags.data, "Y_interval", "dN_interval", "n.intervals", "c", "d")
       jags.inits <- list(lambda0 = rep(0.01, n.intervals))
       Ys <- list(
         Y_interval = Y_interval,
@@ -540,7 +552,6 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
 
     } else {
 
-      # Original implementation: all unique event times
       t.unique <- c(sort(unique(t)), max(t) + 1)
       n.tu <- length(t.unique) - 1
 
@@ -553,42 +564,39 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
         }
       }
 
-      jags.data <- c(jags.data, "Y", "dN", "t.unique", "n.tu", "c", "d")
       jags.inits <- list(dL0 = rep(1.0, n.tu))
-      Ys <- list(Y = Y, dN = dN, t = t, t.unique = t.unique, event = event, c = 0.001, d = 0.1, n.tu = n.tu)
-
+      Ys <- list(Y = Y, dN = dN, t = t, t.unique = t.unique, event = event,
+                 c = 0.001, d = 0.1, n.tu = n.tu)
     }
-
   }
 
   # ========================================================================================== #
   # Finalize inits
   # ========================================================================================== #
 
-  # Initialize weight function parameters at 0 to prevent numerical issues
-  # (e.g., ilogit with extreme initial values drawn from vague priors)
   if (has_mm) {
     for (i in seq_along(mm_blocks)) {
       block <- mm_blocks[[i]]
-      if (length(block$fn$params) > 0) {
-        jags.inits[[paste0("b.w.", i)]] <- rep(0, length(block$fn$params))
+      if (length(block$w$params) > 0) {
+        jags.inits[[paste0("b.w.", i)]] <- rep(0, length(block$w$params))
+      }
+      for (pn in names(block$fn$est_params)) {
+        jags.inits[[paste0("fn.", pn, ".", i)]] <- block$fn$est_params[[pn]]$init
       }
     }
   }
 
   jags.inits <- c(jags.inits, inits)
-  jags.inits <- lapply(1:n.chains, function(x) jags.inits)
+  jags.inits <- lapply(1:chains, function(x) jags.inits)
 
   # ========================================================================================== #
-  # Build the actual data list for JAGS
+  # Build the data list for JAGS
   # ========================================================================================== #
 
-  # Start with scalars and basic vectors
   jags.data.list <- list(
     n.main = n.main
   )
 
-  # Add Y or survival data
   if (family %in% c("Gaussian", "Binomial")) {
     jags.data.list$Y <- Ys$Y
   } else if (family == "Weibull") {
@@ -597,14 +605,12 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     jags.data.list$censored <- Ys$censored
   } else if (family == "Cox") {
     if (!is.null(cox_intervals) && is.numeric(cox_intervals) && cox_intervals > 0) {
-      # Piecewise constant baseline hazard
       jags.data.list$Y_interval <- Ys$Y_interval
       jags.data.list$dN_interval <- Ys$dN_interval
       jags.data.list$n.intervals <- Ys$n.intervals
       jags.data.list$c <- Ys$c
       jags.data.list$d <- Ys$d
     } else {
-      # Original: all unique event times
       jags.data.list$Y <- Ys$Y
       jags.data.list$dN <- Ys$dN
       jags.data.list$t.unique <- Ys$t.unique
@@ -614,109 +620,134 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     }
   }
 
-  # Main-level data
   if (n.Xmain > 0) {
     jags.data.list$X.main <- X.main
-    # n.Xmain not passed to JAGS (unused in model; b range is hardcoded)
   }
-
-  # Main-level fixed data
   if (n.Xmain.fix > 0) {
-    # Phase 1 Optimization: Pass pre-computed offset instead of X.fix and fix separately
     jags.data.list$offset.main <- offset.main
   }
 
-  # MM-level data
   if (has_mm) {
-    # Per-mmid-group indices
-    for (g in seq_along(all_mmid_names)) {
-      jags.data.list[[paste0("mmi1.", g)]] <- mmi1_list[[g]]
-      jags.data.list[[paste0("mmi2.", g)]] <- mmi2_list[[g]]
 
-      # Check if any block in this group has RE
+    # Member-loop types that need group-scalar lookups at the member level
+    needs_grp_types <- c("var", "cov", "expr")
+    member_loop_types <- c("var", "entropy", "threshold", "smax", "gmean", "cov", "expr")
+
+    for (g in seq_along(all_mmid_names)) {
       block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
 
-      # n.mm.g is only needed when model string loops over mm observations
+      # index ranges are only referenced when something in this group is computed in JAGS
+      needs_ranges <- any(sapply(block_indices, function(i) {
+        b <- mm_blocks[[i]]
+        f_in_jags(b) || !is.null(b$RE) || !is.null(b$FE) ||
+          !is.null(offset.mm[[i]]) || (w_in_jags(b) && b$w$constraint)
+      }))
+      if (needs_ranges) {
+        jags.data.list[[paste0("mmi1.", g)]] <- mmi1_list[[g]]
+        jags.data.list[[paste0("mmi2.", g)]] <- mmi2_list[[g]]
+      }
+
       needs_n_mm <- any(sapply(block_indices, function(i) {
-        length(mm_blocks[[i]]$fn$params) > 0 ||
-        (!is.null(mm_blocks[[i]]$vars) && length(mm_blocks[[i]]$vars) > 0) ||
-        mm_blocks[[i]]$ar
+        b <- mm_blocks[[i]]
+        w_in_jags(b) ||
+          (f_in_jags(b) && b$fn$type %in% member_loop_types) ||
+          !is.null(b$ar)
       }))
       if (needs_n_mm) {
         jags.data.list[[paste0("n.mm.", g)]] <- n.mm_list[[g]]
       }
-      has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
+
+      # RE / FE need mmid indexing
+      has_re_in_group <- any(sapply(block_indices, function(i) {
+        !is.null(mm_blocks[[i]]$RE) || !is.null(mm_blocks[[i]]$FE)
+      }))
       if (has_re_in_group) {
         jags.data.list[[paste0("mmid.", g)]] <- mmid_list[[g]]
         jags.data.list[[paste0("n.umm.", g)]] <- n.umm_list[[g]]
       }
 
-      # Check if any block in this group has constraint (computed in JAGS)
-      needs_constraint_in_group <- any(sapply(block_indices, function(i) {
-        mm_blocks[[i]]$fn$constraint && !w.is.precomp[[i]]
+      needs_grp <- any(sapply(block_indices, function(i) {
+        b <- mm_blocks[[i]]
+        (w_in_jags(b) && b$w$constraint) ||
+          (f_in_jags(b) && b$fn$type %in% needs_grp_types)
       }))
-      if (needs_constraint_in_group) {
+      if (needs_grp) {
         jags.data.list[[paste0("grp.mm.", g)]] <- grp.mm_list[[g]]
       }
 
-      # Check if any block in this group has AR
-      has_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
+      has_ar_in_group <- any(sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$ar)))
       if (has_ar_in_group) {
         jags.data.list[[paste0("n.GPn.", g)]] <- n.GPn_list[[g]]
         jags.data.list[[paste0("n.GPNi.", g)]] <- n.GPNi_list[[g]]
+        if (!is.null(gap.mm_list[[g]])) {
+          jags.data.list[[paste0("gap.mm.", g)]] <- gap.mm_list[[g]]
+        }
+      }
+
+      # RE slope covariates
+      if (!is.null(X.re[[g]])) {
+        jags.data.list[[paste0("X.re.", g)]] <- X.re[[g]]
       }
     }
 
-    # Per-block data
     for (i in seq_along(mm_blocks)) {
       block <- mm_blocks[[i]]
 
-      # Free variables
-      if (n.Xmm[[i]] > 0) {
+      # Attribute design matrix: needed only when the feature is computed in JAGS
+      if (n.Xmm[[i]] > 0 && f_in_jags(block)) {
         jags.data.list[[paste0("X.mm.", i)]] <- X.mm[[i]]
-        jags.data.list[[paste0("n.Xmm.", i)]] <- n.Xmm[[i]]
+        if (block$fn$type == "sum" && length(block$feature_labels) > 1) {
+          jags.data.list[[paste0("n.Xmm.", i)]] <- n.Xmm[[i]]
+        }
       }
 
-      # Fixed variables
-      if (n.Xmm.fix[[i]] > 0) {
-        # Phase 1 Optimization: Pass pre-computed offset instead of X.fix and fix separately
+      # Precomputed features
+      if (F.is.precomp[[i]]) {
+        jags.data.list[[paste0("F.", i)]] <- F.precomp[[i]]
+      }
+
+      # Fixed-coefficient offsets
+      if (!is.null(offset.mm[[i]])) {
         jags.data.list[[paste0("offset.mm.", i)]] <- offset.mm[[i]]
       }
 
-      # Weight variables
+      # Weights: precomputed as data, or covariates for in-JAGS computation
       if (w.is.precomp[[i]]) {
-        # Phase 2 Optimization: Pass pre-computed weights as data
-        jags.data.list[[paste0("w.", i)]] <- w.precomp[[i]]
+        # w.k needed as data whenever the model string references it
+        needs_w <- f_in_jags(block) || !is.null(block$RE) || !is.null(block$FE) ||
+          !is.null(offset.mm[[i]])
+        if (needs_w) {
+          jags.data.list[[paste0("w.", i)]] <- w.precomp[[i]]
+        }
       } else if (n.Xw[[i]] > 0) {
-        # Weights have parameters - pass X.w for computation in JAGS
         jags.data.list[[paste0("X.w.", i)]] <- X.w[[i]]
+      }
+
+      # FE slope covariates
+      if (!is.null(X.fe[[i]])) {
+        jags.data.list[[paste0("X.fe.", i)]] <- X.fe[[i]]
       }
     }
   }
 
-  # HM-level data
   if (has_hm) {
     jags.data.list$hmid <- hmid
     jags.data.list$n.hm <- n.hm
 
     for (i in seq_along(hm_blocks)) {
-      # Free variables
-      if (n.Xhm[[i]] > 0) {
-        jags.data.list[[paste0("X.hm.", i)]] <- X.hm[[i]]
-        jags.data.list[[paste0("n.Xhm.", i)]] <- n.Xhm[[i]]
-      }
-
-      # Fixed variables
-      if (n.Xhm.fix[[i]] > 0) {
-        # Phase 1 Optimization: Pass pre-computed offset instead of X.fix and fix separately
-        jags.data.list[[paste0("offset.hm.", i)]] <- offset.hm[[i]]
+      if (!is.null(X.re.hm[[i]])) {
+        jags.data.list[[paste0("X.re.hm.", i)]] <- X.re.hm[[i]]
       }
     }
 
-    # AR data for hm blocks
-    if (any(sapply(hm_blocks, function(b) b$ar))) {
+    if (any(sapply(hm_blocks, function(b) !is.null(b$ar)))) {
       jags.data.list$n.HMn <- n.HMn
       jags.data.list$n.HMNi <- n.HMNi
+      for (i in seq_along(hm_blocks)) {
+        if (!is.null(gap.hm_list[[i]])) {
+          jags.data.list[[paste0("gap.hm.", i)]] <- gap.hm_list[[i]]
+        }
+      }
     }
   }
 
@@ -728,37 +759,31 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, mm, hm, mon
     list(
       ids = list(
         mmid = mmid, mainid = mainid, hmid = hmid,
-        mmi1 = mmi1, mmi1.mm = mmi1.mm,
-        mmi2 = mmi2, mmi2.mm = mmi2.mm,
-        # Per-group structures
+        mmi1 = mmi1, mmi2 = mmi2,
         mmid_list = mmid_list, mmi1_list = mmi1_list, mmi2_list = mmi2_list,
         mmn_list = mmn_list, grp.mm_list = grp.mm_list
       ),
       Ns = list(
         n.mm = n.mm, mmn = mmn, n.umm = n.umm,
         n.main = n.main, n.hm = n.hm,
-        n.Xmm = n.Xmm, n.Xmain = n.Xmain, n.Xhm = n.Xhm, n.Xw = n.Xw,
-        n.Xmm.fix = n.Xmm.fix, n.Xmain.fix = n.Xmain.fix, n.Xhm.fix = n.Xhm.fix,
+        n.Xmm = n.Xmm, n.Xmain = n.Xmain, n.Xw = n.Xw,
         n.mmblocks = n.mmblocks,
         n.GPN = n.GPN, n.GPNi = n.GPNi, n.GPn = n.GPn,
         n.HMN = n.HMN, n.HMNi = n.HMNi, n.HMn = n.HMn,
-        # Per-group counts
-        n.mm_list = n.mm_list, n.umm_list = n.umm_list,
+        n.mm_list = n.mm_list, n.umm_list = n.umm_list, mmn_list = mmn_list,
         n.GPN_list = n.GPN_list, n.GPNi_list = n.GPNi_list, n.GPn_list = n.GPn_list,
         n_mmid_groups = n_mmid_groups,
         all_mmid_names = all_mmid_names, mmid_to_blocks = mmid_to_blocks
       ),
       Xs = list(
-        X.mm = X.mm, X.main = X.main, X.hm = X.hm, X.w = X.w,
-        X.mm.fix = X.mm.fix, X.main.fix = X.main.fix, X.hm.fix = X.hm.fix,
-        fix.mm = fix.mm, fix.main = fix.main, fix.hm = fix.hm,
-        w.is.precomp = w.is.precomp  # Phase 2: Flags for pre-computed weights
+        X.mm = X.mm, X.main = X.main, X.w = X.w, X.re = X.re, X.re.hm = X.re.hm,
+        w.is.precomp = w.is.precomp, w.precomp = w.precomp,
+        F.is.precomp = F.is.precomp, F.precomp = F.precomp
       ),
       Ys = Ys,
-      jags.params = jags.params,
+      jags.params = unique(jags.params),
       jags.inits = jags.inits,
       jags.data = jags.data.list
     )
   )
-
 }

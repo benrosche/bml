@@ -18,7 +18,7 @@ A one-row \code{tibble} with columns:
     \item \code{n.members}: Number of member-level units across mm blocks
     \item \code{DIC}: Deviance Information Criterion
     \item \code{family}: Outcome family
-    \item \code{n.iter}, \code{n.chains}: MCMC settings
+    \item \code{iter}, \code{chains}: MCMC settings
   }
 }
 \description{

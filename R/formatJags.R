@@ -2,25 +2,21 @@
 # Function formatJags
 # ================================================================================================ #
 
-formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm, family, cox_intervals = NULL) {
+formatJags <- function(jags.out, monitor, Ns, Xs, mm_blocks, main, hm_blocks, interactions,
+                       family, cox_intervals = NULL) {
 
- # ========================================================================================== #
+  # ========================================================================================== #
   # Flags and setup
   # ========================================================================================== #
 
   has_mm <- !is.null(mm_blocks) && length(mm_blocks) > 0
   has_hm <- !is.null(hm_blocks) && length(hm_blocks) > 0
-  has_mm_RE <- has_mm && attr(mm_blocks, "has_RE")
+  has_int <- length(interactions %||% list()) > 0
 
-  n.umm      <- Ns$n.umm
-  mmn        <- Ns$mmn
   n.main     <- Ns$n.main
   n.hm       <- Ns$n.hm
-  n.GPN      <- Ns$n.GPN
   n.HMN      <- Ns$n.HMN
-  n.mmblocks <- Ns$n.mmblocks
 
-  # Per-mmid-group info
   all_mmid_names <- Ns$all_mmid_names
   mmid_to_blocks <- Ns$mmid_to_blocks
   n.umm_list     <- Ns$n.umm_list
@@ -28,9 +24,6 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
 
   mainvars <- main$vars
   lhs      <- main$lhs
-
-  # Check if any mm block uses AR
-  any_ar <- has_mm && any(sapply(mm_blocks, function(b) b$ar))
 
   # ========================================================================================== #
   # Create reg.table from JAGS output
@@ -41,27 +34,22 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
     dplyr::rename(mean = 2, sd = 3, lb = 4, ub = 5)
 
   # ========================================================================================== #
-  # Add fixed variables to reg.table
+  # Add fixed (fix()) variables to reg.table
   # ========================================================================================== #
 
   fixed_rows <- list()
 
-  # Main-level fixed variables
   if (!is.null(main$vars_fixed)) {
     for (i in seq_along(main$vars_fixed)) {
       var_info <- main$vars_fixed[[i]]
       fixed_rows[[length(fixed_rows) + 1]] <- data.frame(
         name = paste0("fix.main[", i, "]"),
-        mean = var_info$value,
-        sd = NA_real_,
-        lb = NA_real_,
-        ub = NA_real_,
+        mean = var_info$value, sd = NA_real_, lb = NA_real_, ub = NA_real_,
         stringsAsFactors = FALSE
       )
     }
   }
 
-  # MM-level fixed variables (per block)
   if (has_mm) {
     for (k in seq_along(mm_blocks)) {
       block <- mm_blocks[[k]]
@@ -70,10 +58,7 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
           var_info <- block$vars_fixed[[i]]
           fixed_rows[[length(fixed_rows) + 1]] <- data.frame(
             name = paste0("fix.mm.", k, "[", i, "]"),
-            mean = var_info$value,
-            sd = NA_real_,
-            lb = NA_real_,
-            ub = NA_real_,
+            mean = var_info$value, sd = NA_real_, lb = NA_real_, ub = NA_real_,
             stringsAsFactors = FALSE
           )
         }
@@ -81,98 +66,82 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
     }
   }
 
-  # HM-level fixed variables (per block)
-  if (has_hm) {
-    for (k in seq_along(hm_blocks)) {
-      block <- hm_blocks[[k]]
-      if (!is.null(block$vars_fixed)) {
-        for (i in seq_along(block$vars_fixed)) {
-          var_info <- block$vars_fixed[[i]]
-          fixed_rows[[length(fixed_rows) + 1]] <- data.frame(
-            name = paste0("fix.hm.", k, "[", i, "]"),
-            mean = var_info$value,
-            sd = NA_real_,
-            lb = NA_real_,
-            ub = NA_real_,
-            stringsAsFactors = FALSE
-          )
-        }
-      }
-    }
-  }
-
-  # Bind fixed rows to reg.table
   if (length(fixed_rows) > 0) {
     fixed_df <- dplyr::bind_rows(fixed_rows)
     reg.table <- dplyr::bind_rows(reg.table, fixed_df)
   }
 
   # ========================================================================================== #
-  # Extract and organize outputs
+  # Extract and organize monitored quantities
   # ========================================================================================== #
 
   re.mm <- list()
   re.hm <- list()
   w <- list()
   pred <- c()
+  fitted_mu <- c()
 
   if (monitor) {
 
-    # MM-level Random Effects - per mmid group -------------------------------------------- #
+    # MM-level random effects (per mmid group; intercepts + slopes) ----------------------- #
 
     if (has_mm && !is.null(all_mmid_names)) {
       for (g in seq_along(all_mmid_names)) {
         block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
-        has_re_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$RE))
-        any_ar_in_group <- any(sapply(block_indices, function(i) mm_blocks[[i]]$ar))
+        re_idx <- block_indices[sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$RE))]
+        if (length(re_idx) == 0) next
+        re_spec <- mm_blocks[[re_idx[1]]]$RE
+        any_ar_in_group <- any(sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$ar)))
 
-        if (has_re_in_group) {
-          re.mm_raw <- reg.table %>%
-            dplyr::filter(startsWith(name, paste0("re.mm.", g, "["))) %>%
-            dplyr::select(-sd, -lb, -ub)
+        re.mm_raw <- reg.table %>%
+          dplyr::filter(startsWith(name, paste0("re.mm.", g, "["))) %>%
+          dplyr::select(-sd, -lb, -ub)
 
-          if (any_ar_in_group) {
-            # Autoregressive structure
-            re.mm_df <- re.mm_raw %>%
-              tidyr::separate(name, c("i", "j"), ",", remove = FALSE) %>%
-              dplyr::mutate(
-                i = as.numeric(stringr::str_remove(i, paste0("re.mm.", g, "\\["))),
-                j = as.numeric(stringr::str_remove(j, "]"))
-              ) %>%
-              dplyr::arrange(i, j)
+        if (any_ar_in_group && nrow(re.mm_raw) > 0) {
+          re.mm_df <- re.mm_raw %>%
+            tidyr::separate(name, c("i", "j"), ",", remove = FALSE) %>%
+            dplyr::mutate(
+              i = as.numeric(stringr::str_remove(i, paste0("re.mm.", g, "\\["))),
+              j = as.numeric(stringr::str_remove(j, "]"))
+            ) %>%
+            dplyr::arrange(i, j)
 
-            n_umm_g <- n.umm_list[[g]]
-            n_GPN_g <- n.GPN_list[[g]]
-            remat <- matrix(NA, nrow = n_umm_g, ncol = n_GPN_g)
-            rownames(remat) <- paste0("MM unit ", seq_len(n_umm_g))
-            colnames(remat) <- paste0("Random walk ", seq_len(n_GPN_g))
-
-            for (r in seq_len(nrow(re.mm_df))) {
-              remat[re.mm_df$i[r], re.mm_df$j[r]] <- re.mm_df$mean[r]
-            }
-
-            re.mm[[g]] <- remat
-          } else {
-            re.mm[[g]] <- re.mm_raw %>% dplyr::pull(mean)
+          n_umm_g <- n.umm_list[[g]]
+          n_GPN_g <- n.GPN_list[[g]]
+          remat <- matrix(NA, nrow = n_umm_g, ncol = n_GPN_g)
+          rownames(remat) <- paste0("MM unit ", seq_len(n_umm_g))
+          colnames(remat) <- paste0("Random walk ", seq_len(n_GPN_g))
+          for (r in seq_len(nrow(re.mm_df))) {
+            remat[re.mm_df$i[r], re.mm_df$j[r]] <- re.mm_df$mean[r]
           }
-
-          reg.table <- reg.table %>% dplyr::filter(!startsWith(name, paste0("re.mm.", g, "[")))
+          re.mm[[g]] <- remat
+        } else if (nrow(re.mm_raw) > 0) {
+          out_g <- list(Intercept = re.mm_raw %>% dplyr::pull(mean))
+          for (s in seq_along(re_spec$slopes)) {
+            sl_raw <- reg.table %>%
+              dplyr::filter(startsWith(name, paste0("re.mm.", g, ".s", s, "["))) %>%
+              dplyr::pull(mean)
+            out_g[[re_spec$slopes[s]]] <- sl_raw
+          }
+          re.mm[[g]] <- if (length(out_g) == 1) out_g$Intercept else out_g
         }
+
+        reg.table <- reg.table %>%
+          dplyr::filter(!stringr::str_detect(name, paste0("^re\\.mm\\.", g, "(\\.s\\d+)?\\[")))
       }
     }
 
-    # HM-level Random Effects --------------------------------------------------------------- #
+    # HM-level random effects ---------------------------------------------------------------- #
 
     if (has_hm) {
       for (k in seq_along(hm_blocks)) {
         block <- hm_blocks[[k]]
-        if (block$type == "RE") {
+        if (!is.null(block$RE)) {
           re.hm_raw <- reg.table %>%
             dplyr::filter(startsWith(name, paste0("re.hm.", k, "["))) %>%
             dplyr::select(-sd, -lb, -ub)
 
-          if (block$ar) {
-            # Autoregressive structure
+          if (!is.null(block$ar) && nrow(re.hm_raw) > 0) {
             re.hm_df <- re.hm_raw %>%
               tidyr::separate(name, c("i", "j"), ",", remove = FALSE) %>%
               dplyr::mutate(
@@ -184,41 +153,55 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
             remat <- matrix(NA, nrow = n.hm, ncol = n.HMN)
             rownames(remat) <- paste0("HM unit ", seq_len(n.hm))
             colnames(remat) <- paste0("Random walk ", seq_len(n.HMN))
-
             for (r in seq_len(nrow(re.hm_df))) {
               remat[re.hm_df$i[r], re.hm_df$j[r]] <- re.hm_df$mean[r]
             }
-
             re.hm[[k]] <- remat
-          } else {
-            # Non-AR structure
-            re.hm[[k]] <- re.hm_raw %>% dplyr::pull(mean)
+          } else if (nrow(re.hm_raw) > 0) {
+            out_k <- list(Intercept = re.hm_raw %>% dplyr::pull(mean))
+            for (s in seq_along(block$RE$slopes)) {
+              sl_raw <- reg.table %>%
+                dplyr::filter(startsWith(name, paste0("re.hm.", k, ".s", s, "["))) %>%
+                dplyr::pull(mean)
+              out_k[[block$RE$slopes[s]]] <- sl_raw
+            }
+            re.hm[[k]] <- if (length(out_k) == 1) out_k$Intercept else out_k
           }
         } else {
           re.hm[[k]] <- c()
         }
       }
-      reg.table <- reg.table %>% dplyr::filter(!stringr::str_detect(name, "^re\\.hm\\.\\d+\\["))
+      reg.table <- reg.table %>%
+        dplyr::filter(!stringr::str_detect(name, "^re\\.hm\\.\\d+(\\.s\\d+)?\\["))
     }
 
-    # Weights for each mm block ------------------------------------------------------------ #
+    # Weights for each mm block --------------------------------------------------------------- #
 
     if (has_mm) {
       for (k in seq_along(mm_blocks)) {
-        w_raw <- reg.table %>%
-          dplyr::filter(startsWith(name, paste0("w.", k, "["))) %>%
-          dplyr::pull(mean)
+        g <- mm_blocks[[k]]$mmid_group
+
+        if (isTRUE(Xs$w.is.precomp[[k]])) {
+          w_raw <- Xs$w.precomp[[k]]
+        } else {
+          w_raw <- reg.table %>%
+            dplyr::filter(startsWith(name, paste0("w.", k, "["))) %>%
+            dplyr::pull(mean)
+        }
 
         if (length(w_raw) > 0) {
-          id1 <- cumsum(mmn) - mmn + 1
-          id2 <- cumsum(mmn)
+          mmn_g <- Ns$mmn_list[[g]]  # member counts per main unit for this mmid group
+          id2 <- cumsum(mmn_g)
+          id1 <- id2 - mmn_g + 1
 
-          wmat <- matrix(NA, nrow = n.main, ncol = max(mmn))
+          wmat <- matrix(NA, nrow = n.main, ncol = max(mmn_g))
           rownames(wmat) <- paste0("Main unit ", seq_len(n.main))
-          colnames(wmat) <- paste0("W", seq_len(max(mmn)))
+          colnames(wmat) <- paste0("W", seq_len(max(mmn_g)))
 
           for (i in seq_len(n.main)) {
-            wmat[i, seq_len(mmn[i])] <- w_raw[id1[i]:id2[i]]
+            if (mmn_g[i] > 0) {
+              wmat[i, seq_len(mmn_g[i])] <- w_raw[id1[i]:id2[i]]
+            }
           }
 
           w[[k]] <- wmat
@@ -229,268 +212,296 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
       reg.table <- reg.table %>% dplyr::filter(!stringr::str_detect(name, "^w\\.\\d+\\["))
     }
 
-    # Predicted values --------------------------------------------------------------------- #
+    # Predicted values and fitted mu ----------------------------------------------------------- #
 
     pred <- reg.table %>%
-      dplyr::filter(startsWith(name, "pred")) %>%
-      dplyr::select(-sd, -lb, -ub) %>%
+      dplyr::filter(stringr::str_detect(name, "^pred\\[")) %>%
       dplyr::pull(mean)
 
-    reg.table <- reg.table %>% dplyr::filter(!startsWith(name, "pred"))
+    fitted_mu <- reg.table %>%
+      dplyr::filter(stringr::str_detect(name, "^mu\\[")) %>%
+      dplyr::pull(mean)
+
+    reg.table <- reg.table %>%
+      dplyr::filter(!stringr::str_detect(name, "^(pred|mu|log_lik)\\["))
   }
 
   # ========================================================================================== #
-  # Rename parameters to meaningful names
+  # Rename parameters to user-facing labels
   # ========================================================================================== #
 
   newnames <- reg.table %>% dplyr::pull(name)
+  component <- rep("other", length(newnames))
 
-  # Main-level variables (estimated)
-  main_indices <- stringr::str_detect(newnames, "^b\\[")
+  # Main-level coefficients: b[x] (or scalar "b") -> term names
+  main_indices <- stringr::str_detect(newnames, "^b(\\[|$)")
   if (any(main_indices)) {
-    main_nums <- as.numeric(stringr::str_extract(newnames[main_indices], "(?<=\\[)\\d+(?=\\])"))
-    newnames[main_indices] <- ifelse(mainvars[main_nums] == "X0", "Intercept", mainvars[main_nums])
+    matched <- newnames[main_indices]
+    has_bracket <- stringr::str_detect(matched, "\\[")
+    main_nums <- as.numeric(ifelse(has_bracket,
+                                   stringr::str_extract(matched, "(?<=\\[)\\d+(?=\\])"), "1"))
+    newnames[main_indices] <- ifelse(mainvars[main_nums] == "X0", "(Intercept)",
+                                     mainvars[main_nums])
+    component[main_indices] <- "fixed"
   }
 
-  # Main-level variables (fixed)
+  # Fixed main-level variables
   if (!is.null(main$vars_fixed)) {
     fix_main_indices <- stringr::str_detect(newnames, "^fix\\.main\\[")
     if (any(fix_main_indices)) {
       fix_nums <- as.numeric(stringr::str_extract(newnames[fix_main_indices], "(?<=\\[)\\d+(?=\\])"))
       var_names <- sapply(fix_nums, function(i) main$vars_fixed[[i]]$var)
-      newnames[fix_main_indices] <- ifelse(var_names == "X0", "Intercept (fixed)", paste0(var_names, " (fixed)"))
+      newnames[fix_main_indices] <- ifelse(var_names == "X0", "(Intercept) (fixed)",
+                                           paste0(var_names, " (fixed)"))
+      component[fix_main_indices] <- "fixed"
     }
   }
 
-  # MM-level variables (per block)
   if (has_mm) {
     for (k in seq_along(mm_blocks)) {
       block <- mm_blocks[[k]]
+      g <- block$mmid_group
 
-      # Estimated variables
-      if (!is.null(block$vars) && length(block$vars) > 0) {
-        # Match both b.mm.k[x] (array) and b.mm.k (scalar, when single variable)
-        pattern <- paste0("^b\\.mm\\.", k, "($|\\[)")
-        mm_indices <- stringr::str_detect(newnames, pattern)
-        if (any(mm_indices)) {
-          matched <- newnames[mm_indices]
+      # Feature coefficients: b.fn.k[x] -> feature labels
+      if (length(block$feature_labels) > 0) {
+        pattern <- paste0("^b\\.fn\\.", k, "($|\\[)")
+        idxs <- stringr::str_detect(newnames, pattern)
+        if (any(idxs)) {
+          matched <- newnames[idxs]
           has_bracket <- stringr::str_detect(matched, "\\[")
-          mm_nums <- as.numeric(ifelse(
-            has_bracket,
-            stringr::str_extract(matched, "(?<=\\[)\\d+(?=\\])"),
-            "1"
-          ))
-          newnames[mm_indices] <- paste0(block$vars[mm_nums], " (mm.", k, ")")
+          nums <- as.numeric(ifelse(has_bracket,
+                                    stringr::str_extract(matched, "(?<=\\[)\\d+(?=\\])"), "1"))
+          newnames[idxs] <- block$feature_labels[nums]
+          component[idxs] <- "fixed"
         }
       }
 
-      # Fixed variables
+      # fn shape parameters: fn.<p>.k -> fn[p] (mm.k)
+      for (pn in names(block$fn$est_params)) {
+        idxs <- which(newnames == paste0("fn.", pn, ".", k))
+        if (length(idxs) > 0) {
+          newnames[idxs] <- paste0("fn[", pn, "] (mm.", k, ")")
+          component[idxs] <- "fn"
+        }
+      }
+
+      # Weight parameters: b.w.k[p]
+      if (length(block$w$params) > 0) {
+        pattern <- paste0("^b\\.w\\.", k, "($|\\[)")
+        idxs <- stringr::str_detect(newnames, pattern)
+        if (any(idxs)) {
+          matched <- newnames[idxs]
+          has_bracket <- stringr::str_detect(matched, "\\[")
+          nums <- as.numeric(ifelse(has_bracket,
+                                    stringr::str_extract(matched, "(?<=\\[)\\d+(?=\\])"), "1"))
+          if (length(block$w$vars_p) >= max(nums) && length(block$w$vars_p) > 0) {
+            newnames[idxs] <- paste0("w[", block$w$vars_p[nums], "] (mm.", k, ")")
+          } else {
+            newnames[idxs] <- paste0("w[", block$w$params[nums], "] (mm.", k, ")")
+          }
+          component[idxs] <- "weights"
+        }
+      }
+
+      # Fixed mm variables
       if (!is.null(block$vars_fixed)) {
         pattern <- paste0("^fix\\.mm\\.", k, "\\[")
-        fix_mm_indices <- stringr::str_detect(newnames, pattern)
-        if (any(fix_mm_indices)) {
-          fix_nums <- as.numeric(stringr::str_extract(newnames[fix_mm_indices], "(?<=\\[)\\d+(?=\\])"))
+        idxs <- stringr::str_detect(newnames, pattern)
+        if (any(idxs)) {
+          fix_nums <- as.numeric(stringr::str_extract(newnames[idxs], "(?<=\\[)\\d+(?=\\])"))
           var_names <- sapply(fix_nums, function(i) block$vars_fixed[[i]]$var)
-          newnames[fix_mm_indices] <- paste0(var_names, " (mm.", k, ", fixed)")
+          newnames[idxs] <- paste0(var_names, " (mm.", k, ", fixed)")
+          component[idxs] <- "fixed"
+        }
+      }
+
+      # Member fixed effects
+      if (!is.null(block$FE) && block$FE$showFE) {
+        pattern <- paste0("^alpha\\.mm\\.", k, "\\[")
+        idxs <- stringr::str_detect(newnames, pattern)
+        if (any(idxs)) {
+          nums <- as.numeric(stringr::str_extract(newnames[idxs], "(?<=\\[)\\d+(?=\\])"))
+          newnames[idxs] <- paste0("member ", nums, " (mm.", k, ", FE)")
+          component[idxs] <- "fixed"
         }
       }
     }
-  }
 
-  # HM-level variables (per block)
-  if (has_hm) {
-    for (k in seq_along(hm_blocks)) {
-      block <- hm_blocks[[k]]
-
-      # Estimated variables
-      if (!is.null(block$vars) && length(block$vars) > 0) {
-        # Match both b.hm.k[x] (array) and b.hm.k (scalar, when single variable)
-        pattern <- paste0("^b\\.hm\\.", k, "($|\\[)")
-        hm_indices <- stringr::str_detect(newnames, pattern)
-        if (any(hm_indices)) {
-          matched <- newnames[hm_indices]
-          has_bracket <- stringr::str_detect(matched, "\\[")
-          hm_nums <- as.numeric(ifelse(
-            has_bracket,
-            stringr::str_extract(matched, "(?<=\\[)\\d+(?=\\])"),
-            "1"
-          ))
-          # Handle FE case where vars are hmid2, hmid3, etc.
-          if (block$type == "FE" && !is.null(block$name)) {
-            # Use the hmname labels if available
-            hm_labels <- hm_blocks[[k]]$dat %>% dplyr::pull(hmname)
-            newnames[hm_indices] <- hm_labels[hm_nums + 1]  # +1 because reference is excluded
-          } else {
-            newnames[hm_indices] <- paste0(block$vars[hm_nums], " (hm.", k, ")")
-          }
-        }
-      }
-
-      # Fixed variables
-      if (!is.null(block$vars_fixed)) {
-        pattern <- paste0("^fix\\.hm\\.", k, "\\[")
-        fix_hm_indices <- stringr::str_detect(newnames, pattern)
-        if (any(fix_hm_indices)) {
-          fix_nums <- as.numeric(stringr::str_extract(newnames[fix_hm_indices], "(?<=\\[)\\d+(?=\\])"))
-          var_names <- sapply(fix_nums, function(i) block$vars_fixed[[i]]$var)
-          newnames[fix_hm_indices] <- paste0(var_names, " (hm.", k, ", fixed)")
-        }
-      }
-    }
-  }
-
-  # Weight parameters (per block)
-  if (has_mm) {
-    for (k in seq_along(mm_blocks)) {
-      block <- mm_blocks[[k]]
-      if (length(block$fn$params) > 0) {
-        # Match both b.w.k[x] (array) and b.w.k (scalar, when single parameter)
-        pattern <- paste0("^b\\.w\\.", k, "($|\\[)")
-        w_indices <- stringr::str_detect(newnames, pattern)
-        if (any(w_indices)) {
-          matched <- newnames[w_indices]
-          has_bracket <- stringr::str_detect(matched, "\\[")
-          w_nums <- as.numeric(ifelse(
-            has_bracket,
-            stringr::str_extract(matched, "(?<=\\[)\\d+(?=\\])"),
-            "1"
-          ))
-          # Use vars_p if available
-          if (length(block$fn$vars_p) > 0) {
-            newnames[w_indices] <- paste0(block$fn$vars_p[w_nums], " (w.", k, ")")
-          } else {
-            newnames[w_indices] <- paste0(block$fn$params[w_nums], " (w.", k, ")")
-          }
-        }
-      }
-    }
-  }
-
-  # Variance parameters: annotate sigma.mm.g with the mm blocks that have RE = TRUE
-  if (has_mm && !is.null(all_mmid_names)) {
+    # RE sd / cor labels per mmid group
     for (g in seq_along(all_mmid_names)) {
       block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
-      re_blocks_in_group <- block_indices[sapply(block_indices, function(i) mm_blocks[[i]]$RE)]
+      re_idx <- block_indices[sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$RE))]
+      if (length(re_idx) == 0) next
+      re_spec <- mm_blocks[[re_idx[1]]]$RE
 
-      if (length(re_blocks_in_group) == 1) {
-        mm_tag <- paste0(" (mm.", re_blocks_in_group, ")")
-        sigma_mm_idx <- which(newnames == paste0("sigma.mm.", g))
-        if (length(sigma_mm_idx) > 0) {
-          newnames[sigma_mm_idx] <- paste0("sigma.mm.", g, mm_tag)
+      idx <- which(newnames == paste0("sigma.mm.", g))
+      if (length(idx) > 0) {
+        newnames[idx] <- paste0("sd(Intercept) (mm.", re_idx[1], ")")
+        component[idx] <- "random"
+      }
+      for (s in seq_along(re_spec$slopes)) {
+        idx <- which(newnames == paste0("sigma.mm.", g, ".s", s))
+        if (length(idx) > 0) {
+          newnames[idx] <- paste0("sd(", re_spec$slopes[s], ") (mm.", re_idx[1], ")")
+          component[idx] <- "random"
         }
+      }
+      idx <- which(newnames == paste0("rho.mm.", g))
+      if (length(idx) > 0) {
+        newnames[idx] <- paste0("cor(Intercept,", re_spec$slopes[1], ") (mm.", re_idx[1], ")")
+        component[idx] <- "random"
       }
     }
   }
 
-  # Variance parameters: annotate sigma.hm.k with the hm block index
+  # Interaction coefficients (scalar "b.int" when there is a single interaction)
+  if (has_int) {
+    idxs <- which(stringr::str_detect(newnames, "^b\\.int($|\\[)"))
+    if (length(idxs) > 0) {
+      matched <- newnames[idxs]
+      has_bracket <- stringr::str_detect(matched, "\\[")
+      nums <- as.numeric(ifelse(has_bracket,
+                                stringr::str_extract(matched, "(?<=\\[)\\d+(?=\\])"), "1"))
+      newnames[idxs] <- sapply(nums, function(t) interactions[[t]]$label)
+      component[idxs] <- "fixed"
+    }
+  }
+
+  # HM labels
   if (has_hm) {
     for (k in seq_along(hm_blocks)) {
       block <- hm_blocks[[k]]
-      if (block$type == "RE") {
-        sigma_hm_idx <- which(newnames == paste0("sigma.hm.", k))
-        if (length(sigma_hm_idx) > 0) {
-          newnames[sigma_hm_idx] <- paste0("sigma.hm (hm.", k, ")")
+
+      if (!is.null(block$RE)) {
+        idx <- which(newnames == paste0("sigma.hm.", k))
+        if (length(idx) > 0) {
+          newnames[idx] <- paste0("sd(Intercept) (hm.", k, ")")
+          component[idx] <- "random"
+        }
+        for (s in seq_along(block$RE$slopes)) {
+          idx <- which(newnames == paste0("sigma.hm.", k, ".s", s))
+          if (length(idx) > 0) {
+            newnames[idx] <- paste0("sd(", block$RE$slopes[s], ") (hm.", k, ")")
+            component[idx] <- "random"
+          }
+        }
+        idx <- which(newnames == paste0("rho.hm.", k))
+        if (length(idx) > 0) {
+          newnames[idx] <- paste0("cor(Intercept,", block$RE$slopes[1], ") (hm.", k, ")")
+          component[idx] <- "random"
+        }
+      }
+
+      if (!is.null(block$FE) && block$FE$showFE) {
+        pattern <- paste0("^alpha\\.hm\\.", k, "\\[")
+        idxs <- stringr::str_detect(newnames, pattern)
+        if (any(idxs)) {
+          nums <- as.numeric(stringr::str_extract(newnames[idxs], "(?<=\\[)\\d+(?=\\])"))
+          if ("hmlabel" %in% colnames(block$dat)) {
+            unit_labels <- block$dat %>% dplyr::pull(hmlabel)
+            newnames[idxs] <- paste0(unit_labels[nums], " (hm.", k, ", FE)")
+          } else {
+            newnames[idxs] <- paste0("unit ", nums, " (hm.", k, ", FE)")
+          }
+          component[idxs] <- "fixed"
+        }
+        for (s in seq_along(block$FE$slopes)) {
+          pattern <- paste0("^alphas\\.hm\\.", k, "\\.s", s, "\\[")
+          idxs <- stringr::str_detect(newnames, pattern)
+          if (any(idxs)) {
+            nums <- as.numeric(stringr::str_extract(newnames[idxs], "(?<=\\[)\\d+(?=\\])"))
+            newnames[idxs] <- paste0("unit ", nums, ":", block$FE$slopes[s], " (hm.", k, ", FE)")
+            component[idxs] <- "fixed"
+          }
         }
       }
     }
   }
+
+  # Family parameters
+  idx <- which(newnames == "sigma")
+  if (length(idx) > 0) { component[idx] <- "random" }
+  idx <- which(newnames == "shape")
+  if (length(idx) > 0) { component[idx] <- "random" }
 
   # ========================================================================================== #
   # Finalize reg.table
   # ========================================================================================== #
-  #
-  # Final structure of reg.table:
-  #   - Rownames: Original JAGS parameter names (e.g., "b[1]", "sigma.mm")
-  #   - Columns:
-  #       * Parameter: Cleaned/labeled parameter names (accessible via $Parameter)
-  #       * mean: Posterior means (accessible via $mean)
-  #       * sd: Posterior standard deviations (accessible via $sd)
-  #       * lb: Lower 95% credible interval bound (accessible via $lb)
-  #       * ub: Upper 95% credible interval bound (accessible via $ub)
-  #
-  # ========================================================================================== #
 
   reg.table <- reg.table %>%
-    dplyr::mutate(Parameter = newnames) %>%
+    dplyr::mutate(Parameter = newnames, component = component) %>%
     dplyr::relocate(Parameter, .before = mean) %>%
     dplyr::filter(Parameter != "deviance") %>%
     tibble::column_to_rownames(var = "name")
 
-  # Add metadata about posterior estimates
   attr(reg.table, "estimate_type") <- "Posterior mean (MCMC)"
   attr(reg.table, "credible_interval") <- "95% equal-tailed credible intervals [2.5%, 97.5%]"
   attr(reg.table, "DIC") <- as.numeric(jags.out$BUGSoutput$DIC)
 
-  # Add outcome family and link information
   outcome_desc <- switch(family,
-    "Gaussian" = "Gaussian (identity link)",
-    "Binomial" = "Binomial (logit link)",
+    "Gaussian" = "gaussian (identity link)",
+    "Binomial" = "bernoulli (logit link)",
     "Weibull"  = {
       if (length(lhs) >= 2) {
-        paste0("Weibull survival (duration: ", lhs[1], ", event: ", lhs[2], ")")
+        paste0("weibull survival (duration: ", lhs[1], ", event: ", lhs[2], ")")
       } else {
-        "Weibull survival (log link)"
+        "weibull survival (log link)"
       }
     },
     "Cox" = {
       base_desc <- if (length(lhs) >= 2) {
-        paste0("Cox proportional hazards (duration: ", lhs[1], ", event: ", lhs[2])
+        paste0("cox proportional hazards (duration: ", lhs[1], ", event: ", lhs[2])
       } else {
-        "Cox proportional hazards (log link"
+        "cox proportional hazards (log link"
       }
-
-      # Add interval information if using piecewise constant baseline hazard
       if (!is.null(cox_intervals) && is.numeric(cox_intervals) && cox_intervals > 0) {
         paste0(base_desc, ", ", cox_intervals, " baseline hazard intervals)")
       } else {
         paste0(base_desc, ")")
       }
     },
-    paste0(family, " (unknown link)")  # fallback
+    paste0(family, " (unknown link)")
   )
   attr(reg.table, "outcome_family") <- outcome_desc
 
-  # Build level specification
+  # Level specification
   level_spec_lines <- c()
 
-  # HM blocks
   if (has_hm) {
     for (k in seq_along(hm_blocks)) {
       block <- hm_blocks[[k]]
-      id_var <- block$id
-
-      # Effect type
-      effect_type <- if (block$type == "RE") "RE" else "FE"
-
-      # Temporal structure (only for RE)
-      temporal <- if (block$type == "RE" && block$ar) "AR" else if (block$type == "RE") "indep" else "indep"
-
-      # Format: hm.k: id (type, temporal)
+      eff_desc <- if (!is.null(block$RE)) {
+        paste0("RE = re(", if (block$RE$intercept) "1" else "0",
+               if (length(block$RE$slopes) > 0) paste0(" + ", paste(block$RE$slopes, collapse = " + ")),
+               if (isTRUE(block$RE$cor)) ", cor = TRUE", ")",
+               if (!is.null(block$ar)) paste0(", ar", if (!is.null(block$ar$time)) paste0(" = ", block$ar$time)) else "")
+      } else if (!is.null(block$FE)) {
+        paste0("FE = fe(", if (block$FE$intercept) "1" else "0",
+               if (length(block$FE$slopes) > 0) paste0(" + ", paste(block$FE$slopes, collapse = " + ")),
+               ")")
+      } else ""
       level_spec_lines <- c(level_spec_lines,
-                           paste0("  hm.", k, ": ", id_var, " (", effect_type, ", ", temporal, ")"))
+                            paste0("  hm.", k, ": ", block$id, " (", eff_desc, ")"))
     }
   }
 
-  # MM blocks
   if (has_mm) {
     for (k in seq_along(mm_blocks)) {
       block <- mm_blocks[[k]]
-      id_vars <- paste(mm[[k]]$id, collapse = ", ")
-
-      if (block$RE) {
-        # Show RE specification with temporal structure
-        temporal <- if (block$ar) "AR" else "indep"
-        level_spec_lines <- c(level_spec_lines,
-                             paste0("  mm.", k, ": ", id_vars, " (RE, ", temporal, ")"))
-      } else {
-        # No parentheses when only vars, no RE
-        level_spec_lines <- c(level_spec_lines,
-                             paste0("  mm.", k, ": ", id_vars))
+      parts <- paste0("fn(\"", block$fn$type, "\")")
+      if (!is.null(block$RE)) {
+        parts <- paste0(parts, ", RE = re(", if (block$RE$intercept) "1" else "0",
+                        if (length(block$RE$slopes) > 0)
+                          paste0(" + ", paste(block$RE$slopes, collapse = " + ")),
+                        if (isTRUE(block$RE$cor)) ", cor = TRUE", ")")
       }
+      if (!is.null(block$FE)) parts <- paste0(parts, ", FE")
+      if (!is.null(block$ar)) parts <- paste0(parts, ", ar", if (!is.null(block$ar$time)) paste0(" = ", block$ar$time))
+      level_spec_lines <- c(level_spec_lines,
+                            paste0("  mm.", k, " [", block$name, "]: ", parts))
     }
   }
 
-  # Store as attribute
   if (length(level_spec_lines) > 0) {
     attr(reg.table, "level_spec") <- paste(level_spec_lines, collapse = "\n")
   } else {
@@ -507,7 +518,8 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
       w         = w,
       re.mm     = re.mm,
       re.hm     = re.hm,
-      pred      = pred
+      pred      = pred,
+      fitted    = fitted_mu
     ))
   } else {
     return(list(
@@ -515,8 +527,8 @@ formatJags <- function(jags.out, monitor, Ns, mm_blocks, main, hm_blocks, mm, hm
       w         = list(),
       re.mm     = list(),
       re.hm     = list(),
-      pred      = c()
+      pred      = c(),
+      fitted    = c()
     ))
   }
-
 }

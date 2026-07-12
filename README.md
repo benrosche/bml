@@ -114,10 +114,10 @@ bml(
     mm(
       id = id(pid, gid),
       vars = vars(org_structure),
-      fn = fn(w ~ 1 / n, c = TRUE),
+      w    = w(~ 1 / n, scale = TRUE),
       RE = TRUE
     ),
-  family = "Gaussian",
+  family = gaussian(),
   data = coalgov
 ) |>
   summary()

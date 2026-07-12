@@ -62,8 +62,8 @@ data(coalgov)
 # Fit model
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
-  family = "Weibull",
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+  family = weibull(),
   monitor = TRUE,
   data = coalgov
 )
@@ -75,7 +75,7 @@ mcmcDiag(m1, parameters = "b")  # All b coefficients
 mcmcDiag(m1, parameters = c("b[1]", "b[2]", "shape"))
 
 # Check mm block parameters
-mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm.1"))
+mcmcDiag(m1, parameters = c("b.fn.1", "sigma.mm.1"))
 
 # Custom autocorrelation lag
 mcmcDiag(m1, parameters = "b", lag = 100)

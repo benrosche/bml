@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-The `bml` package implements *Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions*. These models are designed for situations where higher-level outcomes depend on the combined influence of multiple lower-level units. Instead of aggregating lower-level data to higher levels (risking aggregation bias) or disaggregating outcomes to lower levels (artificially inflating sample size), `bml` explicitly models how lower-level units jointly shape higher-level outcomes.
+The `bml` package estimates *micro-to-macro regressions*: Bayesian multilevel models in which the aggregation from member-level records to group-level outcomes is an explicit, estimable object. Instead of aggregating lower-level data to higher levels with an assumed rule (risking aggregation bias) or disaggregating outcomes to lower levels (artificially inflating sample size), `bml` models how lower-level units jointly shape higher-level outcomes — including *which members count* (the weights) and *how their contributions combine* (the aggregation function).
 
 ## Installation
 
@@ -60,14 +60,15 @@ Our first model examines coalition duration as a function of party-level charact
 mod1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(
-      id = id(pid, gid),
+      id   = id(pid, gid),
       vars = vars(finance),
-      fn = fn(w ~ 1/n, c = TRUE),
-      RE = TRUE
+      w    = w(~ 1/n, scale = TRUE),
+      fn   = fn("sum"),
+      RE   = TRUE
     ),
-  family = "Weibull",
-  data = coalgov,
-  seed = 1
+  data   = coalgov,
+  family = weibull(),
+  seed   = 1
 )
 
 summary(mod1)
@@ -79,29 +80,30 @@ summary(mod1)
 - `majority`: Government-level covariate (binary indicator)
 - `mm()`: Multiple-membership block containing:
   - `id = id(pid, gid)`: Party ID (member) and government ID (group)
-  - `vars = vars(finance)`: Party-level covariate to aggregate
-  - `fn = fn(w ~ 1/n, c = TRUE)`: Weight function (equal weights, constrained to sum to 1)
-  - `RE = TRUE`: Include party-specific random effects
+  - `vars = vars(finance)`: Party-level attribute
+  - `w = w(~ 1/n, scale = TRUE)`: The weights — *who counts* (equal weights, normalized to sum to 1)
+  - `fn = fn("sum")`: The aggregation function — *how contributions combine* (the additive weighted mean; this is the default)
+  - `RE = TRUE`: Party-specific random intercepts (shorthand for `RE = re(1)`)
+
+The feature's coefficient appears in the output as `A_finance` — an ordinary class-`"b"` coefficient of the main model.
 
 ### Model 2: Parameterizing the Weight Function
 
-A key feature of `bml` is the ability to model aggregation weights as a function of covariates. Instead of assuming all parties have equal influence, we can test whether seat share affects a party's weight in the coalition:
+A key feature of `bml` is the ability to estimate the aggregation weights from member characteristics. Instead of assuming all parties have equal influence, we can test whether seat share affects a party's weight in the coalition:
 
 ```{r}
 mod2 <- bml(
-  Surv(dur_wkb, event_wkb) ~ 1 +
-    majority +
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(
-      id = id(pid, gid),
+      id   = id(pid, gid),
       vars = vars(finance),
-      fn = fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * pseat))), c = TRUE),
-      RE = TRUE
+      w    = w(~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * pseat))), scale = TRUE),
+      RE   = TRUE
     ),
-  family = "Weibull",
-  priors = c("b.w ~ dnorm(0,1)"), # weakly informative prior on the weight parameters
-  data = coalgov,
-  seed = 1,
-  monitor = TRUE
+  data   = coalgov,
+  family = weibull(),
+  prior  = prior(normal(0, 1), class = "w"),  # weakly informative prior on the weight parameters
+  seed   = 1
 )
 
 summary(mod2)
@@ -109,40 +111,61 @@ summary(mod2)
 
 **New elements:**
 
-- The weight function now includes `pseat` (party seat share) with parameter `b1`
-- `priors`: Specify prior for the weight function parameter
-- `monitor = TRUE`: Save MCMC chains for diagnostics
+- The weight formula includes `pseat` (party seat share). By the *one parameter rule*, the symbols `b0` and `b1` are not data columns and therefore become free parameters — the build messages `Estimating parameters: b0, b1 (w.1)`.
+- `prior = prior(normal(0, 1), class = "w")`: A structured prior on the weight parameters, written on the standard-deviation scale and translated to JAGS automatically. Run `get_prior(formula, data, family)` to list everything that is settable.
 
 **Interpretation:**
 
-- If $b1 \approx 0$: Seat share doesn't affect weights (equal influence)
-- If $b1 > 0$: Larger parties have more weight
-- If $b1 < 0$: Smaller parties have more weight
+- If $b_1 \approx 0$: Seat share doesn't affect weights (equal influence)
+- If $b_1 > 0$: Larger parties have more weight
+- If $b_1 < 0$: Smaller parties have more weight
+
+### Model 3: Beyond the sum — emergent features
+
+The aggregation function `fn()` is not limited to the weighted mean. Emergent features are properties of the *whole member set*:
+
+```{r}
+mod3 <- bml(
+  Surv(dur_wkb, event_wkb) ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(finance), w = w(~ 1/n), RE = TRUE) +      # mean:     A_finance
+    mm(id = id(pid, gid), vars = vars(finance), w = w(~ 1/n), fn = fn("var")) + # spread:   V_finance
+    mm(id = id(pid, gid), w = w(~ pseat, scale = TRUE), fn = fn("hhi"),         # dominance: C_w
+       RE = FALSE),
+  data   = coalgov,
+  family = weibull(),
+  seed   = 1
+)
+```
+
+Other built-ins include `fn("threshold", c = est())` (critical mass with an estimated cutpoint), `fn("smax", kappa = est())` (is the aggregation mean-like or max/min-like?), `fn("gmean", p = est())` (CES/power mean), and `fn("cov")`. You can also write your own reduction with the expression DSL: `fn(~ E((x - E(x))^2))`.
 
 ### Visualizing Results
 
 ```{r}
-# Diagnostic plot for weight parameter
+# Coefficients (all class-"b" terms, labeled by feature name)
+fixef(mod2)
+
+# Diagnostic plot for a weight parameter
 monetPlot(mod2, parameter = "b.w.1[1]", label = "Seat share effect")
 
 # MCMC diagnostics
 mcmcDiag(mod2, parameters = "b.w.1[1]")
+
+# The posterior toolchain
+draws <- as_draws_df(mod2)
 ```
 
 ## Next Steps
 
 - See the [Model documentation](model.html) for mathematical details
-- Explore [Examples](examples.html) for spatial, network, and aggregation applications
+- Explore [Examples](examples.html) for applications
 - Check the [FAQ](faq.html) for common questions
 - Read the accompanying paper: [Rosche (2026)](https://osf.io/preprints/socarxiv/4bafr)
 
 ## Key Concepts
 
-- **Multiple-membership structure:** Higher-level units (coalitions) contain multiple lower-level units (parties), and lower-level units can appear in multiple higher-level units.
-- **Weight functions:** Control how lower-level characteristics are aggregated. Can be:
-  - Fixed (e.g., equal weights `w ~ 1/n`)
-  - Endogenous (estimated from data, e.g., `w ~ 1/n^exp(b1*x)`)
-- **Constraint parameter `c`:**
-  - `c = TRUE`: Weights sum to 1 within each group
-  - `c = FALSE`: No constraint on weight sums
-- **Random effects:** Account for unobserved heterogeneity at the member level (`RE = TRUE` in `mm()`) or nesting level (`type = "RE"` in `hm()`)
+- **Multiple-membership structure:** Higher-level units (coalitions) contain multiple lower-level units (parties), and lower-level units can appear in multiple higher-level units. `id(member, group)` uses long format: one row per membership, any number of members per group.
+- **Weights `w()` — who counts:** a within-group measure over members. Fixed (`w(~ 1/n)`), observed (`w(~ importance, scale = TRUE)`), or estimated (`w(~ ilogit(b0 + b1 * q))`). `scale = TRUE` normalizes weights to sum to 1 within each group.
+- **Aggregation function `fn()` — how contributions combine:** `fn("sum")` is the additive case; `fn("var")`, `fn("hhi")`, `fn("threshold")`, `fn("smax")`, `fn("gmean")`, `fn("cov")` are emergent features; `fn(~ E(...))` is the user-written DSL. Parameters that act on external member characteristics belong in `w()`; parameters that act on the effect attribute belong in `fn()`.
+- **Effects:** member/unit random effects with `RE = re(1 + x)` (partial pooling; `cor = TRUE` opts into correlated intercept-slope), or fixed effects with `FE = fe(1 + x)` (no pooling). `hm()` adds hierarchical nesting; unit-level covariates go in the main formula (`Y ~ gdp + hm(id(cid), RE = re(1 + gdp))`).
+- **Named blocks:** give a block a `name =` and reference its feature in interactions (`Ax:education`, `Ax:Vx`).

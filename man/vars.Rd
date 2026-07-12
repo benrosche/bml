@@ -2,66 +2,45 @@
 % Please edit documentation in R/helpers.R
 \name{vars}
 \alias{vars}
-\title{Specify covariates for multiple-membership or hierarchical models}
+\title{Specify member-level attributes for mm() blocks}
 \usage{
 vars(...)
 }
 \arguments{
-\item{...}{Unquoted variable names from your data, combined using \code{+}
-(formula-style). Supports:
+\item{...}{Unquoted variable names, combined with \code{+} (formula-style)
+or as separate arguments. Supports:
 \itemize{
-  \item Simple variables: \code{vars(x + y)}
-  \item Interactions: \code{vars(x * y)} or \code{vars(x:y)}
-  \item Transformations: \code{vars(I(x^2))} or \code{vars(I(x + y))}
+  \item Simple variables: \code{vars(x + y)} or \code{vars(x, y)}
+  \item Interactions: \code{vars(x * y)} (main effects + interaction) or
+    \code{vars(x:y)} (interaction only; the member-paired interaction
+    \eqn{H_{xz} = \sum_k w_k x_k z_k})
+  \item Transformations: \code{vars(I(x^2))}
   \item Fixed coefficients: \code{vars(fix(x, 1.0) + y)}
 }
 Note: Numeric literals like \code{1}, \code{0}, or \code{-1} are ignored
-(no intercept support in mm/hm blocks).}
+(no intercept support in mm blocks).}
 }
 \value{
-A \code{bml_vars} object containing:
-  \itemize{
-    \item \code{formula}: Formula object for use with \code{model.matrix()}
-    \item \code{free}: Character vector of base variable names
-    \item \code{fixed}: List of variables with fixed coefficients (if any)
-  }
-  Returns \code{NULL} if no variables are specified.
+A \code{bml_vars} object (list with \code{formula}, \code{free},
+  \code{fixed}), or \code{NULL} if empty.
 }
 \description{
-Helper function used within \code{\link{mm}} and \code{\link{hm}} to specify
-which variables should be included at each level of the model. Supports both
-free variables (with coefficients to be estimated) and fixed variables (with
-coefficients held constant using \code{\link{fix}}).
+Helper function used within \code{\link{mm}} to specify the member-level
+attributes (the effect covariates \eqn{x_{kt}}) that the block's aggregation
+function \code{\link{fn}} reads. Supports both free variables (with
+coefficients estimated by the main model) and fixed variables (coefficients
+held constant via \code{\link{fix}}).
 }
 \examples{
 \dontrun{
-# Simple variable specification (formula-style with +)
-vars(income + education)
-
-# Single variable
 vars(income)
-
-# Interactions
-vars(income * education)  # expands to income + education + income:education
-vars(income:education)    # interaction only
-
-# Transformations
-vars(I(income^2))         # squared term
-vars(income + I(income^2)) # linear and squared
-
-# Mix free and fixed variables
-vars(fix(exposure, 1.0) + income + education)
-
-# Use in mm() specification
-mm(
-  id = id(pid, gid),
-  vars = vars(rile + ipd),
-  fn = fn(w ~ 1/n),
-  RE = FALSE
-)
+vars(income + education)
+vars(income:education)      # member-paired interaction only
+vars(x, z)                  # two attributes (e.g. for fn("cov"))
+vars(fix(exposure, 1.0) + income)
 }
 
 }
 \seealso{
-\code{\link{fix}}, \code{\link{mm}}, \code{\link{hm}}
+\code{\link{fix}}, \code{\link{mm}}, \code{\link{fn}}
 }

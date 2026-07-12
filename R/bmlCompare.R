@@ -63,14 +63,14 @@ nameModels <- function(models, exprs) {
 #'
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
-#'   family = "Weibull",
+#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+#'   family = weibull(),
 #'   data = coalgov
 #' )
 #' m2 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ pseat), RE = TRUE),
-#'   family = "Weibull",
+#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ pseat), RE = TRUE),
+#'   family = weibull(),
 #'   data = coalgov
 #' )
 #'

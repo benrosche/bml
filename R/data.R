@@ -147,9 +147,9 @@
 #' # Model: government duration as function of majority status and party characteristics
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(finance), fn = fn(w ~ 1/n), RE = TRUE) +
-#'     hm(id = id(cid), type = "RE"),
-#'   family = "Weibull",
+#'     mm(id = id(pid, gid), vars = vars(finance), w = w(~ 1/n), RE = TRUE) +
+#'     hm(id = id(cid)),
+#'   family = weibull(),
 #'   data = coalgov
 #' )
 #' summary(m1)

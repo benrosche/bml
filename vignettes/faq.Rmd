@@ -63,37 +63,39 @@ For standard hierarchical models without multiple membership, packages like `lme
 
 You can also specify hierarchical random effects (`hm()` blocks) in addition to multiple-membership structures, allowing for hierarchically nested and cross-classified designs.
 
-## 5. How do I specify the weight function, and what are the `c` and `ar` parameters?
+## 5. How do I specify the weights, and what are the `scale` and `ar` options?
 
-The weight function is specified in the `fn()` container within an `mm()` block:
+The weights are specified in the `w()` container within an `mm()` block (the aggregation function lives in `fn()`, which defaults to the additive `fn("sum")`):
 
 ```r
 mm(
-  id = id(member_id, group_id),
+  id   = id(member_id, group_id),
   vars = vars(X),
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = TRUE,
-  ar = FALSE
+  w    = w(~ 1/n, scale = TRUE),
+  fn   = fn("sum"),
+  RE   = TRUE
 )
 ```
 
 **Weight function components:**
 
-- **`w ~ ...`**: Specifies the functional form for weights. You can use:
+- **`w(~ ...)`**: Specifies the functional form for weights (one-sided formula). You can use:
   - Group size: `n` (number of members in each group)
   - Covariates: Any variable in your data
   - Mathematical functions: `exp()`, `log()`, `sqrt()`, etc.
-  - Examples: `w ~ 1/n` (equal weights), `w ~ tenure` (proportional to tenure), `w ~ 1/n^exp(b*similarity)` (similarity-weighted)
+  - Examples: `w(~ 1/n)` (equal weights), `w(~ tenure)` (proportional to tenure), `w(~ 1/n^exp(b*similarity))` (similarity-weighted)
+  - **One parameter rule:** any symbol that is not a data column (like `b` above) becomes a free parameter with a default prior; the build messages `Estimating parameters: ...`
 
-- **`c` parameter:** Controls weight normalization
-  - `c = TRUE` (default): Weights are normalized to sum to 1 within each group (row-standardization)
-  - `c = FALSE`: Weights are not normalized (useful when aggregating sums rather than averages)
+- **`scale` parameter:** Controls weight normalization
+  - `scale = TRUE` (default): Weights are normalized to sum to 1 within each group (row-standardization); this makes them a probability measure over the group's members
+  - `scale = FALSE`: Weights are not normalized (useful when aggregating sums rather than averages)
 
-- **`ar` parameter:** Autoregressive random effects
-  - `ar = FALSE` (default): Standard independent random effects for each member
-  - `ar = TRUE`: Member-level random effects evolve as a random walk across repeated group participations, capturing dynamics where a member's unobserved heterogeneity changes over time
+- **Autoregressive random effects** live inside `re()` (they are a property of the random effect):
+  - `RE = re(1)` (default): independent random effects for each member
+  - `RE = re(1, ar = TRUE)`: member effects evolve as a random walk across repeated group participations
+  - `RE = re(1, ar = year)`: random walk over a numeric time variable, with the step variance scaled by the (normalized) time gaps — long gaps allow more drift than short ones
 
-**Important:** Only one `mm()` block can have `RE = TRUE` in a given model.
+**Important:** Only one `mm()` block per member-id can carry random effects.
 
 ## 6. How do I fix parameters to known values?
 
@@ -109,22 +111,22 @@ Use the `fix()` helper inside `vars()` to hold a coefficient at a specified valu
 # Fix the coefficient of 'exposure' to 1 (i.e., use as an offset)
 m <- bml(
   y ~ 1 + fix(exposure, 1) + x1 + x2,
-  family = "Gaussian",
-  data = dat
+  data = dat,
+  family = gaussian()
 )
 ```
 
 This is equivalent to adding `exposure` as a predictor but constraining its coefficient to 1 instead of estimating it. This is useful for offsets or when prior theory dictates a specific coefficient value.
 
-**In `hm()` blocks:**
+**Unit-level covariates:** with the `re()`/`fe()` grammar, `hm()` carries only the effect structure; unit-level covariates (and `fix()` offsets of them) go in the main formula:
 
 ```r
 m <- bml(
-  y ~ 1 + x1 +
-    mm(id = id(pid, gid), fn = fn(w ~ 1/n), RE = TRUE) +
-    hm(id = id(cid), vars = vars(fix(investiture, 0.5) + gdp), type = "FE"),
-  family = "Gaussian",
-  data   = coalgov
+  y ~ 1 + x1 + fix(investiture, 0.5) + gdp +
+    mm(id = id(pid, gid), w = w(~ 1/n), RE = TRUE) +
+    hm(id = id(cid), FE = fe(1)),
+  data   = coalgov,
+  family = gaussian()
 )
 ```
 
@@ -136,39 +138,39 @@ m <- bml(
     mm(
       id   = id(pid, gid),
       vars = vars(fix(cohesion, 1) + finance),
-      fn   = fn(w ~ 1/n, c = TRUE),
+      w    = w(~ 1/n, scale = TRUE),
       RE   = TRUE
     ),
-  family = "Weibull",
-  data   = coalgov
+  data   = coalgov,
+  family = weibull()
 )
 ```
 
 Here, the coefficient of `cohesion` is fixed at 1 while `finance` is freely estimated.
 
-### Weight function `fn()`: Omitting parameters
+### Weights `w()`: Omitting parameters
 
-In the weight function specified via `fn()`, you fix weights by simply not including any free parameters (`b0`, `b1`, ...) in the formula. When no parameters appear, the weight function is treated as a known, fixed transformation.
+In the weight formula, you fix weights by simply not including any free symbols. When every symbol is a data column (or `n`), the weights are a known, fixed transformation and are pre-computed in R.
 
 ```r
 # Fixed equal weights (no parameters to estimate)
-fn(w ~ 1/n, c = TRUE)
+w(~ 1/n, scale = TRUE)
 
 # Fixed weights proportional to seat share (no parameters to estimate)
-fn(w ~ pseat, c = TRUE)
+w(~ pseat, scale = TRUE)
 ```
 
-Compare this with weight functions that include free parameters:
+Compare this with weight formulas that include free parameters:
 
 ```r
-# Estimable: b is estimated from data
-fn(w ~ 1/n^exp(b * x), c = TRUE)
+# Estimable: b is a free symbol, so it is estimated from data
+w(~ 1/n^exp(b * x), scale = TRUE)
 
 # Estimable: b0 is estimated from data
-fn(w ~ 1 / (1 + (n - 1) * exp(-b0)), c = FALSE)
+w(~ 1 / (1 + (n - 1) * exp(-b0)), scale = FALSE)
 ```
 
-The key distinction: if the `fn()` formula contains `b`, `b0`, `b1`, etc., these are estimated. If the formula contains only data variables and constants (like `n`, `pseat`, `1`), the weights are fixed.
+The key distinction is the *one parameter rule*: any symbol that is not a data column or `n` is a free parameter with a default prior. The build always messages the detected parameters (`Estimating parameters: ...`), so a misspelled column name surfaces immediately.
 
 ## 7. I get "Error in node w.1[...]: Invalid parent values" — what does this mean?
 
@@ -185,10 +187,7 @@ This error occurs when JAGS cannot evaluate the weight function for a particular
     ```r
     m <- bml(
       ...,
-      priors = list(
-        "b.w.1[1] ~ dnorm(0, 1)",   # SD = 1 instead of 100
-        "b.w.1[2] ~ dnorm(0, 1)"
-      )
+      prior = prior(normal(0, 1), class = "w")   # SD = 1 instead of 100
     )
     ```
 
@@ -196,10 +195,10 @@ This error occurs when JAGS cannot evaluate the weight function for a particular
 
 2. **Ensure the weight function is bounded.** Unbounded weight functions can produce extreme values that destabilize the likelihood. Common strategies:
 
-    - Use `ilogit()` to bound weights between 0 and 1: `fn(w ~ ilogit(b0 + b1 * x), c = TRUE)`
-    - Use `exp()` carefully — it grows rapidly, so pair it with constraints like `c = TRUE` (normalization) or wrap the argument: `fn(w ~ exp(b1 * x), c = TRUE)` where `x` is standardized
+    - Use `ilogit()` to bound weights between 0 and 1: `w(~ ilogit(b0 + b1 * x), scale = TRUE)`
+    - Use `exp()` carefully — it grows rapidly, so pair it with `scale = TRUE` (normalization) or wrap the argument: `w(~ exp(b1 * x), scale = TRUE)` where `x` is standardized
 
-3. **Standardize covariates in the weight function.** If a weight variable has a large range (e.g., income in thousands), the product `b1 * x` can easily overflow. Standardize such variables before including them in `fn()`.
+3. **Standardize covariates in the weight function.** If a weight variable has a large range (e.g., income in thousands), the product `b1 * x` can easily overflow. Standardize such variables before including them in `w()`.
 
 4. **Supply explicit initial values.** If the default initialization at 0 doesn't work for your model, provide custom starting values:
 
@@ -211,3 +210,25 @@ This error occurs when JAGS cannot evaluate the weight function for a particular
     ```
 
 5. **Re-run the model.** Since the error can be seed-dependent (different chains draw different initial values), simply re-running may resolve it. However, this indicates a fragile parameterization — consider steps 1--3 for a robust solution.
+
+## 8. I'm coming from brms — what maps onto what?
+
+`bml`'s member random effects aggregated by weights are exactly brms's weighted multiple-membership term, and the `bml` API deliberately follows brms where the semantics coincide:
+
+| brms | bml | note |
+|---|---|---|
+| `brm(formula, data, family = gaussian())` | `bml(formula, data, family = gaussian())` | same positions; family functions or strings |
+| `iter`, `warmup`, `thin`, `chains`, `cores`, `seed` | same | same meanings |
+| `prior(normal(0, 5), class = "b")` | same | plus bml-specific classes `"w"` (weight parameters) and `"fn"` (aggregation shape parameters) |
+| `get_prior()` | `get_prior()` | lists every settable prior |
+| `(1 + x \| mm(g1, g2, weights = w, scale = TRUE))` | `mm(id = id(k, i), w = w(~ q, scale = TRUE), RE = re(1 + x))` | see the divergences below |
+| `mmc(x1, x2)` | not needed | `bml`'s long format gives every member row its own covariate value |
+| `fixef()`, `ranef()`, `coef()`, `fitted()`, `predict()`, `posterior_predict()`, `log_lik()`, `loo()`, `waic()`, `pp_check()`, `conditional_effects()`, `as_draws_df()` | same | `newdata` prediction is not supported yet |
+| `make_stancode()` / `make_standata()` | `make_jagscode()` / `make_jagsdata()` | |
+| `sd(Intercept)`, `sd(x)`, `cor(Intercept,x)` output labels | same | |
+
+**Deliberate divergences:**
+
+- **`id(member, group)` is long format** (one row per membership, any number of members per group), not brms's wide `mm(g1, g2)` (fixed number of membership columns). Long format is strictly more general for variable set sizes.
+- **`re()` defaults to `cor = FALSE`** (independent intercept and slope), where brms's `|` is correlated. The correlated draw is a real JAGS cost, and in `mm()` blocks the member effects are only read through the weighted aggregate, so the correlation is rarely of interest. Opt in with `re(1 + x, cor = TRUE)`.
+- **`bml::mm()` is more than brms's `mm()`:** brms's `mm()` is only the grouping constructor inside `( | )`; `bml`'s `mm()` bundles the grouping, the weights `w()`, the aggregation function `fn()` (including emergent features like `fn("var")`), and the member effects `RE = re(...)`.

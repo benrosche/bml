@@ -38,6 +38,11 @@ utils::globalVariables(c(
   "ub",
   "j",
   "hmname",
+  "hmlabel",
+  "component",
+
+  # helpers.R (mm() default weight helper)
+  "importance",
 
   # tidy.bml.R / bmlCompare.R / coefPlot.R
   "term",

@@ -1,33 +1,39 @@
 # ================================================================================================ #
-# Shared helpers for tests that need a fitted model (used by test-output.R, test-broom.R)
+# Shared helpers for tests that need a fitted model
 # ================================================================================================ #
 
 data("coalgov")
 
-# Create a minimal fitted model for testing (if JAGS is available)
-create_test_model <- function(monitor = FALSE, n.thin = 1) {
+skip_if_no_jags <- function() {
   testthat::skip_on_cran()
-
   if (!requireNamespace("rjags", quietly = TRUE)) {
-    skip("rjags not available")
+    testthat::skip("rjags not available")
   }
+}
 
-  # Use a very small subset and few iterations for speed
-  test_data <- coalgov[1:100, ]
+# Minimal fitted gaussian model with an mm block (cached across tests within a run)
+.test_model_cache <- new.env(parent = emptyenv())
 
-  tryCatch({
-    m <- bml(
-      event_wkb ~ 1 + majority,
-      family = "Gaussian",
-      data = test_data,
-      n.iter = 500,
-      n.burnin = 100,
-      n.thin = n.thin,
-      n.chains = 2,
+create_test_model <- function(monitor = TRUE) {
+  skip_if_no_jags()
+
+  key <- paste0("m_", monitor)
+  if (!is.null(.test_model_cache[[key]])) return(.test_model_cache[[key]])
+
+  m <- tryCatch({
+    suppressWarnings(suppressMessages(bml(
+      dur_wkb ~ 1 + majority +
+        mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+      data = coalgov,
+      family = gaussian(),
+      iter = 800, warmup = 300, thin = 1, chains = 2,
+      seed = 99,
       monitor = monitor
-    )
-    return(m)
+    )))
   }, error = function(e) {
-    skip(paste("Could not fit test model:", e$message))
+    testthat::skip(paste("Could not fit test model:", e$message))
   })
+
+  .test_model_cache[[key]] <- m
+  m
 }

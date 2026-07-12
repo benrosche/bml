@@ -32,5 +32,5 @@ vars(fix(population, 0.5) + income + education)
 
 }
 \seealso{
-\code{\link{vars}}, \code{\link{mm}}, \code{\link{hm}}
+\code{\link{vars}}, \code{\link{mm}}
 }

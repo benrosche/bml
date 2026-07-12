@@ -2,132 +2,113 @@
 % Please edit documentation in R/helpers.R
 \name{mm}
 \alias{mm}
-\title{Define a multiple-membership structure}
+\title{Define a multiple-membership block (the micro-to-macro aggregation)}
 \usage{
-mm(id, vars = NULL, fn = NULL, RE = NULL, ar = FALSE)
+mm(
+  id,
+  vars = NULL,
+  w = NULL,
+  fn = NULL,
+  RE = NULL,
+  FE = NULL,
+  name = NULL,
+  ...
+)
 }
 \arguments{
-\item{id}{An \code{\link{id}} object specifying the member-level and group-level
-identifiers: \code{id(mmid, mainid)} where \code{mmid} identifies members
-and \code{mainid} identifies groups.}
+\item{id}{An \code{\link{id}} object: \code{id(mmid, mainid)}.}
 
-\item{vars}{A \code{\link{vars}} object specifying member-level covariates to
-aggregate, or \code{NULL} for random effects only. Supports interactions
-(\code{*}, \code{:}) and transformations (\code{I()}). Variables are weighted
-according to the function specified in \code{fn}.}
+\item{vars}{A \code{\link{vars}} object with member attributes, or
+\code{NULL} for weights-only blocks (RE-only, or \code{fn("hhi")}-family).}
 
-\item{fn}{A \code{\link{fn}} object specifying the weight function (default:
-\code{fn(w ~ 1/n, c = TRUE)} for equal weights). Note: Weight functions do
-NOT support interactions or \code{I()} - pre-create any needed transformed
-variables in your data. See \code{\link{fn}} for details.}
+\item{w}{A \code{\link{w}} object specifying the weights. Default:
+\code{w(~ 1/n, scale = TRUE)} (equal weights).}
 
-\item{RE}{Logical; if \code{TRUE}, include random effects for member-level units.
-Automatically set to \code{TRUE} if \code{vars = NULL} (random effects only).}
+\item{fn}{A \code{\link{fn}} object selecting the aggregation function.
+Default: \code{fn("sum")} (the additive weighted mean).}
 
-\item{ar}{Logical; if \code{TRUE}, random effects evolve autoregressively across
-participations. Requires members to have sequential participation indicators
-in the data. Default: \code{FALSE}.}
+\item{RE}{Random effects: \code{TRUE} (shorthand for \code{re(1)}), a
+\code{\link{re}} object, or \code{NULL}/\code{FALSE} for none. Only
+available with \code{fn("sum")}: member random effects do not compose with
+dispersion-type features.}
+
+\item{FE}{Fixed effects: a \code{\link{fe}} object, or \code{NULL}. Mutually
+exclusive with \code{RE}. With many members this is weakly identified —
+prefer \code{RE} (partial pooling) at the member level.}
+
+\item{name}{Optional block name (unquoted or string) used to reference the
+block's feature in main-formula interactions (e.g. \code{Ax:education}).
+Auto-generated from the feature when omitted (e.g. \code{A_x}, \code{V_x}).
+Must not collide with a data column.}
+
+\item{...}{Not used; catches removed arguments (\code{c =}, and \code{ar =},
+which moved into the effects grammar: \code{RE = re(1, ar = TRUE)}) with a
+migration message.}
 }
 \value{
-A \code{bml_mm} object containing the multiple-membership specification.
+A \code{bml_mm} object.
 }
 \description{
-Specifies a multiple-membership level in the model where group-level units
-(e.g., governments) are composed of multiple member-level units (e.g., political
-parties). Unlike pure hierarchical nesting, members can belong to multiple groups,
-and their contributions are aggregated using a user-specified weight function.
+Specifies a multiple-membership level where group-level units (e.g.,
+occupations) are composed of member-level units (e.g., tasks). Each block
+aggregates the weighted member records into one or more \emph{group-level
+features} whose coefficients are estimated by the main model. The components
+map onto the framework's notation \eqn{\theta^{micro,f}(M_{it})}:
+
+\itemize{
+  \item \code{id = id(mmid, mainid)}: the membership structure \eqn{S_{it}}
+  \item \code{vars = vars(x)}: the member attributes \eqn{x_{kt}}
+  \item \code{w = w(~ ...)}: the weights \eqn{w_{ikt}} (who counts)
+  \item \code{fn = fn("...")}: the aggregation function \eqn{f} (how
+    contributions combine); \code{fn("sum")} is the additive case, other
+    types are emergent features (variance, concentration, thresholds, ...)
+  \item \code{RE = re(...)}: member random effects, aggregated by the weights
+    (\eqn{\sum_k w_{ikt} u_{0k}}, plus random slopes via \code{re(1 + x)})
+  \item \code{name}: block name for referencing the feature in main-formula
+    interactions (auto-generated when omitted)
+}
 }
 \details{
-\strong{Multiple-Membership Models:}
+\strong{One mechanism.} Every block emits group-level feature(s) whose
+coefficients are main-model coefficients (class \code{"b"}, labeled by the
+feature name, e.g. \code{A_x}). \code{fn("sum")} is the additive case
+\eqn{\theta = \beta A_x + \sum_k w_k u_{0k}}: the feature \eqn{A_x} plus the
+optional \code{RE}. There is no separate "sum mode".
 
-In standard hierarchical models, each observation belongs to exactly one group.
-Multiple-membership models relax this assumption, allowing groups to be composed
-of multiple members, with flexible weighting of member contributions.
-
-\strong{Model Structure:}
-
-The contribution from mm block \eqn{k} to group \eqn{j} is:
-
-\deqn{\mathrm{mm}_{kj} = \sum_{i \in group_j} w_{ki} (x_{ki}' \beta_k + \alpha_{ki})}
-
-where:
-\itemize{
-  \item \eqn{w_{ki}}: Weight for member \eqn{i} in group \eqn{j} (from \code{fn})
-  \item \eqn{x_{ki}}: Member-level covariates (from \code{vars})
-  \item \eqn{\beta_k}: Regression coefficients (estimated)
-  \item \eqn{\alpha_{ki}}: Member-level random effect (if \code{RE = TRUE})
-}
-
-\strong{Multiple mm() Blocks:}
-
-You can specify multiple \code{mm()} blocks with different weight functions,
-variables, or random effect specifications. This allows modeling different
-aggregation mechanisms simultaneously.
+\strong{Multiple blocks} can be combined with \code{+} to stack features
+(mean + variance + concentration, ...). \code{RE} can be specified for one
+block per member-id group.
 }
 \examples{
 \dontrun{
-# Equal weights with variables
-mm(
-  id = id(pid, gid),
-  vars = vars(rile + ipd),
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = FALSE
-)
+# Additive aggregation (weighted mean effect)
+mm(id = id(task, occ), vars = vars(x), w = w(~ importance, scale = TRUE))
 
-# Random effects only (no variables)
-mm(
-  id = id(pid, gid),
-  vars = NULL,
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = TRUE  # Automatically TRUE when vars = NULL
-)
+# With member random intercepts
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), RE = TRUE)
 
-# Flexible weights with parameter
-mm(
-  id = id(pid, gid),
-  vars = vars(org_structure),
-  fn = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
-  RE = TRUE
-)
+# Random intercept + slope (residual effect heterogeneity)
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), RE = re(1 + x))
 
-# Autoregressive random effects
-mm(
-  id = id(pid, gid),
-  vars = NULL,
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = TRUE,
-  ar = TRUE  # Random effects evolve over participations
-)
+# Emergent features
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), fn = fn("var"))
+mm(id = id(task, occ), w = w(~ importance), fn = fn("hhi"))
+mm(id = id(task, occ), vars = vars(x), fn = fn("threshold", c = est(), kappa = 10))
+mm(id = id(task, occ), vars = vars(x), fn = fn("smax", kappa = est()))
 
-# Interactions and transformations in vars
-mm(
-  id = id(pid, gid),
-  vars = vars(rile * ipd),  # Main effects plus interaction
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = FALSE
-)
-
-mm(
-  id = id(pid, gid),
-  vars = vars(rile + I(rile^2)),  # Quadratic term
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = FALSE
-)
+# Named block, referenced in a cross-level interaction
+bml(Y ~ education + Ax:education +
+      mm(name = Ax, id = id(task, occ), vars = vars(x), w = w(~ 1/n)),
+    data = dat)
 }
 
 }
 \references{
-Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
-Micro-Macro Link. \emph{Political Analysis}.
-
-Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
-multiple classification (MMMC) models. \emph{Statistical Modelling}, 1(2), 103-124.
-
-Fielding, A., & Goldstein, H. (2006). \emph{Cross-classified and multiple
-membership structures in multilevel models: An introduction and review}.
-Research Report RR791, Department for Education and Skills.
+Rosche, B. (2026). A Multilevel Model for Coalition Governments: Uncovering
+Party-Level Dependencies Within and Between Governments. \emph{Political Analysis}.
 }
 \seealso{
-\code{\link{bml}}, \code{\link{id}}, \code{\link{vars}}, \code{\link{fn}},
+\code{\link{bml}}, \code{\link{id}}, \code{\link{vars}},
+  \code{\link{w}}, \code{\link{fn}}, \code{\link{re}}, \code{\link{fe}},
   \code{\link{hm}}
 }

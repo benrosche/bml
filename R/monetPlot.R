@@ -11,7 +11,7 @@
 #'
 #' @param parameter Character string specifying the parameter to plot. Must use the
 #'   internal parameter name (i.e., row names from \code{bml$reg.table}). Examples:
-#'   \code{"b[1]"} (intercept), \code{"b[2]"} (first covariate), \code{"b.mm.1"}
+#'   \code{"b[1]"} (intercept), \code{"b[2]"} (first covariate), \code{"b.fn.1"}
 #'   (first mm block coefficient), \code{"sigma.mm"} (mm random effect SD).
 #'
 #' @param label Optional character string for the parameter label displayed on the
@@ -61,9 +61,9 @@
 #' # Fit model with monitoring enabled
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
-#'     hm(id = id(cid), type = "RE"),
-#'   family = "Weibull",
+#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+#'     hm(id = id(cid)),
+#'   family = weibull(),
 #'   monitor = TRUE,  # Required for monetPlot
 #'   data = coalgov
 #' )
@@ -75,7 +75,7 @@
 #' monetPlot(m1, parameter = "b[2]", label = "Majority Government Effect")
 #'
 #' # Plot mm coefficient
-#' monetPlot(m1, parameter = "b.mm.1", label = "Party Fragmentation")
+#' monetPlot(m1, parameter = "b.fn.1", label = "Party Fragmentation")
 #'
 #' # Plot random effect SD
 #' monetPlot(m1, parameter = "sigma.mm.1")

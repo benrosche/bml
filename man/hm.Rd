@@ -4,103 +4,64 @@
 \alias{hm}
 \title{Define a hierarchical nesting structure}
 \usage{
-hm(id, vars = NULL, name = NULL, type = "RE", showFE = FALSE, ar = FALSE)
+hm(id, RE = NULL, FE = NULL, labels = NULL, ...)
 }
 \arguments{
-\item{id}{An \code{\link{id}} object specifying the nesting-level identifier:
-\code{id(hmid)} where \code{hmid} identifies the higher-level units (e.g.,
-countries, regions).}
+\item{id}{An \code{\link{id}} object: \code{id(hmid)}.}
 
-\item{vars}{A \code{\link{vars}} object specifying nesting-level covariates,
-or \code{NULL} for intercept-only effects. Supports interactions (\code{*}, \code{:})
-and transformations (\code{I()}).}
+\item{RE}{Random effects: \code{TRUE} (shorthand for \code{re(1)}), an
+\code{\link{re}} object, or \code{NULL}. Slope variables are main-level
+columns varying within the nesting units. Default when neither \code{RE}
+nor \code{FE} is given: \code{re(1)}.}
 
-\item{name}{Unquoted variable name for nesting-level labels (optional). If
-provided, these labels will be displayed in model output for fixed effects.}
+\item{FE}{Fixed effects: a \code{\link{fe}} object (unit dummies via
+\code{fe(1)}; unit-specific slopes via \code{fe(1 + x)}; report per-unit
+estimates with \code{fe(1, showFE = TRUE)}). Mutually exclusive with
+\code{RE}.}
 
-\item{type}{Character; either \code{"RE"} for random effects (default) or
-\code{"FE"} for fixed effects at the nesting level.}
+\item{labels}{Unquoted variable name holding display labels for the nesting
+units (used when reporting per-unit fixed effects).}
 
-\item{showFE}{Logical; if \code{TRUE} and \code{type = "FE"}, fixed effect
-estimates for each nesting-level unit are included in output. Default: \code{FALSE}.}
-
-\item{ar}{Logical; if \code{TRUE}, random effects evolve autoregressively across
-participations at the nesting level. Requires sequential participation
-indicators in the data. Default: \code{FALSE}.}
+\item{...}{Not used; catches the removed \code{type =}, \code{vars =},
+\code{name =}, \code{showFE =}, and \code{ar =} arguments (the last moved
+into the effects grammar: \code{RE = re(1, ar = TRUE)}) with a migration
+message.}
 }
 \value{
-A \code{bml_hm} object containing the hierarchical specification.
+A \code{bml_hm} object.
 }
 \description{
-Specifies a hierarchical (nesting) level in the model where group-level units
-are nested within higher-level entities. Unlike multiple-membership structures,
-each group belongs to exactly one nesting-level unit. Can model either random
-effects or fixed effects at the nesting level.
+Specifies a hierarchical (nesting) level: each group-level unit belongs to
+exactly one nesting-level unit (e.g., governments within countries).
+\code{hm()} carries only the effect \emph{structure} — random effects
+(\code{RE = re(...)}, partial pooling) or fixed effects (\code{FE = fe(...)},
+no pooling). Fixed effects of unit-level \emph{covariates} belong in the main
+formula, following the lme4/brms convention:
+
+\preformatted{
+Y ~ gdp + hm(id = id(cid), RE = re(1 + gdp))   # like y ~ gdp + (1 + gdp | cid)
+}
 }
 \details{
-\strong{Hierarchical vs. Multiple-Membership:}
-
-Hierarchical structures (\code{hm}) model strict nesting: each group belongs to
-exactly one higher-level unit. Use \code{\link{mm}} when groups can have
-memberships in multiple units.
-
-\strong{Random vs. Fixed Effects:}
-\itemize{
-  \item \strong{Random effects} (\code{type = "RE"}): Nesting-level units are
-    treated as a random sample from a population. Best when you have many units
-    and want to generalize.
-  \item \strong{Fixed effects} (\code{type = "FE"}): Each unit gets its own
-    parameter. Best when you have few units or want to estimate unit-specific effects.
-}
-
-\strong{Cross-Classification:}
-
-Multiple \code{hm()} blocks create cross-classified models where groups are
-simultaneously nested within multiple non-nested hierarchies (e.g., schools
-within both neighborhoods and districts).
+Cross-classified structures are modeled by including multiple \code{hm()}
+blocks. The old \code{type = "RE"/"FE"} and \code{vars =} arguments were
+removed: use \code{RE = re(...)} / \code{FE = fe(...)}, and move unit-level
+covariates into the main formula (their coefficients are ordinary main-model
+coefficients).
 }
 \examples{
 \dontrun{
-# Random effects with covariates
-hm(
-  id = id(cid),
-  vars = vars(gdp + democracy),
-  name = cname,
-  type = "RE"
-)
-
-# Random intercepts only
-hm(
-  id = id(cid),
-  vars = NULL,
-  type = "RE"
-)
-
-# Fixed effects
-hm(
-  id = id(cid),
-  vars = NULL,
-  name = cname,
-  type = "FE",
-  showFE = TRUE  # Show estimates for each country
-)
-
-# Autoregressive random effects
-hm(
-  id = id(cid),
-  vars = NULL,
-  type = "RE",
-  ar = TRUE  # Effects evolve over time
-)
+hm(id = id(cid))                          # random intercepts (default)
+hm(id = id(cid), RE = re(1 + x))          # random intercept + slope on x
+hm(id = id(cid), FE = fe(1))              # country dummies (no pooling)
+hm(id = id(cid), FE = fe(1, showFE = TRUE), labels = cname)
 }
 
 }
 \references{
 Goldstein, H. (2011). \emph{Multilevel Statistical Models} (4th ed.). Wiley.
-
-Rabe-Hesketh, S., & Skrondal, A. (2012). \emph{Multilevel and Longitudinal
-Modeling Using Stata} (3rd ed.). Stata Press.
 }
 \seealso{
-\code{\link{bml}}, \code{\link{mm}}, \code{\link{id}}, \code{\link{vars}}
+\code{\link{bml}}, \code{\link{mm}}, \code{\link{id}},
+  \code{\link{re}}, \code{\link{fe}}
 }
