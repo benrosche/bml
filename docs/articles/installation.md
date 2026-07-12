@@ -25,6 +25,18 @@ The stable release version is available on CRAN:
 install.packages("bml")
 ```
 
+Installing `bml` pulls in its R dependencies automatically, including
+the Bayesian workflow packages it builds on (**posterior** for draws
+handling, **loo** for cross-validation). For graphical posterior
+predictive checks with
+[`pp_check()`](https://benrosche.github.io/bml/reference/pp_check.md),
+additionally install **bayesplot**:
+
+``` r
+
+install.packages("bayesplot")
+```
+
 ### Option B: Install development version from GitHub
 
 For the latest development features, install from GitHub using

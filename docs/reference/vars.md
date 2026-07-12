@@ -1,11 +1,12 @@
-# Specify covariates for multiple-membership or hierarchical models
+# Specify member-level attributes for mm() blocks
 
 Helper function used within
-[`mm`](https://benrosche.github.io/bml/reference/mm.md) and
-[`hm`](https://benrosche.github.io/bml/reference/hm.md) to specify which
-variables should be included at each level of the model. Supports both
-free variables (with coefficients to be estimated) and fixed variables
-(with coefficients held constant using
+[`mm`](https://benrosche.github.io/bml/reference/mm.md) to specify the
+member-level attributes (the effect covariates \\x\_{kt}\\) that the
+block's aggregation function
+[`fn`](https://benrosche.github.io/bml/reference/fn.md) reads. Supports
+both free variables (with coefficients estimated by the main model) and
+fixed variables (coefficients held constant via
 [`fix`](https://benrosche.github.io/bml/reference/fix.md)).
 
 ## Usage
@@ -18,66 +19,41 @@ vars(...)
 
 - ...:
 
-  Unquoted variable names from your data, combined using `+`
-  (formula-style). Supports:
+  Unquoted variable names, combined with `+` (formula-style) or as
+  separate arguments. Supports:
 
-  - Simple variables: `vars(x + y)`
+  - Simple variables: `vars(x + y)` or `vars(x, y)`
 
-  - Interactions: `vars(x * y)` or `vars(x:y)`
+  - Interactions: `vars(x * y)` (main effects + interaction) or
+    `vars(x:y)` (interaction only; the member-paired interaction
+    \\H\_{xz} = \sum_k w_k x_k z_k\\)
 
-  - Transformations: `vars(I(x^2))` or `vars(I(x + y))`
+  - Transformations: `vars(I(x^2))`
 
   - Fixed coefficients: `vars(fix(x, 1.0) + y)`
 
   Note: Numeric literals like `1`, `0`, or `-1` are ignored (no
-  intercept support in mm/hm blocks).
+  intercept support in mm blocks).
 
 ## Value
 
-A `bml_vars` object containing:
-
-- `formula`: Formula object for use with
-  [`model.matrix()`](https://rdrr.io/r/stats/model.matrix.html)
-
-- `free`: Character vector of base variable names
-
-- `fixed`: List of variables with fixed coefficients (if any)
-
-Returns `NULL` if no variables are specified.
+A `bml_vars` object (list with `formula`, `free`, `fixed`), or `NULL` if
+empty.
 
 ## See also
 
 [`fix`](https://benrosche.github.io/bml/reference/fix.md),
 [`mm`](https://benrosche.github.io/bml/reference/mm.md),
-[`hm`](https://benrosche.github.io/bml/reference/hm.md)
+[`fn`](https://benrosche.github.io/bml/reference/fn.md)
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-# Simple variable specification (formula-style with +)
-vars(income + education)
-
-# Single variable
 vars(income)
-
-# Interactions
-vars(income * education)  # expands to income + education + income:education
-vars(income:education)    # interaction only
-
-# Transformations
-vars(I(income^2))         # squared term
-vars(income + I(income^2)) # linear and squared
-
-# Mix free and fixed variables
-vars(fix(exposure, 1.0) + income + education)
-
-# Use in mm() specification
-mm(
-  id = id(pid, gid),
-  vars = vars(rile + ipd),
-  fn = fn(w ~ 1/n),
-  RE = FALSE
-)
+vars(income + education)
+vars(income:education)      # member-paired interaction only
+vars(x, z)                  # two attributes (e.g. for fn("cov"))
+vars(fix(exposure, 1.0) + income)
 } # }
 ```

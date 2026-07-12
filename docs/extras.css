@@ -1,7 +1,0 @@
-/* Add top spacing to sidebar TOC on article and reference pages */
-aside.col-md-3 {
-  padding-top: 1rem !important;
-}
-.col-md-3 .sticky-top {
-  padding-top: 1rem;
-}

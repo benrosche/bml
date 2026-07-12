@@ -1,161 +1,150 @@
-# Define a multiple-membership structure
+# Define a multiple-membership block (the micro-to-macro aggregation)
 
-Specifies a multiple-membership level in the model where group-level
-units (e.g., governments) are composed of multiple member-level units
-(e.g., political parties). Unlike pure hierarchical nesting, members can
-belong to multiple groups, and their contributions are aggregated using
-a user-specified weight function.
+Specifies a multiple-membership level where group-level units (e.g.,
+occupations) are composed of member-level units (e.g., tasks). Each
+block aggregates the weighted member records into one or more
+*group-level features* whose coefficients are estimated by the main
+model. The components map onto the framework's notation
+\\\theta^{micro,f}(M\_{it})\\:
+
+- `id = id(mmid, mainid)`: the membership structure \\S\_{it}\\
+
+- `vars = vars(x)`: the member attributes \\x\_{kt}\\
+
+- `w = w(~ ...)`: the weights \\w\_{ikt}\\ (who counts)
+
+- `fn = fn("...")`: the aggregation function \\f\\ (how contributions
+  combine); `fn("sum")` is the additive case, other types are emergent
+  features (variance, concentration, thresholds, ...)
+
+- `RE = re(...)`: member random effects, aggregated by the weights
+  (\\\sum_k w\_{ikt} u\_{0k}\\, plus random slopes via `re(1 + x)`)
+
+- `name`: block name for referencing the feature in main-formula
+  interactions (auto-generated when omitted)
 
 ## Usage
 
 ``` r
-mm(id, vars = NULL, fn = NULL, RE = NULL, ar = FALSE)
+mm(
+  id,
+  vars = NULL,
+  w = NULL,
+  fn = NULL,
+  RE = NULL,
+  FE = NULL,
+  name = NULL,
+  ...
+)
 ```
 
 ## Arguments
 
 - id:
 
-  An [`id`](https://benrosche.github.io/bml/reference/id.md) object
-  specifying the member-level and group-level identifiers:
-  `id(mmid, mainid)` where `mmid` identifies members and `mainid`
-  identifies groups.
+  An [`id`](https://benrosche.github.io/bml/reference/id.md) object:
+  `id(mmid, mainid)`.
 
 - vars:
 
   A [`vars`](https://benrosche.github.io/bml/reference/vars.md) object
-  specifying member-level covariates to aggregate, or `NULL` for random
-  effects only. Supports interactions (`*`, `:`) and transformations
-  ([`I()`](https://rdrr.io/r/base/AsIs.html)). Variables are weighted
-  according to the function specified in `fn`.
+  with member attributes, or `NULL` for weights-only blocks (RE-only, or
+  `fn("hhi")`-family).
+
+- w:
+
+  A [`w`](https://benrosche.github.io/bml/reference/w.md) object
+  specifying the weights. Default: `w(~ 1/n, scale = TRUE)` (equal
+  weights).
 
 - fn:
 
   A [`fn`](https://benrosche.github.io/bml/reference/fn.md) object
-  specifying the weight function (default: `fn(w ~ 1/n, c = TRUE)` for
-  equal weights). Note: Weight functions do NOT support interactions or
-  [`I()`](https://rdrr.io/r/base/AsIs.html) - pre-create any needed
-  transformed variables in your data. See
-  [`fn`](https://benrosche.github.io/bml/reference/fn.md) for details.
+  selecting the aggregation function. Default: `fn("sum")` (the additive
+  weighted mean).
 
 - RE:
 
-  Logical; if `TRUE`, include random effects for member-level units.
-  Automatically set to `TRUE` if `vars = NULL` (random effects only).
+  Random effects: `TRUE` (shorthand for `re(1)`), a
+  [`re`](https://benrosche.github.io/bml/reference/re.md) object, or
+  `NULL`/`FALSE` for none. Only available with `fn("sum")`: member
+  random effects do not compose with dispersion-type features.
 
-- ar:
+- FE:
 
-  Logical; if `TRUE`, random effects evolve autoregressively across
-  participations. Requires members to have sequential participation
-  indicators in the data. Default: `FALSE`.
+  Fixed effects: a
+  [`fe`](https://benrosche.github.io/bml/reference/fe.md) object, or
+  `NULL`. Mutually exclusive with `RE`. With many members this is weakly
+  identified — prefer `RE` (partial pooling) at the member level.
+
+- name:
+
+  Optional block name (unquoted or string) used to reference the block's
+  feature in main-formula interactions (e.g. `Ax:education`).
+  Auto-generated from the feature when omitted (e.g. `A_x`, `V_x`). Must
+  not collide with a data column.
+
+- ...:
+
+  Not used; catches removed arguments (`c =`, and `ar =`, which moved
+  into the effects grammar: `RE = re(1, ar = TRUE)`) with a migration
+  message.
 
 ## Value
 
-A `bml_mm` object containing the multiple-membership specification.
+A `bml_mm` object.
 
 ## Details
 
-**Multiple-Membership Models:**
+**One mechanism.** Every block emits group-level feature(s) whose
+coefficients are main-model coefficients (class `"b"`, labeled by the
+feature name, e.g. `A_x`). `fn("sum")` is the additive case \\\theta =
+\beta A_x + \sum_k w_k u\_{0k}\\: the feature \\A_x\\ plus the optional
+`RE`. There is no separate "sum mode".
 
-In standard hierarchical models, each observation belongs to exactly one
-group. Multiple-membership models relax this assumption, allowing groups
-to be composed of multiple members, with flexible weighting of member
-contributions.
-
-**Model Structure:**
-
-The contribution from mm block \\k\\ to group \\j\\ is:
-
-\$\$\mathrm{mm}\_{kj} = \sum\_{i \in group_j} w\_{ki} (x\_{ki}'
-\beta_k + \alpha\_{ki})\$\$
-
-where:
-
-- \\w\_{ki}\\: Weight for member \\i\\ in group \\j\\ (from `fn`)
-
-- \\x\_{ki}\\: Member-level covariates (from `vars`)
-
-- \\\beta_k\\: Regression coefficients (estimated)
-
-- \\\alpha\_{ki}\\: Member-level random effect (if `RE = TRUE`)
-
-**Multiple mm() Blocks:**
-
-You can specify multiple `mm()` blocks with different weight functions,
-variables, or random effect specifications. This allows modeling
-different aggregation mechanisms simultaneously.
+**Multiple blocks** can be combined with `+` to stack features (mean +
+variance + concentration, ...). `RE` can be specified for one block per
+member-id group.
 
 ## References
 
-Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
-Micro-Macro Link. *Political Analysis*.
-
-Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
-multiple classification (MMMC) models. *Statistical Modelling*, 1(2),
-103-124.
-
-Fielding, A., & Goldstein, H. (2006). *Cross-classified and multiple
-membership structures in multilevel models: An introduction and review*.
-Research Report RR791, Department for Education and Skills.
+Rosche, B. (2026). A Multilevel Model for Coalition Governments:
+Uncovering Party-Level Dependencies Within and Between Governments.
+*Political Analysis*.
 
 ## See also
 
 [`bml`](https://benrosche.github.io/bml/reference/bml.md),
 [`id`](https://benrosche.github.io/bml/reference/id.md),
 [`vars`](https://benrosche.github.io/bml/reference/vars.md),
+[`w`](https://benrosche.github.io/bml/reference/w.md),
 [`fn`](https://benrosche.github.io/bml/reference/fn.md),
+[`re`](https://benrosche.github.io/bml/reference/re.md),
+[`fe`](https://benrosche.github.io/bml/reference/fe.md),
 [`hm`](https://benrosche.github.io/bml/reference/hm.md)
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-# Equal weights with variables
-mm(
-  id = id(pid, gid),
-  vars = vars(rile + ipd),
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = FALSE
-)
+# Additive aggregation (weighted mean effect)
+mm(id = id(task, occ), vars = vars(x), w = w(~ importance, scale = TRUE))
 
-# Random effects only (no variables)
-mm(
-  id = id(pid, gid),
-  vars = NULL,
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = TRUE  # Automatically TRUE when vars = NULL
-)
+# With member random intercepts
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), RE = TRUE)
 
-# Flexible weights with parameter
-mm(
-  id = id(pid, gid),
-  vars = vars(org_structure),
-  fn = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
-  RE = TRUE
-)
+# Random intercept + slope (residual effect heterogeneity)
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), RE = re(1 + x))
 
-# Autoregressive random effects
-mm(
-  id = id(pid, gid),
-  vars = NULL,
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = TRUE,
-  ar = TRUE  # Random effects evolve over participations
-)
+# Emergent features
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), fn = fn("var"))
+mm(id = id(task, occ), w = w(~ importance), fn = fn("hhi"))
+mm(id = id(task, occ), vars = vars(x), fn = fn("threshold", c = est(), kappa = 10))
+mm(id = id(task, occ), vars = vars(x), fn = fn("smax", kappa = est()))
 
-# Interactions and transformations in vars
-mm(
-  id = id(pid, gid),
-  vars = vars(rile * ipd),  # Main effects plus interaction
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = FALSE
-)
-
-mm(
-  id = id(pid, gid),
-  vars = vars(rile + I(rile^2)),  # Quadratic term
-  fn = fn(w ~ 1/n, c = TRUE),
-  RE = FALSE
-)
+# Named block, referenced in a cross-level interaction
+bml(Y ~ education + Ax:education +
+      mm(name = Ax, id = id(task, occ), vars = vars(x), w = w(~ 1/n)),
+    data = dat)
 } # }
 ```

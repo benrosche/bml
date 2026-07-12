@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,14 +73,15 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>The <code>bml</code> package implements <em>Bayesian
-Multiple-Membership Multilevel Models with Parameterizable Weight
-Functions</em>. These models are designed for situations where
-higher-level outcomes depend on the combined influence of multiple
-lower-level units. Instead of aggregating lower-level data to higher
-levels (risking aggregation bias) or disaggregating outcomes to lower
-levels (artificially inflating sample size), <code>bml</code> explicitly
-models how lower-level units jointly shape higher-level outcomes.</p>
+<p>The <code>bml</code> package estimates <em>micro-to-macro
+regressions</em>: Bayesian multilevel models in which the aggregation
+from member-level records to group-level outcomes is an explicit,
+estimable object. Instead of aggregating lower-level data to higher
+levels with an assumed rule (risking aggregation bias) or disaggregating
+outcomes to lower levels (artificially inflating sample size),
+<code>bml</code> models how lower-level units jointly shape higher-level
+outcomes — including <em>which members count</em> (the weights) and
+<em>how their contributions combine</em> (the aggregation function).</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -134,14 +135,15 @@ party-level characteristics, aggregated using equal weights:</p>
 <code class="sourceCode R"><span><span class="va">mod1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
 <span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
-<span>      id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
+<span>      id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>      vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
-<span>      fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>      RE <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>      w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>      fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
+<span>      RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>    <span class="op">)</span>,</span>
-<span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">coalgov</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">1</span></span>
+<span>  data   <span class="op">=</span> <span class="va">coalgov</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  seed   <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mod1</span><span class="op">)</span></span></code></pre></div>
@@ -160,72 +162,110 @@ indicator)</li>
 <code>id = id(pid, gid)</code>: Party ID (member) and government ID
 (group)</li>
 <li>
-<code>vars = vars(finance)</code>: Party-level covariate to
-aggregate</li>
+<code>vars = vars(finance)</code>: Party-level attribute</li>
 <li>
-<code>fn = fn(w ~ 1/n, c = TRUE)</code>: Weight function (equal
-weights, constrained to sum to 1)</li>
+<code>w = w(~ 1/n, scale = TRUE)</code>: The weights — <em>who
+counts</em> (equal weights, normalized to sum to 1)</li>
 <li>
-<code>RE = TRUE</code>: Include party-specific random effects</li>
+<code>fn = fn("sum")</code>: The aggregation function — <em>how
+contributions combine</em> (the additive weighted mean; this is the
+default)</li>
+<li>
+<code>RE = TRUE</code>: Party-specific random intercepts (shorthand
+for <code>RE = re(1)</code>)</li>
 </ul>
 </li>
 </ul>
+<p>The feature’s coefficient appears in the output as
+<code>A_finance</code> — an ordinary class-<code>"b"</code> coefficient
+of the main model.</p>
 </div>
 <div class="section level3">
 <h3 id="model-2-parameterizing-the-weight-function">Model 2: Parameterizing the Weight Function<a class="anchor" aria-label="anchor" href="#model-2-parameterizing-the-weight-function"></a>
 </h3>
-<p>A key feature of <code>bml</code> is the ability to model aggregation
-weights as a function of covariates. Instead of assuming all parties
-have equal influence, we can test whether seat share affects a party’s
-weight in the coalition:</p>
+<p>A key feature of <code>bml</code> is the ability to estimate the
+aggregation weights from member characteristics. Instead of assuming all
+parties have equal influence, we can test whether seat share affects a
+party’s weight in the coalition:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
-<span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span></span>
-<span>    <span class="va">majority</span> <span class="op">+</span></span>
+<span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
-<span>      id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
+<span>      id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>      vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
-<span>      fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">pseat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>      RE <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>      w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">pseat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>      RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>    <span class="op">)</span>,</span>
-<span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
-<span>  priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.w ~ dnorm(0,1)"</span><span class="op">)</span>, <span class="co"># weakly informative prior on the weight parameters</span></span>
-<span>  data <span class="op">=</span> <span class="va">coalgov</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  monitor <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  data   <span class="op">=</span> <span class="va">coalgov</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  prior  <span class="op">=</span> <span class="fu"><a href="../reference/prior.html">prior</a></span><span class="op">(</span><span class="fu">normal</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, class <span class="op">=</span> <span class="st">"w"</span><span class="op">)</span>,  <span class="co"># weakly informative prior on the weight parameters</span></span>
+<span>  seed   <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mod2</span><span class="op">)</span></span></code></pre></div>
 <p><strong>New elements:</strong></p>
 <ul>
-<li>The weight function now includes <code>pseat</code> (party seat
-share) with parameter <code>b1</code>
-</li>
+<li>The weight formula includes <code>pseat</code> (party seat share).
+By the <em>one parameter rule</em>, the symbols <code>b0</code> and
+<code>b1</code> are not data columns and therefore become free
+parameters — the build messages
+<code>Estimating parameters: b0, b1 (w.1)</code>.</li>
 <li>
-<code>priors</code>: Specify prior for the weight function
-parameter</li>
-<li>
-<code>monitor = TRUE</code>: Save MCMC chains for diagnostics</li>
+<code>prior = prior(normal(0, 1), class = "w")</code>: A structured
+prior on the weight parameters, written on the standard-deviation scale
+and translated to JAGS automatically. Run
+<code>get_prior(formula, data, family)</code> to list everything that is
+settable.</li>
 </ul>
 <p><strong>Interpretation:</strong></p>
 <ul>
-<li>If <span class="math inline">\(b1 \approx 0\)</span>: Seat share
+<li>If <span class="math inline">\(b_1 \approx 0\)</span>: Seat share
 doesn’t affect weights (equal influence)</li>
-<li>If <span class="math inline">\(b1 &gt; 0\)</span>: Larger parties
+<li>If <span class="math inline">\(b_1 &gt; 0\)</span>: Larger parties
 have more weight</li>
-<li>If <span class="math inline">\(b1 &lt; 0\)</span>: Smaller parties
+<li>If <span class="math inline">\(b_1 &lt; 0\)</span>: Smaller parties
 have more weight</li>
 </ul>
 </div>
 <div class="section level3">
+<h3 id="model-3-beyond-the-sum-emergent-features">Model 3: Beyond the sum — emergent features<a class="anchor" aria-label="anchor" href="#model-3-beyond-the-sum-emergent-features"></a>
+</h3>
+<p>The aggregation function <code><a href="../reference/fn.html">fn()</a></code> is not limited to the
+weighted mean. Emergent features are properties of the <em>whole member
+set</em>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
+<span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span>      <span class="co"># mean:     A_finance</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"var"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="co"># spread:   V_finance</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="va">pseat</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"hhi"</span><span class="op">)</span>,         <span class="co"># dominance: C_w</span></span>
+<span>       RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
+<span>  data   <span class="op">=</span> <span class="va">coalgov</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  seed   <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Other built-ins include <code>fn("threshold", c = est())</code>
+(critical mass with an estimated cutpoint),
+<code>fn("smax", kappa = est())</code> (is the aggregation mean-like or
+max/min-like?), <code>fn("gmean", p = est())</code> (CES/power mean),
+and <code>fn("cov")</code>. You can also write your own reduction with
+the expression DSL: <code>fn(~ E((x - E(x))^2))</code>.</p>
+</div>
+<div class="section level3">
 <h3 id="visualizing-results">Visualizing Results<a class="anchor" aria-label="anchor" href="#visualizing-results"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Diagnostic plot for weight parameter</span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Coefficients (all class-"b" terms, labeled by feature name)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/nlme/man/fixed.effects.html" class="external-link">fixef</a></span><span class="op">(</span><span class="va">mod2</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Diagnostic plot for a weight parameter</span></span>
 <span><span class="fu"><a href="../reference/monetPlot.html">monetPlot</a></span><span class="op">(</span><span class="va">mod2</span>, parameter <span class="op">=</span> <span class="st">"b.w.1[1]"</span>, label <span class="op">=</span> <span class="st">"Seat share effect"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># MCMC diagnostics</span></span>
-<span><span class="fu"><a href="../reference/mcmcDiag.html">mcmcDiag</a></span><span class="op">(</span><span class="va">mod2</span>, parameters <span class="op">=</span> <span class="st">"b.w.1[1]"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/mcmcDiag.html">mcmcDiag</a></span><span class="op">(</span><span class="va">mod2</span>, parameters <span class="op">=</span> <span class="st">"b.w.1[1]"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># The posterior toolchain</span></span>
+<span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df</a></span><span class="op">(</span><span class="va">mod2</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -234,8 +274,7 @@ have more weight</li>
 <ul>
 <li>See the <a href="model.html">Model documentation</a> for
 mathematical details</li>
-<li>Explore <a href="examples.html">Examples</a> for spatial, network,
-and aggregation applications</li>
+<li>Explore <a href="examples.html">Examples</a> for applications</li>
 <li>Check the <a href="faq.html">FAQ</a> for common questions</li>
 <li>Read the accompanying paper: <a href="https://osf.io/preprints/socarxiv/4bafr" class="external-link">Rosche (2026)</a>
 </li>
@@ -248,30 +287,36 @@ and aggregation applications</li>
 <li>
 <strong>Multiple-membership structure:</strong> Higher-level units
 (coalitions) contain multiple lower-level units (parties), and
-lower-level units can appear in multiple higher-level units.</li>
+lower-level units can appear in multiple higher-level units.
+<code>id(member, group)</code> uses long format: one row per membership,
+any number of members per group.</li>
 <li>
-<strong>Weight functions:</strong> Control how lower-level
-characteristics are aggregated. Can be:
-<ul>
-<li>Fixed (e.g., equal weights <code>w ~ 1/n</code>)</li>
-<li>Endogenous (estimated from data, e.g.,
-<code>w ~ 1/n^exp(b1*x)</code>)</li>
-</ul>
-</li>
+<strong>Weights <code><a href="../reference/w.html">w()</a></code> — who counts:</strong> a
+within-group measure over members. Fixed (<code>w(~ 1/n)</code>),
+observed (<code>w(~ importance, scale = TRUE)</code>), or estimated
+(<code>w(~ ilogit(b0 + b1 * q))</code>). <code>scale = TRUE</code>
+normalizes weights to sum to 1 within each group.</li>
 <li>
-<strong>Constraint parameter <code>c</code>:</strong>
-<ul>
+<strong>Aggregation function <code><a href="../reference/fn.html">fn()</a></code> — how contributions
+combine:</strong> <code>fn("sum")</code> is the additive case;
+<code>fn("var")</code>, <code>fn("hhi")</code>,
+<code>fn("threshold")</code>, <code>fn("smax")</code>,
+<code>fn("gmean")</code>, <code>fn("cov")</code> are emergent features;
+<code>fn(~ E(...))</code> is the user-written DSL. Parameters that act
+on external member characteristics belong in <code><a href="../reference/w.html">w()</a></code>;
+parameters that act on the effect attribute belong in
+<code><a href="../reference/fn.html">fn()</a></code>.</li>
 <li>
-<code>c = TRUE</code>: Weights sum to 1 within each group</li>
+<strong>Effects:</strong> member/unit random effects with
+<code>RE = re(1 + x)</code> (partial pooling; <code>cor = TRUE</code>
+opts into correlated intercept-slope), or fixed effects with
+<code>FE = fe(1 + x)</code> (no pooling). <code><a href="../reference/hm.html">hm()</a></code> adds
+hierarchical nesting; unit-level covariates go in the main formula
+(<code>Y ~ gdp + hm(id(cid), RE = re(1 + gdp))</code>).</li>
 <li>
-<code>c = FALSE</code>: No constraint on weight sums</li>
-</ul>
-</li>
-<li>
-<strong>Random effects:</strong> Account for unobserved
-heterogeneity at the member level (<code>RE = TRUE</code> in
-<code><a href="../reference/mm.html">mm()</a></code>) or nesting level (<code>type = "RE"</code> in
-<code><a href="../reference/hm.html">hm()</a></code>)</li>
+<strong>Named blocks:</strong> give a block a <code>name =</code>
+and reference its feature in interactions (<code>Ax:education</code>,
+<code>Ax:Vx</code>).</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

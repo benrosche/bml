@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -317,7 +317,7 @@ w_{ik}(\mathbf{x}_{ik}^{(w)}, n_i) = \frac{1}{1 + (n_i - 1)
 <span class="math inline">\(i\)</span>.</p>
 <p>In <code>bml</code>, this is specified via:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">x2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">x2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>where:</p>
 <ul>
 <li>
@@ -384,9 +384,9 @@ x_{ik}^{(w)} + (1 - \beta_1^{(w)}) \cdot \mathbb{1}\left[x_{ik}^{(w)} =
 \min_k x_{ik}^{(w)}\right]\]</span></p>
 <p>In <code>bml</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span></span>
-<span>  <span class="va">w</span> <span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="va">x</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  c <span class="op">=</span> <span class="cn">TRUE</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span></span>
+<span>  <span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="va">x</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  scale <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The parameter <span class="math inline">\(\beta_1^{(w)}\)</span>
 controls the mixture between aggregation mechanisms. When <span class="math inline">\(\beta_1^{(w)} = 1\)</span>, weights are
@@ -396,8 +396,13 @@ proportional to <span class="math inline">\(x_{ik}^{(w)}\)</span>
 value. Intermediate values yield a convex combination of both. Replacing
 min() with max() tests whether the highest-valued member dominates. To
 preserve this interpretation, <span class="math inline">\(\beta_1^{(w)}\)</span> should be constrained to
-<span class="math inline">\([0,1]\)</span>, e.g., via priors =
-list(“b1~dunif(0,1)”).</p>
+<span class="math inline">\([0,1]\)</span>, e.g., via
+<code>prior = "b.w.1[1] ~ dunif(0,1)"</code> (a raw JAGS prior string)
+or <code>prior(uniform(0, 1), class = "w")</code>. Note that the
+smooth-max family <code>fn("smax", kappa = est())</code> offers a
+one-parameter alternative for the mean-vs-extremes question that keeps
+the weights in their measurement role (see <code><a href="../reference/fn.html">?fn</a></code>, section
+“Adjudicating between aggregation functions”).</p>
 <p><strong>2. Mean vs. Sum:</strong> Are member effects
 <em>contextual</em> (mean aggregation: <span class="math inline">\(\sum_k w_{ik} = 1\)</span>) or <em>autonomous</em>
 (sum aggregation: <span class="math inline">\(\sum_k w_{ik} =
@@ -406,9 +411,9 @@ n_i\)</span>)?</p>
 \exp\left(-\beta_0^{(w)}\right)}\]</span></p>
 <p>In <code>bml</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span></span>
-<span>  <span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">b0</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  c <span class="op">=</span> <span class="cn">FALSE</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">b0</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  scale <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>When <span class="math inline">\(\beta_0^{(w)} \approx 0\)</span>,
 the weight evaluates to <span class="math inline">\(1/n_i\)</span>,
@@ -427,12 +432,140 @@ w_{ik} = \frac{1}{1 + (n_i - 1) \exp\left(-(\beta_0^{(w)} +
 \]</span></p>
 <p>In <code>bml</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span></span>
-<span>  <span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">x2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  c <span class="op">=</span> <span class="cn">TRUE</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">x2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  scale <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>This weight function tests whether member attributes <span class="math inline">\(x_1, x_2\)</span> (e.g., size, organization,
 power) generate disproportionate influence via <span class="math inline">\(\beta_1^{(w)}, \beta_2^{(w)}\)</span>.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="emergent-aggregation-functions">Emergent Aggregation Functions<a class="anchor" aria-label="anchor" href="#emergent-aggregation-functions"></a>
+</h2>
+<p>The weights <span class="math inline">\(w_{ik}\)</span> define a
+within-group <em>measure</em> over members; the aggregation function
+<code><a href="../reference/fn.html">fn()</a></code> chooses which function of that measure (and of the
+member attributes) enters the group-level equation.
+<code>fn("sum")</code> — the additive weighted mean <span class="math inline">\(A_x = \sum_k w_{ik} x_{ik}\)</span> — is the
+default and recovers everything above. The <em>emergent</em> types read
+properties of the whole member set:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th><code><a href="../reference/fn.html">fn()</a></code></th>
+<th>feature</th>
+<th>question</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<code>fn("var")</code>, <code>fn("var", moment = p)</code>
+</td>
+<td><span class="math inline">\(\sum_k w_k (x_k - A_x)^p\)</span></td>
+<td>distributional spread / shape</td>
+</tr>
+<tr class="even">
+<td>
+<code>fn("hhi")</code>, <code>fn("effn")</code>,
+<code>fn("entropy")</code>
+</td>
+<td>
+<span class="math inline">\(\sum_k w_k^2\)</span>, its inverse,
+<span class="math inline">\(-\sum_k w_k \log w_k\)</span>
+</td>
+<td>dominance / concentration of the weights</td>
+</tr>
+<tr class="odd">
+<td><code>fn("threshold", c =, kappa =)</code></td>
+<td><span class="math inline">\(\sum_k w_k\, \mathrm{ilogit}(\kappa (x_k
+- c))\)</span></td>
+<td>critical mass above a cutpoint; <code>c = est()</code> estimates
+it</td>
+</tr>
+<tr class="even">
+<td><code>fn("smax", kappa =)</code></td>
+<td><span class="math inline">\(\frac{1}{\kappa}\log \sum_k w_k
+e^{\kappa x_k}\)</span></td>
+<td>smooth max/min; <code>kappa = est()</code> estimates the aggregation
+function itself (<span class="math inline">\(\kappa&lt;0\)</span>: min,
+<span class="math inline">\(\kappa \to 0\)</span>: mean, <span class="math inline">\(\kappa&gt;0\)</span>: max)</td>
+</tr>
+<tr class="odd">
+<td><code>fn("gmean", p = est())</code></td>
+<td><span class="math inline">\((\sum_k w_k x_k^p)^{1/p}\)</span></td>
+<td>CES/power mean; members as substitutes vs complements (<span class="math inline">\(x &gt; 0\)</span>)</td>
+</tr>
+<tr class="even">
+<td><code>fn("cov")</code></td>
+<td><span class="math inline">\(\sum_k w_k (x_k - A_x)(z_k -
+A_z)\)</span></td>
+<td>within-member pairing of two attributes</td>
+</tr>
+</tbody>
+</table>
+<p>Each block emits a group-level <em>feature</em> whose coefficient is
+an ordinary main-model coefficient (labeled by the feature name,
+e.g. <code>V_x</code>). Blocks stack: combine mean + variance +
+concentration in one model. Shape parameters (<code>c</code>,
+<code>kappa</code>, <code>p</code>) are reported in their own “Function
+parameters” section and take priors via
+<code>prior(..., class = "fn")</code>.</p>
+<p><strong>Who counts vs. how contributions combine.</strong> Parameters
+that act on <em>external</em> member characteristics (importance, size)
+belong in <code><a href="../reference/w.html">w()</a></code>; parameters that act on the <em>effect
+attribute</em> (whatever is in <code><a href="../reference/vars.html">vars()</a></code>) belong in
+<code><a href="../reference/fn.html">fn()</a></code>. Building weights from the attribute being aggregated
+(<code>w(~ exp(om * x))</code> with <code>vars(x)</code>) is
+near-equivalent to <code>fn("smax")</code> — the exponentially tilted
+mean is the derivative of the log-sum-exp — and <code>bml</code> warns
+when a variable appears in both.</p>
+<div class="section level3">
+<h3 id="user-written-reductions-the-expression-dsl">User-written reductions: the expression DSL<a class="anchor" aria-label="anchor" href="#user-written-reductions-the-expression-dsl"></a>
+</h3>
+<p>Beyond the named types, <code><a href="../reference/fn.html">fn()</a></code> accepts a one-sided formula
+in a restricted expression DSL. <code>E(e)</code> is the expectation
+<span class="math inline">\(\sum_k w_k e_k\)</span> under the normalized
+weights; member-level quantities are the <code><a href="../reference/vars.html">vars()</a></code> attributes
+and the reserved symbol <code>w</code>; whitelisted operations
+(<code>+ - * / ^</code>, <code>exp</code>, <code>log</code>,
+<code>ilogit</code>, <code>pow</code>) transpile to JAGS. Any other
+symbol is a free shape parameter (the same one-parameter rule as
+<code><a href="../reference/w.html">w()</a></code>).</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="op">~</span> <span class="fu">E</span><span class="op">(</span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="fu">E</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>                                    <span class="co"># variance, written out</span></span>
+<span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="op">~</span> <span class="fu">E</span><span class="op">(</span><span class="fu">ilogit</span><span class="op">(</span><span class="va">kappa</span> <span class="op">*</span> <span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="va">c1</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fu">ilogit</span><span class="op">(</span><span class="va">kappa</span> <span class="op">*</span> <span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="va">c2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>  <span class="co"># band: mass between two levels</span></span>
+<span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="op">~</span> <span class="fu">E</span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="va">a</span> <span class="op">/</span> <span class="op">(</span><span class="va">c</span><span class="op">^</span><span class="va">a</span> <span class="op">+</span> <span class="va">x</span><span class="op">^</span><span class="va">a</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>                               <span class="co"># Hill / saturating dose-response (x &gt; 0)</span></span>
+<span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="op">~</span> <span class="fu">E</span><span class="op">(</span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="fu">E</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="va">z</span> <span class="op">-</span> <span class="fu">E</span><span class="op">(</span><span class="va">z</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span></span>
+<span>     <span class="op">(</span><span class="fu">E</span><span class="op">(</span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="fu">E</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">*</span> <span class="fu">E</span><span class="op">(</span><span class="op">(</span><span class="va">z</span> <span class="op">-</span> <span class="fu">E</span><span class="op">(</span><span class="va">z</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">0.5</span><span class="op">)</span>            <span class="co"># correlation</span></span>
+<span><span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="op">~</span> <span class="fu">E</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>                                          <span class="co"># log-mean / geometric mean (x &gt; 0)</span></span></code></pre></div>
+<p>Identification note: shape parameters reach the outcome only through
+<code>coefficient x feature</code> — if the feature’s coefficient is
+near zero they are unidentified, and a free parameter that
+<em>multiplies</em> an attribute inside a nonlinear <code>E()</code> is
+confounded with the coefficient (a warning fires). Treat inner
+parameters as cutpoints/sharpness, not slopes.</p>
+</div>
+<div class="section level3">
+<h3 id="named-blocks-and-interactions">Named blocks and interactions<a class="anchor" aria-label="anchor" href="#named-blocks-and-interactions"></a>
+</h3>
+<p>Every block has a name (auto-generated, e.g. <code>A_x</code>,
+<code>V_x</code>, or set via <code>name =</code>). Single-feature blocks
+can be referenced in main-formula interactions:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">Y</span> <span class="op">~</span> <span class="va">education</span> <span class="op">+</span> <span class="va">Ax</span><span class="op">:</span><span class="va">education</span> <span class="op">+</span>                        <span class="co"># cross-level: feature x macro variable</span></span>
+<span>  <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">Ax</span>, id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">k</span>, <span class="va">i</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">Y</span> <span class="op">~</span> <span class="va">Ax</span><span class="op">:</span><span class="va">Vx</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">Ax</span>, <span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">Vx</span>, <span class="va">...</span><span class="op">)</span>   <span class="co"># block x block</span></span></code></pre></div>
+<p>The macro variable must also appear as a main effect, and must be
+group-constant (a within-group-varying moderator is a member-paired
+interaction and belongs in <code>vars(x:z)</code>). A bare,
+non-interacted block reference errors — the block’s main effect already
+enters through the block itself.</p>
 </div>
 </div>
 <div class="section level2">
@@ -445,9 +578,9 @@ linear and survival models:</p>
 \text{logit}\left(P(y_i^{(g)} = 1)\right) = \theta_i^{(g)} +
 \theta_{j[i]}^{(c)} + \theta_i^{(p)} \tag{9}
 \end{equation}\]</span></p>
-<p>In <code>bml</code>, specify <code>family = "Binomial"</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, family <span class="op">=</span> <span class="st">"Binomial"</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></code></pre></div>
+<p>In <code>bml</code>, specify <code>family = bernoulli()</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">d</span>, family <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">bernoulli</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Weibull Survival Model:</strong></p>
 <p><span class="math display">\[\begin{equation}
 \log(t_i) = \theta_i^{(g)} + \theta_{j[i]}^{(c)} + \theta_i^{(p)} +
@@ -457,10 +590,10 @@ linear and survival models:</p>
 <span class="math inline">\(\epsilon_i\)</span> follows an extreme value
 distribution, and <span class="math inline">\(\sigma\)</span> is the
 scale parameter related to the Weibull shape parameter.</p>
-<p>In <code>bml</code>, specify <code>family = "Weibull"</code> with a
+<p>In <code>bml</code>, specify <code>family = weibull()</code> with a
 <code>Surv()</code> outcome:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="fu">Surv</span><span class="op">(</span><span class="va">time</span>, <span class="va">event</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, family <span class="op">=</span> <span class="st">"Weibull"</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="fu">Surv</span><span class="op">(</span><span class="va">time</span>, <span class="va">event</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">d</span>, family <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Cox Proportional Hazards Model:</strong></p>
 <p><span class="math display">\[\begin{equation}
 h(t_i) = h_0(t) \exp\left(\theta_i^{(g)} + \theta_{j[i]}^{(c)} +
@@ -469,11 +602,11 @@ h(t_i) = h_0(t) \exp\left(\theta_i^{(g)} + \theta_{j[i]}^{(c)} +
 <p>where <span class="math inline">\(h_0(t)\)</span> is the baseline
 hazard function, estimated non-parametrically or as a piecewise constant
 function.</p>
-<p>In <code>bml</code>, specify <code>family = "Cox"</code>. The
-optional <code>cox_intervals</code> argument controls the number of
+<p>In <code>bml</code>, specify <code>family = cox()</code>. The
+optional <code>intervals</code> argument controls the number of
 intervals for the piecewise constant baseline hazard:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="fu">Surv</span><span class="op">(</span><span class="va">time</span>, <span class="va">event</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, family <span class="op">=</span> <span class="st">"Cox"</span>, cox_intervals <span class="op">=</span> <span class="fl">10</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span><span class="fu">Surv</span><span class="op">(</span><span class="va">time</span>, <span class="va">event</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">d</span>, family <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">cox</a></span><span class="op">(</span>intervals <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>All outcome types support the full multilevel and multiple-membership
 structure, including parameterizable weight functions.</p>
 </div>
@@ -521,12 +654,12 @@ squared weights across groups.</p>
 posterior distributions. The <code><a href="../reference/varDecomp.html">varDecomp()</a></code> function computes
 ICCs per posterior draw and summarizes them, properly propagating
 uncertainty:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
 <span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"RE"</span><span class="op">)</span>,</span>
-<span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">coalgov</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -563,9 +696,9 @@ f(\mathbf{x}_{ik}^{(w,b)}, n_i)\)</span>.</p>
 <p><strong>Example:</strong> Model the effect of the cohesion of the
 party with the largest seat share while the party random effects are
 specified with equal weights:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="va">pseat</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">pseat</span><span class="op">)</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="va">pseat</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">pseat</span><span class="op">)</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Important:</strong> For any given <code>id(pid, gid)</code>
 combination, only one <code><a href="../reference/mm.html">mm()</a></code> block may include
 <code>RE = TRUE</code> within the same model.</p>
@@ -574,8 +707,14 @@ combination, only one <code><a href="../reference/mm.html">mm()</a></code> block
 <h3 id="autoregressive-random-effects">Autoregressive Random Effects<a class="anchor" aria-label="anchor" href="#autoregressive-random-effects"></a>
 </h3>
 <p>Member random effects may evolve over time rather than remain
-constant. The <code>ar = TRUE</code> option specifies a random walk
-process:</p>
+constant. The autoregressive walk is part of the effects grammar — it is
+specified inside <code><a href="../reference/re.html">re()</a></code>, since it is a property of the random
+effect:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">RE</span> <span class="op">=</span> <span class="fu"><a href="../reference/re.html">re</a></span><span class="op">(</span><span class="fl">1</span>, ar <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>        <span class="co"># random walk over participation order</span></span>
+<span><span class="va">RE</span> <span class="op">=</span> <span class="fu"><a href="../reference/re.html">re</a></span><span class="op">(</span><span class="fl">1</span>, ar <span class="op">=</span> <span class="va">year</span><span class="op">)</span>        <span class="co"># random walk over calendar time (gap-scaled)</span></span></code></pre></div>
+<p>With <code>ar = TRUE</code>, the effect follows a random walk across
+the member’s successive group participations:</p>
 <p><span class="math display">\[\begin{equation}
 u_{ik}^{(p)} \sim \begin{cases}
 N(0, \sigma_{u^{(p)}}^2) &amp; \text{if } g[i,k] = \emptyset \\
@@ -586,6 +725,23 @@ N(u_{g[i,k],k}^{(p)}, \sigma_{u^{(p)}}^2) &amp; \text{if } g[i,k] \neq
 <p>where <span class="math inline">\(g[i,k]\)</span> returns the most
 recent previous group in which member <span class="math inline">\(k\)</span> participated. For <span class="math inline">\(g[i,k] = \emptyset\)</span> (first participation),
 the effect is drawn from the prior.</p>
+<p><strong>Time-indexed walk.</strong> Passing a (numeric) time variable
+instead of <code>TRUE</code> — <code>re(1, ar = year)</code> — orders
+each member’s participations by that variable and scales the step
+variance by the elapsed time, so that unobserved heterogeneity drifts
+more over long gaps than short ones:</p>
+<p><span class="math display">\[\begin{equation}
+u_{t} \sim N\!\left(u_{t-1},\; \sigma_{u^{(p)}}^2 \cdot \Delta_t /
+\bar{\Delta}\right) \tag{17a}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(\Delta_t\)</span> is the time gap
+between the member’s consecutive participations and <span class="math inline">\(\bar{\Delta}\)</span> the average gap in the data.
+The normalization by <span class="math inline">\(\bar{\Delta}\)</span>
+means equal spacing reproduces the <code>ar = TRUE</code> model exactly,
+and <span class="math inline">\(\sigma_{u^{(p)}}\)</span> keeps its
+interpretation as the innovation standard deviation per average step.
+Time values must be unique within each member (a zero gap would make the
+step variance zero).</p>
 <p><strong>Interpretation:</strong> Autoregressive effects capture
 dynamics where a member’s unobserved heterogeneity changes across
 successive group participations. The variance <span class="math inline">\(\sigma_{u^{(p)}}^2\)</span> now represents the
@@ -594,8 +750,12 @@ successive group participations. The variance <span class="math inline">\(\sigma
 governments may evolve as its leadership, organization, or electoral
 fortunes change.</p>
 <p><strong>Usage:</strong></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span>, ar <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="fu"><a href="../reference/re.html">re</a></span><span class="op">(</span><span class="fl">1</span>, ar <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, RE <span class="op">=</span> <span class="fu"><a href="../reference/re.html">re</a></span><span class="op">(</span><span class="fl">1</span>, ar <span class="op">=</span> <span class="va">year</span><span class="op">)</span><span class="op">)</span>    <span class="co"># also available at the nesting level</span></span></code></pre></div>
+<p>The walk requires an intercept-only random effect
+(<code>re(1, ar = ...)</code>; it does not combine with random slopes or
+<code>cor = TRUE</code>).</p>
 </div>
 <div class="section level3">
 <h3 id="opposition-members">Opposition Members<a class="anchor" aria-label="anchor" href="#opposition-members"></a>
@@ -615,9 +775,9 @@ effects and different aggregation mechanisms.</p>
 <p>In <code>bml</code>, this is specified using two <code><a href="../reference/mm.html">mm()</a></code>
 blocks with different mmid variables — one for members (<span class="math inline">\(k \in p[i]\)</span>) and one for non-members
 (<span class="math inline">\(k \notin p[i]\)</span>):</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_g</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_o</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_g</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_o</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Data format:</strong> Since the two <code><a href="../reference/mm.html">mm()</a></code> blocks
 use different member ID variables (<code>pid_g</code> and
 <code>pid_o</code>), the data should be in a stacked long format where

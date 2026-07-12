@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,10 +54,52 @@
 
       <dl><dt>
 
+          <code><a href="as_draws.bml.html">as_draws(<i>&lt;bml&gt;</i>)</a></code> <code><a href="as_draws.bml.html">as_draws_df(<i>&lt;bml&gt;</i>)</a></code> <code><a href="as_draws.bml.html">as_draws_matrix(<i>&lt;bml&gt;</i>)</a></code> <code><a href="as_draws.bml.html">as_draws_array(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract posterior draws from a bml model</dd>
+
+        <dt>
+
+          <code><a href="bml-families.html">bernoulli()</a></code> <code><a href="bml-families.html">weibull()</a></code> <code><a href="bml-families.html">cox()</a></code>
+
+        </dt>
+        <dd>Model families for bml</dd>
+
+        <dt>
+
           <code><a href="bml.html">bml()</a></code>
 
         </dt>
-        <dd>Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions Using JAGS</dd>
+        <dd>Bayesian Multilevel Models for Micro-Macro Analysis (Multiple Membership) Using JAGS</dd>
+
+        <dt>
+
+          <code><a href="bmlCompare.html">bmlCompare()</a></code>
+
+        </dt>
+        <dd>Compare fitted bml models in a publication-style table</dd>
+
+        <dt>
+
+          <code><a href="bml_delta.html">bml_delta()</a></code>
+
+        </dt>
+        <dd>Temporal composition change: matched decomposition of a feature difference</dd>
+
+        <dt>
+
+          <code><a href="bml_realloc.html">bml_realloc()</a></code>
+
+        </dt>
+        <dd>Reallocation of membership weights toward high-attribute members</dd>
+
+        <dt>
+
+          <code><a href="bml_turnover.html">bml_turnover()</a></code>
+
+        </dt>
+        <dd>Membership turnover between two snapshots</dd>
 
         <dt>
 
@@ -68,6 +110,48 @@
 
         <dt>
 
+          <code><a href="coef.bml.html">coef(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract combined coefficients from a bml model</dd>
+
+        <dt>
+
+          <code><a href="coefPlot.html">coefPlot()</a></code>
+
+        </dt>
+        <dd>Coefficient plot for fitted bml models</dd>
+
+        <dt>
+
+          <code><a href="conditional_effects.html">conditional_effects()</a></code>
+
+        </dt>
+        <dd>Conditional effects of main-formula predictors</dd>
+
+        <dt>
+
+          <code><a href="est.html">est()</a></code>
+
+        </dt>
+        <dd>Mark a shape parameter as estimated</dd>
+
+        <dt>
+
+          <code><a href="fe.html">fe()</a></code>
+
+        </dt>
+        <dd>Fixed effects: no pooling</dd>
+
+        <dt>
+
+          <code><a href="fitted.bml.html">fitted(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Posterior expectations of the linear predictor</dd>
+
+        <dt>
+
           <code><a href="fix.html">fix()</a></code>
 
         </dt>
@@ -75,10 +159,31 @@
 
         <dt>
 
+          <code><a href="fixef.bml.html">fixef(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract fixed coefficients from a bml model</dd>
+
+        <dt>
+
           <code><a href="fn.html">fn()</a></code>
 
         </dt>
-        <dd>Specify a weight function for multiple-membership models</dd>
+        <dd>The aggregation function of an mm() block</dd>
+
+        <dt>
+
+          <code><a href="get_prior.html">get_prior()</a></code>
+
+        </dt>
+        <dd>List every settable prior of a bml model</dd>
+
+        <dt>
+
+          <code><a href="glance.bml.html">glance(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Glance at a fitted bml model</dd>
 
         <dt>
 
@@ -96,6 +201,27 @@
 
         <dt>
 
+          <code><a href="log_lik.html">log_lik()</a></code>
+
+        </dt>
+        <dd>Pointwise log-likelihood of a bml model</dd>
+
+        <dt>
+
+          <code><a href="loo.bml.html">loo(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Efficient approximate leave-one-out cross-validation for bml models</dd>
+
+        <dt>
+
+          <code><a href="make_jagscode.html">make_jagscode()</a></code> <code><a href="make_jagscode.html">make_jagsdata()</a></code>
+
+        </dt>
+        <dd>Generate the JAGS model code / data without fitting</dd>
+
+        <dt>
+
           <code><a href="mcmcDiag.html">mcmcDiag()</a></code>
 
         </dt>
@@ -106,7 +232,7 @@
           <code><a href="mm.html">mm()</a></code>
 
         </dt>
-        <dd>Define a multiple-membership structure</dd>
+        <dd>Define a multiple-membership block (the micro-to-macro aggregation)</dd>
 
         <dt>
 
@@ -117,10 +243,59 @@
 
         <dt>
 
+          <code><a href="posterior_predict.html">posterior_predict()</a></code>
+
+        </dt>
+        <dd>Draws from the posterior predictive distribution</dd>
+
+        <dt>
+
+          <code><a href="pp_check.html">pp_check()</a></code>
+
+        </dt>
+        <dd>Posterior predictive checks for bml models</dd>
+
+        <dt>
+
+          <code><a href="predict.bml.html">predict(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Predictions from a bml model</dd>
+
+        <dt>
+
+          <code><a href="prior.html">prior()</a></code>
+
+        </dt>
+        <dd>Structured prior specifications</dd>
+
+        <dt>
+
+          <code><a href="ranef.bml.html">ranef(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract random effects from a bml model</dd>
+
+        <dt>
+
+          <code><a href="re.html">re()</a></code>
+
+        </dt>
+        <dd>Random effects: partial pooling</dd>
+
+        <dt>
+
           <code><a href="summary.bml.html">summary(<i>&lt;bml&gt;</i>)</a></code>
 
         </dt>
         <dd>Summarize a fitted bml model</dd>
+
+        <dt>
+
+          <code><a href="tidy.bml.html">tidy(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Tidy a fitted bml model</dd>
 
         <dt>
 
@@ -134,7 +309,21 @@
           <code><a href="vars.html">vars()</a></code>
 
         </dt>
-        <dd>Specify covariates for multiple-membership or hierarchical models</dd>
+        <dd>Specify member-level attributes for mm() blocks</dd>
+
+        <dt>
+
+          <code><a href="w.html">w()</a></code>
+
+        </dt>
+        <dd>Specify the membership weights of an mm() block</dd>
+
+        <dt>
+
+          <code><a href="waic.bml.html">waic(<i>&lt;bml&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Widely applicable information criterion for bml models</dd>
       </dl></div>
   </main></div>
 

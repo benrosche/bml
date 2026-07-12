@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,11 +57,10 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><p><br></p>
-<p><img src="reference/figures/bml-hexagon.png" align="right" width="240" alt="bml package hexagon logo"></p>
-<div class="section level2">
+  <main id="main" class="col-md-9"><div class="section level2">
 <h2 id="bml-bayesian-multiple-membership-multilevel-models-with-parameterizable-weight-functions">bml: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions<a class="anchor" aria-label="anchor" href="#bml-bayesian-multiple-membership-multilevel-models-with-parameterizable-weight-functions"></a>
 </h2>
+<p><img src="reference/figures/bml-hexagon.png" align="right" width="240" alt="bml package hexagon logo"></p>
 <!-- badges: start -->
 
 <p><code>bml</code> is an R package for fitting <em>Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions</em> (“extended MMMM”) via JAGS. It supports a range of outcome types—including linear, logit, and survival models—and is designed for settings where researchers want to model how multiple units at a lower level jointly influence outcomes at a higher level.</p>
@@ -103,10 +102,10 @@
 <span>    <span class="fu"><a href="reference/mm.html">mm</a></span><span class="op">(</span></span>
 <span>      id <span class="op">=</span> <span class="fu"><a href="reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>      vars <span class="op">=</span> <span class="fu"><a href="reference/vars.html">vars</a></span><span class="op">(</span><span class="va">org_structure</span><span class="op">)</span>,</span>
-<span>      fn <span class="op">=</span> <span class="fu"><a href="reference/fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="va">n</span>, c <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>      w    <span class="op">=</span> <span class="fu"><a href="reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>      RE <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>    <span class="op">)</span>,</span>
-<span>  family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">coalgov</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>

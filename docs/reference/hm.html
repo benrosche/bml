@@ -5,13 +5,25 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="Define a hierarchical nesting structure — hm"><meta name="description" content="Specifies a hierarchical (nesting) level in the model where group-level units
-are nested within higher-level entities. Unlike multiple-membership structures,
-each group belongs to exactly one nesting-level unit. Can model either random
-effects or fixed effects at the nesting level."><meta property="og:description" content="Specifies a hierarchical (nesting) level in the model where group-level units
-are nested within higher-level entities. Unlike multiple-membership structures,
-each group belongs to exactly one nesting-level unit. Can model either random
-effects or fixed effects at the nesting level."></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><script src="../extra.js"></script><meta property="og:title" content="Define a hierarchical nesting structure — hm"><meta name="description" content="Specifies a hierarchical (nesting) level: each group-level unit belongs to
+exactly one nesting-level unit (e.g., governments within countries).
+hm() carries only the effect structure — random effects
+(RE = re(...), partial pooling) or fixed effects (FE = fe(...),
+no pooling). Fixed effects of unit-level covariates belong in the main
+formula, following the lme4/brms convention:
+
+Y ~ gdp + hm(id = id(cid), RE = re(1 + gdp))   # like y ~ gdp + (1 + gdp | cid)
+
+"><meta property="og:description" content="Specifies a hierarchical (nesting) level: each group-level unit belongs to
+exactly one nesting-level unit (e.g., governments within countries).
+hm() carries only the effect structure — random effects
+(RE = re(...), partial pooling) or fixed effects (FE = fe(...),
+no pooling). Fixed effects of unit-level covariates belong in the main
+formula, following the lme4/brms convention:
+
+Y ~ gdp + hm(id = id(cid), RE = re(1 + gdp))   # like y ~ gdp + (1 + gdp | cid)
+
+"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +31,7 @@ effects or fixed effects at the nesting level."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,15 +63,20 @@ effects or fixed effects at the nesting level."></head><body>
     </div>
 
     <div class="ref-description section level2">
-    <p>Specifies a hierarchical (nesting) level in the model where group-level units
-are nested within higher-level entities. Unlike multiple-membership structures,
-each group belongs to exactly one nesting-level unit. Can model either random
-effects or fixed effects at the nesting level.</p>
+    <p>Specifies a hierarchical (nesting) level: each group-level unit belongs to
+exactly one nesting-level unit (e.g., governments within countries).
+<code>hm()</code> carries only the effect <em>structure</em> — random effects
+(<code>RE = re(...)</code>, partial pooling) or fixed effects (<code>FE = fe(...)</code>,
+no pooling). Fixed effects of unit-level <em>covariates</em> belong in the main
+formula, following the lme4/brms convention:</p>
+<div class="sourceCode"><pre><code><span></span>
+<span><span class="va">Y</span> <span class="op">~</span> <span class="va">gdp</span> <span class="op">+</span> <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, RE <span class="op">=</span> <span class="fu"><a href="../reference/re.html">re</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">gdp</span><span class="op">)</span><span class="op">)</span>   <span class="co"># like y ~ gdp + (1 + gdp | cid)</span></span></code></pre></div>
+
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hm</span><span class="op">(</span><span class="va">id</span>, vars <span class="op">=</span> <span class="cn">NULL</span>, name <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"RE"</span>, showFE <span class="op">=</span> <span class="cn">FALSE</span>, ar <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hm</span><span class="op">(</span><span class="va">id</span>, RE <span class="op">=</span> <span class="cn">NULL</span>, FE <span class="op">=</span> <span class="cn">NULL</span>, labels <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,103 +84,64 @@ effects or fixed effects at the nesting level.</p>
 
 
 <dl><dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
-<dd><p>An <code><a href="id.html">id</a></code> object specifying the nesting-level identifier:
-<code>id(hmid)</code> where <code>hmid</code> identifies the higher-level units (e.g.,
-countries, regions).</p></dd>
+<dd><p>An <code><a href="id.html">id</a></code> object: <code>id(hmid)</code>.</p></dd>
 
 
-<dt id="arg-vars">vars<a class="anchor" aria-label="anchor" href="#arg-vars"></a></dt>
-<dd><p>A <code><a href="vars.html">vars</a></code> object specifying nesting-level covariates,
-or <code>NULL</code> for intercept-only effects. Supports interactions (<code>*</code>, <code>:</code>)
-and transformations (<code><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I()</a></code>).</p></dd>
+<dt id="arg-re">RE<a class="anchor" aria-label="anchor" href="#arg-re"></a></dt>
+<dd><p>Random effects: <code>TRUE</code> (shorthand for <code>re(1)</code>), an
+<code><a href="re.html">re</a></code> object, or <code>NULL</code>. Slope variables are main-level
+columns varying within the nesting units. Default when neither <code>RE</code>
+nor <code>FE</code> is given: <code>re(1)</code>.</p></dd>
 
 
-<dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>Unquoted variable name for nesting-level labels (optional). If
-provided, these labels will be displayed in model output for fixed effects.</p></dd>
+<dt id="arg-fe">FE<a class="anchor" aria-label="anchor" href="#arg-fe"></a></dt>
+<dd><p>Fixed effects: a <code><a href="fe.html">fe</a></code> object (unit dummies via
+<code>fe(1)</code>; unit-specific slopes via <code>fe(1 + x)</code>; report per-unit
+estimates with <code>fe(1, showFE = TRUE)</code>). Mutually exclusive with
+<code>RE</code>.</p></dd>
 
 
-<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Character; either <code>"RE"</code> for random effects (default) or
-<code>"FE"</code> for fixed effects at the nesting level.</p></dd>
+<dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
+<dd><p>Unquoted variable name holding display labels for the nesting
+units (used when reporting per-unit fixed effects).</p></dd>
 
 
-<dt id="arg-showfe">showFE<a class="anchor" aria-label="anchor" href="#arg-showfe"></a></dt>
-<dd><p>Logical; if <code>TRUE</code> and <code>type = "FE"</code>, fixed effect
-estimates for each nesting-level unit are included in output. Default: <code>FALSE</code>.</p></dd>
-
-
-<dt id="arg-ar">ar<a class="anchor" aria-label="anchor" href="#arg-ar"></a></dt>
-<dd><p>Logical; if <code>TRUE</code>, random effects evolve autoregressively across
-participations at the nesting level. Requires sequential participation
-indicators in the data. Default: <code>FALSE</code>.</p></dd>
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Not used; catches the removed <code>type =</code>, <code>vars =</code>,
+<code>name =</code>, <code>showFE =</code>, and <code>ar =</code> arguments (the last moved
+into the effects grammar: <code>RE = re(1, ar = TRUE)</code>) with a migration
+message.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>bml_hm</code> object containing the hierarchical specification.</p>
+    <p>A <code>bml_hm</code> object.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>Hierarchical vs. Multiple-Membership:</strong></p>
-<p>Hierarchical structures (<code>hm</code>) model strict nesting: each group belongs to
-exactly one higher-level unit. Use <code><a href="mm.html">mm</a></code> when groups can have
-memberships in multiple units.</p>
-<p><strong>Random vs. Fixed Effects:</strong></p><ul><li><p><strong>Random effects</strong> (<code>type = "RE"</code>): Nesting-level units are
-    treated as a random sample from a population. Best when you have many units
-    and want to generalize.</p></li>
-<li><p><strong>Fixed effects</strong> (<code>type = "FE"</code>): Each unit gets its own
-    parameter. Best when you have few units or want to estimate unit-specific effects.</p></li>
-</ul><p><strong>Cross-Classification:</strong></p>
-<p>Multiple <code>hm()</code> blocks create cross-classified models where groups are
-simultaneously nested within multiple non-nested hierarchies (e.g., schools
-within both neighborhoods and districts).</p>
+    <p>Cross-classified structures are modeled by including multiple <code>hm()</code>
+blocks. The old <code>type = "RE"/"FE"</code> and <code>vars =</code> arguments were
+removed: use <code>RE = re(...)</code> / <code>FE = fe(...)</code>, and move unit-level
+covariates into the main formula (their coefficients are ordinary main-model
+coefficients).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Goldstein, H. (2011). <em>Multilevel Statistical Models</em> (4th ed.). Wiley.</p>
-<p>Rabe-Hesketh, S., &amp; Skrondal, A. (2012). <em>Multilevel and Longitudinal
-Modeling Using Stata</em> (3rd ed.). Stata Press.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="bml.html">bml</a></code>, <code><a href="mm.html">mm</a></code>, <code><a href="id.html">id</a></code>, <code><a href="vars.html">vars</a></code></p></div>
+    <div class="dont-index"><p><code><a href="bml.html">bml</a></code>, <code><a href="mm.html">mm</a></code>, <code><a href="id.html">id</a></code>,
+  <code><a href="re.html">re</a></code>, <code><a href="fe.html">fe</a></code></p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Random effects with covariates</span></span></span>
-<span class="r-in"><span><span class="fu">hm</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">gdp</span> <span class="op">+</span> <span class="va">democracy</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  name <span class="op">=</span> <span class="va">cname</span>,</span></span>
-<span class="r-in"><span>  type <span class="op">=</span> <span class="st">"RE"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Random intercepts only</span></span></span>
-<span class="r-in"><span><span class="fu">hm</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  vars <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>  type <span class="op">=</span> <span class="st">"RE"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Fixed effects</span></span></span>
-<span class="r-in"><span><span class="fu">hm</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  vars <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>  name <span class="op">=</span> <span class="va">cname</span>,</span></span>
-<span class="r-in"><span>  type <span class="op">=</span> <span class="st">"FE"</span>,</span></span>
-<span class="r-in"><span>  showFE <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># Show estimates for each country</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Autoregressive random effects</span></span></span>
-<span class="r-in"><span><span class="fu">hm</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  vars <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>  type <span class="op">=</span> <span class="st">"RE"</span>,</span></span>
-<span class="r-in"><span>  ar <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># Effects evolve over time</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">hm</span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span><span class="op">)</span>                          <span class="co"># random intercepts (default)</span></span></span>
+<span class="r-in"><span><span class="fu">hm</span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, RE <span class="op">=</span> <span class="fu"><a href="re.html">re</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span><span class="op">)</span>          <span class="co"># random intercept + slope on x</span></span></span>
+<span class="r-in"><span><span class="fu">hm</span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, FE <span class="op">=</span> <span class="fu"><a href="fe.html">fe</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>              <span class="co"># country dummies (no pooling)</span></span></span>
+<span class="r-in"><span><span class="fu">hm</span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, FE <span class="op">=</span> <span class="fu"><a href="fe.html">fe</a></span><span class="op">(</span><span class="fl">1</span>, showFE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, labels <span class="op">=</span> <span class="va">cname</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

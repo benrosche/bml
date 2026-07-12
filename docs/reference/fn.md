@@ -1,198 +1,83 @@
-# Specify a weight function for multiple-membership models
+# The aggregation function of an mm() block
 
-Defines how member-level contributions are weighted when aggregating to
-the group level (the "micro-macro link"). The weight function can be a
-simple formula (e.g., `1/n` for equal weights) or can include parameters
-to be estimated from the data.
+Selects the function `f` that reduces the weighted member records to a
+group-level feature — the `f` in the framework's
+\\\theta^{micro,f}(M\_{it})\\. `fn("sum")` (the default) is the additive
+weighted mean; the other named types are "emergent" features of the
+whole member set. `fn()` also accepts a one-sided formula written in a
+restricted expression DSL, so users can define their own reductions.
+
+**Named types:**
+
+
+    fn("sum")                          # A_x  = sum_k w_k x_k          (default)
+    fn("var")                          # V_x  = sum_k w_k (x_k - A_x)^2
+    fn("var", moment = 3)              # higher central moments
+    fn("hhi")                          # C    = sum_k w_k^2  (weights only)
+    fn("effn")                         # 1 / C
+    fn("entropy")                      # -sum_k w_k log w_k
+    fn("threshold", c = 0.7, kappa = 10)  # T(c) = sum_k w_k ilogit(kappa (x_k - c))
+    fn("threshold", c = est())         # estimate the cutpoint
+    fn("smax", kappa = 5)              # (1/kappa) log sum_k w_k exp(kappa x_k)
+    fn("smax", kappa = est())          # estimate the aggregation function itself:
+                                       #   kappa<0 -> min, kappa->0 -> mean, kappa>0 -> max
+    fn("gmean", p = est())             # power/CES mean (sum_k w_k x_k^p)^(1/p); x > 0
+    fn("cov")                          # C_xz = sum_k w_k (x_k - A_x)(z_k - A_z); two attributes
+
+**Expression DSL:**
+[`w()`](https://benrosche.github.io/bml/reference/w.md) normalizes
+weights to a probability measure over the group's members; `E(e)` is the
+expectation \\\sum_k w_k e_k\\ under that measure. Member-level
+quantities are the
+[`vars()`](https://benrosche.github.io/bml/reference/vars.md) attributes
+and the reserved symbol `w`; anything wrapped in `E()` is a group
+scalar. Whitelisted operations: `+ - * / ^`, `exp`, `log`, `ilogit`,
+`pow`. Any symbol that is not a data column or reserved word is a *free
+parameter* with a default prior (one rule, shared with
+[`w`](https://benrosche.github.io/bml/reference/w.md)); the build
+messages the detected parameters.
+
+
+    fn(~ E((x - E(x))^2))                       # variance, written out
+    fn(~ E(ilogit(kappa * (x - c))))            # threshold with free c, kappa
+    fn(~ E((x - E(x)) * (z - E(z))))            # covariance
+
+**Identification:** internal parameters reach the outcome only through
+`b * feature`; if the feature's coefficient is ~0 they are unidentified.
+Dispersion functions need real within-group spread; threshold/tail
+functions need mass of `x` in the region they read. A free parameter
+that multiplies an attribute inside a nonlinear `E()` is confounded with
+the feature's coefficient — treat inner parameters as shape parameters
+(cutpoints, sharpness), not slopes.
 
 ## Usage
 
 ``` r
-fn(w = w ~ 1/n, c = TRUE)
+fn(type = "sum", ...)
 ```
 
 ## Arguments
 
-- w:
+- type:
 
-  A two-sided formula specifying the weight function. The left-hand side
-  must be `w`; the right-hand side defines the weighting scheme:
+  A type string (one of `"sum"`, `"var"`, `"hhi"`, `"effn"`,
+  `"entropy"`, `"threshold"`, `"smax"`, `"gmean"`, `"cov"`) or a
+  one-sided formula (`~ E(...)`).
 
-  - Simple: `w ~ 1/n` (equal weights based on group size)
+- ...:
 
-  - Parameterized: `w ~ b0 + b1 * tenure` (weights depend on member
-    characteristics and estimated parameters)
-
-  - With group aggregates: `w ~ b1 * min(x) + (1-b1) * mean(x)` (weights
-    based on group-level summaries; see Details)
-
-  Parameters must be named `b0`, `b1`, `b2`, etc.
-
-- c:
-
-  Logical; if `TRUE` (default), weights are normalized to sum to 1
-  within each group. Set to `FALSE` for unnormalized weights.
+  Shape parameters for the named types: `moment` (var), `c` and `kappa`
+  (threshold), `kappa` (smax), `p` (gmean). Each is a number (fixed) or
+  [`est()`](https://benrosche.github.io/bml/reference/est.md)
+  (estimated).
 
 ## Value
 
-A `bml_fn` object containing the parsed weight function specification.
-
-## Details
-
-**Weight Function Components:**
-
-- **Variables** (e.g., `n`, `tenure`): Data from your dataset
-
-- **Parameters** (e.g., `b0`, `b1`): Estimated from the data
-
-- **Operations**: Standard R arithmetic (`+`, `-`, `*`, `/`, `^`, etc.)
-
-**Common Weight Functions:**
-
-- Equal weights: `w ~ 1/n`
-
-- Duration-based: `w ~ duration`
-
-- Flexible parameterized: `w ~ b0 + b1 * seniority`
-
-- Group aggregates: `w ~ b1 * min(x) + (1-b1) * mean(x)`
-
-When `c = TRUE`, the weights are constrained: \\\sum\_{k \in group} w_k
-= 1\\.
-
-**Group-Level Aggregation Functions:**
-
-The weight function supports aggregation functions that compute
-summaries within each group (mainid). These are pre-computed in R before
-passing to JAGS. Supported functions:
-
-- `min(var)`, `max(var)`: Minimum/maximum value within the group
-
-- `mean(var)`, `sum(var)`: Mean/sum of values within the group
-
-- `median(var)`, `mode(var)`: Median/mode (most frequent) value within
-  the group
-
-- `sd(var)`, `var(var)`, `range(var)`: Standard deviation/variance/range
-  (max-min) within the group
-
-- `first(var)`, `last(var)`: First/last value (based on data order)
-
-- `quantile(var, prob)`: Quantile at probability `prob` (0 to 1). For
-  example, `quantile(x, 0.25)` computes the 25th percentile.
-
-Example: `fn(w ~ b1 * min(tenure) + (1-b1) * max(tenure))` creates
-weights that blend the minimum and maximum tenure within each group,
-with the blend controlled by the estimated parameter `b1`.
-
-Example with quantile: `fn(w ~ quantile(tenure, 0.75) / max(tenure))`
-uses the 75th percentile relative to the maximum within each group.
-
-Note: Nested aggregation functions (e.g., `min(max(x))`) are not
-supported.
-
-**JAGS Mathematical Functions:**
-
-The following mathematical functions are passed directly to JAGS and can
-be used in weight formulas:
-
-- `exp`, `log`, `log10`, `sqrt`, `abs`, `pow`
-
-- `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
-
-- `sinh`, `cosh`, `tanh`
-
-- `logit`, `ilogit`, `probit`, `iprobit`, `cloglog`, `icloglog`
-
-- `round`, `trunc`, `floor`, `ceiling`
-
-Example: `fn(w ~ 1 / (1 + (n - 1) * exp(-(b1 * x))))` uses an
-exponential decay function where weights depend on member
-characteristics.
-
-**Ensuring Numerical Stability:**
-
-Weight functions with estimated parameters (`b0`, `b1`, ...) must
-produce bounded, positive values across all plausible parameter values.
-Unbounded weight functions can cause the MCMC sampler to crash (e.g.,
-`"Error in node w.1[...]: Invalid parent values"`). During sampling,
-weight parameters can take on extreme values, and if the weight function
-is not bounded, this will destabilize the likelihood.
-
-Recommendations:
-
-- **Use bounded weight functions.** Two options:
-
-  - `ilogit()`: Bounds weights between 0 and 1 with a zero-point at 0.5:
-    `fn(w ~ ilogit(b0 + b1 * x), c = TRUE)`
-
-  - **Generalized logistic** (Rosche, 2026): Bounds weights between 0
-    and 1 with a zero-point at \\1/n\\ (equal weights), so deviations
-    from equal weighting are estimated as a function of covariates:
-    `fn(w ~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * x))), c = TRUE)`
-
-- **Use `c = TRUE`** (weight normalization) to prevent weights from
-  growing without bound
-
-- **Standardize covariates** in the weight function. Variables with
-  large ranges (e.g., income in thousands) can cause `b * x` to overflow
-
-- **Use informative priors** for weight parameters via the `priors`
-  argument in [`bml`](https://benrosche.github.io/bml/reference/bml.md)
-  (e.g., `priors = list("b.w.1[1] ~ dnorm(0, 1)")`)
-
-- **Avoid unbounded functions** like `exp(b * x)` without normalization
-  (`c = TRUE`) or wrapping (e.g., inside `ilogit()`)
-
-Weight parameters are initialized at 0 by default to ensure numerically
-stable starting values. See
-[`vignette("faq")`](https://benrosche.github.io/bml/articles/faq.md)
-(Question 7) for detailed troubleshooting of numerical issues.
-
-## References
-
-Rosche, B. (2026). A Multilevel Model for Theorizing and Estimating the
-Micro-Macro Link. *Political Analysis*.
-
-Browne, W. J., Goldstein, H., & Rasbash, J. (2001). Multiple membership
-multiple classification (MMMC) models. *Statistical Modelling*, 1(2),
-103-124.
+A `bml_fn` object.
 
 ## See also
 
 [`mm`](https://benrosche.github.io/bml/reference/mm.md),
-[`bml`](https://benrosche.github.io/bml/reference/bml.md),
-[`vignette("model")`](https://benrosche.github.io/bml/articles/model.md)
-for the model structure,
-[`vignette("faq")`](https://benrosche.github.io/bml/articles/faq.md) for
-troubleshooting
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-# Equal weights (standard multiple-membership)
-fn(w ~ 1/n, c = TRUE)
-
-# Tenure-based weights (proportional to time served)
-fn(w ~ tenure, c = TRUE)
-
-# Flexible parameterized weights
-fn(w ~ b0 + b1 * seniority, c = TRUE)
-
-# Unconstrained weights
-fn(w ~ importance, c = FALSE)
-
-# Weights based on group aggregates
-fn(w ~ b1 * min(tenure) + (1 - b1) * mean(tenure), c = TRUE)
-
-# Combining individual and aggregate measures
-fn(w ~ b0 + b1 * (tenure / max(tenure)), c = TRUE)
-
-# Using median for robust central tendency
-fn(w ~ tenure / median(tenure), c = TRUE)
-
-# Using quantiles for percentile-based weights
-fn(w ~ quantile(tenure, 0.75) - quantile(tenure, 0.25), c = TRUE)
-} # }
-```
+[`w`](https://benrosche.github.io/bml/reference/w.md),
+[`est`](https://benrosche.github.io/bml/reference/est.md),
+[`prior`](https://benrosche.github.io/bml/reference/prior.md)

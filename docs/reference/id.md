@@ -4,10 +4,10 @@ Helper function used within
 [`mm`](https://benrosche.github.io/bml/reference/mm.md) and
 [`hm`](https://benrosche.github.io/bml/reference/hm.md) to specify the
 identifier variables that define memberships and nesting structures. In
-multiple-membership models, `id()` links member-level units (e.g., party
-IDs) to group-level units (e.g., government IDs). In hierarchical
-models, `id()` specifies the nesting-level identifier (e.g., country
-ID).
+multiple-membership models, `id()` links member-level units (e.g., task
+IDs) to group-level units (e.g., occupation IDs) in long format: one row
+per membership, any number of members per group. In hierarchical models,
+`id()` specifies the nesting-level identifier (e.g., country ID).
 
 ## Usage
 

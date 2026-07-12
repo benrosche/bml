@@ -1,8 +1,6 @@
-  
+## bml: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions
 
 ![bml package hexagon logo](reference/figures/bml-hexagon.png)
-
-## bml: Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions
 
 `bml` is an R package for fitting *Bayesian Multiple-Membership
 Multilevel Models with Parameterizable Weight Functions* (“extended
@@ -107,10 +105,10 @@ bml(
     mm(
       id = id(pid, gid),
       vars = vars(org_structure),
-      fn = fn(w ~ 1 / n, c = TRUE),
+      w    = w(~ 1 / n, scale = TRUE),
       RE = TRUE
     ),
-  family = "Gaussian",
+  family = gaussian(),
   data = coalgov
 ) |>
   summary()

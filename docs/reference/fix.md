@@ -30,8 +30,7 @@ A `bml_fix` object that can be used within
 ## See also
 
 [`vars`](https://benrosche.github.io/bml/reference/vars.md),
-[`mm`](https://benrosche.github.io/bml/reference/mm.md),
-[`hm`](https://benrosche.github.io/bml/reference/hm.md)
+[`mm`](https://benrosche.github.io/bml/reference/mm.md)
 
 ## Examples
 

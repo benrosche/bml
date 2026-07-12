@@ -23,7 +23,7 @@ monetPlot(bml, parameter, label = NULL, r = 2, yaxis = TRUE)
 
   Character string specifying the parameter to plot. Must use the
   internal parameter name (i.e., row names from `bml$reg.table`).
-  Examples: `"b[1]"` (intercept), `"b[2]"` (first covariate), `"b.mm.1"`
+  Examples: `"b[1]"` (intercept), `"b[2]"` (first covariate), `"b.fn.1"`
   (first mm block coefficient), `"sigma.mm"` (mm random effect SD).
 
 - label:
@@ -96,9 +96,9 @@ data(coalgov)
 # Fit model with monitoring enabled
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
-    hm(id = id(cid), type = "RE"),
-  family = "Weibull",
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+    hm(id = id(cid)),
+  family = weibull(),
   monitor = TRUE,  # Required for monetPlot
   data = coalgov
 )
@@ -110,7 +110,7 @@ monetPlot(m1, parameter = "b[1]", label = "Intercept")
 monetPlot(m1, parameter = "b[2]", label = "Majority Government Effect")
 
 # Plot mm coefficient
-monetPlot(m1, parameter = "b.mm.1", label = "Party Fragmentation")
+monetPlot(m1, parameter = "b.fn.1", label = "Party Fragmentation")
 
 # Plot random effect SD
 monetPlot(m1, parameter = "sigma.mm.1")

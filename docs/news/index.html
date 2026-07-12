@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,121 @@
       <small>Source: <a href="https://github.com/benrosche/bml/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.0" id="bml-100">bml 1.0.0<a class="anchor" aria-label="anchor" href="#bml-100"></a></h2>
+<p>This release redesigns the model-specification grammar around the micro-macro framework (weights, aggregation functions, effects) and aligns the package API with brms. <strong>All breaking changes are clean breaks — old spellings error with a migration message; there are no deprecation shims.</strong></p>
+<div class="section level3">
+<h3 id="the-aggregation-function-fn-emergent-terms-1-0-0">The aggregation function <code>fn()</code> (emergent terms)<a class="anchor" aria-label="anchor" href="#the-aggregation-function-fn-emergent-terms-1-0-0"></a></h3>
+<ul><li>Every <code><a href="../reference/mm.html">mm()</a></code> block now selects an <strong>aggregation function</strong> <code><a href="../reference/fn.html">fn()</a></code> — the <code>f</code> in the framework’s <code>theta^{micro,f}(M_it)</code>. <code>fn("sum")</code> (default) is the additive weighted mean; new <strong>emergent</strong> types read properties of the whole member set:
+<ul><li>
+<code>fn("var", moment = p)</code> — weighted central moments (distributional shape)</li>
+<li>
+<code>fn("hhi")</code>, <code>fn("effn")</code>, <code>fn("entropy")</code> — concentration of the weights</li>
+<li>
+<code>fn("threshold", c =, kappa =)</code> — smooth critical-mass terms; the cutpoint can be <strong>estimated</strong>: <code>c = est()</code>
+</li>
+<li>
+<code>fn("smax", kappa =)</code> — smooth max/min; <code>kappa = est()</code> makes the aggregation function itself the estimand (min &lt;-&gt; mean &lt;-&gt; max)</li>
+<li>
+<code>fn("gmean", p = est())</code> — power/CES mean (substitutes vs complements)</li>
+<li>
+<code>fn("cov")</code> — weighted covariance of two member attributes</li>
+</ul></li>
+<li>
+<strong>Expression DSL:</strong> <code>fn(~ E((x - E(x))^2))</code> — user-written reductions with the expectation operator <code>E()</code> over the normalized member weights; whitelisted operations transpile to JAGS. Free symbols become estimable shape parameters.</li>
+<li>Blocks stack: combine mean + variance + concentration features in one model.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="weights-fn---w-1-0-0">Weights: <code>fn()</code> -&gt; <code>w()</code>
+<a class="anchor" aria-label="anchor" href="#weights-fn---w-1-0-0"></a></h3>
+<ul><li>Weights moved to their own component: <code>w(~ 1/n)</code>, <code>w(~ importance, scale = TRUE)</code>, <code>w(~ ilogit(b0 + b1*q))</code>. The old <code>fn(w ~ ...)</code> spelling and the <code>c =</code> normalization flag were <strong>removed</strong> (<code>c</code> -&gt; <code>scale</code>, matching brms).</li>
+<li>
+<strong>One parameter rule:</strong> any symbol in a <code><a href="../reference/w.html">w()</a></code> or <code><a href="../reference/fn.html">fn()</a></code> formula that is not a data column is a free parameter; the build messages <code>Estimating parameters: ...</code> so typos surface immediately.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="named-blocks-and-interactions-1-0-0">Named blocks and interactions<a class="anchor" aria-label="anchor" href="#named-blocks-and-interactions-1-0-0"></a></h3>
+<ul><li>Every block has a (auto-generated or user-set) <code>name =</code>; single-feature blocks can be referenced in main-formula interactions: cross-level (<code>Ax:education</code>) and block x block (<code>Ax:Vx</code>). Bare references error.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="effects-grammar-re--fe-1-0-0">Effects grammar: <code>re()</code> / <code>fe()</code>
+<a class="anchor" aria-label="anchor" href="#effects-grammar-re--fe-1-0-0"></a></h3>
+<ul><li>
+<code>RE = re(1 + x)</code> — random intercepts + slopes (lme4-style LHS; grouping implied by <code><a href="../reference/id.html">id()</a></code>). Default <strong><code>cor = FALSE</code></strong> (independent; a deliberate divergence from brms’s correlated default); <code>cor = TRUE</code> opts into the correlated 2x2 with an LKJ-style prior.</li>
+<li>
+<code>FE = fe(1 + x, showFE =)</code> — the no-pooling peer (unit dummies + unit-specific slopes; first unit is the reference).</li>
+<li>
+<code><a href="../reference/hm.html">hm()</a></code> carries <strong>structure only</strong>: <code>type =</code> and <code>vars =</code> were removed. Fixed effects of unit-level covariates go in the main formula (<code>Y ~ gdp + hm(id(cid), RE = re(1 + gdp))</code>), retiring <code>b.hm</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="brms-aligned-call-syntax-1-0-0">brms-aligned call syntax<a class="anchor" aria-label="anchor" href="#brms-aligned-call-syntax-1-0-0"></a></h3>
+<ul><li>
+<code>bml(formula, data, family = gaussian(), prior = ...)</code> — <code>data</code> is second.</li>
+<li>
+<strong>Family functions:</strong> <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code>, <code><a href="../reference/bml-families.html">bernoulli()</a></code>, <code><a href="../reference/bml-families.html">weibull()</a></code>, <code>cox(intervals =)</code> (absorbing <code>cox_intervals</code>); strings still accepted.</li>
+<li>
+<strong>MCMC arguments renamed:</strong> <code>iter</code>, <code>warmup</code>, <code>thin</code>, <code>chains</code>, <code>cores</code> (replacing <code>n.iter</code>, <code>n.burnin</code>, <code>n.thin</code>, <code>n.chains</code>, <code>parallel</code>).</li>
+<li>
+<strong><code><a href="../reference/prior.html">prior()</a></code> system:</strong> class-targeted priors on the natural (SD) scale, translated to JAGS automatically — <code>prior(normal(0, 5), class = "b")</code>, classes <code>Intercept</code>, <code>b</code>, <code>sd</code>, <code>cor</code>, <code>sigma</code>, <code>shape</code>, <code>w</code>, <code>fn</code>; <code><a href="../reference/get_prior.html">get_prior()</a></code> lists every settable prior. Raw JAGS strings remain an escape hatch. The old <code>priors =</code> list argument was removed.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="parameter-naming-1-0-0">Parameter naming<a class="anchor" aria-label="anchor" href="#parameter-naming-1-0-0"></a></h3>
+<ul><li>One user-facing coefficient family <strong><code>b</code></strong>, labeled by term (<code>(Intercept)</code>, <code>majority</code>, <code>A_x</code>, <code>A_x:education</code>); internal arrays <code>b</code>, <code>b.fn.&lt;k&gt;</code> retire <code>b.mm</code>/<code>b.hm</code>. Weight parameters are <code>b.w.&lt;k&gt;</code> (class <code>"w"</code>); <code>fn</code> shape parameters are <code>fn.&lt;name&gt;.&lt;k&gt;</code> (class <code>"fn"</code>) and are reported in their own “Function parameters” section, never in the coefficient table. RE variances print as <code>sd(Intercept)</code>, <code>sd(x)</code>, <code>cor(Intercept,x)</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="post-estimation-the-brms--posterior-vocabulary-1-0-0">Post-estimation: the brms / posterior vocabulary<a class="anchor" aria-label="anchor" href="#post-estimation-the-brms--posterior-vocabulary-1-0-0"></a></h3>
+<ul><li>
+<code><a href="https://mc-stan.org/posterior/reference/draws.html" class="external-link">as_draws()</a></code> / <code><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df()</a></code> / <code><a href="https://mc-stan.org/posterior/reference/draws_matrix.html" class="external-link">as_draws_matrix()</a></code> / <code><a href="https://mc-stan.org/posterior/reference/draws_array.html" class="external-link">as_draws_array()</a></code>
+</li>
+<li>
+<code><a href="https://rdrr.io/pkg/nlme/man/fixed.effects.html" class="external-link">fixef()</a></code>, <code><a href="https://rdrr.io/pkg/nlme/man/random.effects.html" class="external-link">ranef()</a></code>, <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>
+</li>
+<li>
+<code><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted()</a></code>, <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>, <code><a href="../reference/posterior_predict.html">posterior_predict()</a></code> (newdata not yet supported)</li>
+<li>
+<code><a href="../reference/log_lik.html">log_lik()</a></code>, <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo()</a></code>, <code><a href="https://mc-stan.org/loo/reference/waic.html" class="external-link">waic()</a></code> (gaussian/bernoulli; pointwise <code>log_lik</code> is monitored in the generated JAGS model)</li>
+<li>
+<code><a href="../reference/pp_check.html">pp_check()</a></code> (via bayesplot, Suggests), <code><a href="../reference/conditional_effects.html">conditional_effects()</a></code>
+</li>
+<li>
+<code><a href="../reference/make_jagscode.html">make_jagscode()</a></code> / <code><a href="../reference/make_jagscode.html">make_jagsdata()</a></code> (analogues of <code>make_stancode()</code>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="autoregressive-random-effects-ar-moved-into-re-1-0-0">Autoregressive random effects: <code>ar</code> moved into <code>re()</code>
+<a class="anchor" aria-label="anchor" href="#autoregressive-random-effects-ar-moved-into-re-1-0-0"></a></h3>
+<ul><li>The random-walk option is part of the effects grammar now — it is a property of the random effect, not of the block. <code>mm(ar = TRUE)</code> / <code>hm(ar = TRUE)</code> were <strong>removed</strong> (migration error): write <code>RE = re(1, ar = TRUE)</code>.</li>
+<li>
+<strong>New: time-indexed walks.</strong> <code>RE = re(1, ar = year)</code> orders each member’s participations by a numeric time variable and scales the step variance by the normalized time gaps, <code>u_t ~ N(u_{t-1}, sigma^2 * gap_t / mean(gap))</code> — long gaps allow more drift than short ones; equal spacing reproduces the <code>ar = TRUE</code> model. Requires an intercept-only <code>re(1)</code>; time values must be unique within each member/unit.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="temporal-helpers-1-0-0">Temporal helpers<a class="anchor" aria-label="anchor" href="#temporal-helpers-1-0-0"></a></h3>
+<ul><li>
+<code><a href="../reference/bml_delta.html">bml_delta()</a></code>, <code><a href="../reference/bml_realloc.html">bml_realloc()</a></code>, <code><a href="../reference/bml_turnover.html">bml_turnover()</a></code> — aggregation over membership spells: the matched (shift-share style) decomposition of a composition change into reallocation + attribute change + entry/exit, with the adding-up identity holding exactly. Observed-panel case; the in-model spell path (estimated weights, reallocation toward high-RE members) is future work.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="vignettes-1-0-0">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes-1-0-0"></a></h3>
+<ul><li>The examples vignette gained four new examples on the coalition data: mean vs. spread (<code>fn("var")</code>, stacked feature blocks), estimating the aggregation function itself (<code>fn("smax", kappa = est())</code>), cross-level interactions via named blocks (<code>Afin:majority</code>), and heterogeneous member effects (<code>vars(x + x:z)</code> + <code>re(1 + x)</code> in one block). The friendship example now adjudicates linear-in-means vs. best-friend with <code>loo_compare()</code> and shows <code><a href="../reference/pp_check.html">pp_check()</a></code>; the Boston example uses <code>prior(..., class = "w")</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-0-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-0"></a></h3>
+<ul><li>
+<strong>Canonical member-row ordering.</strong> All member-level structures (design matrices, weights, slope data, and the member-id index vectors) now share one ordering, sorted by (group, member). Previously the member-id index used a different ordering than the design/weight matrices, so models with member random effects could associate rows with the wrong member’s effect when the input data were not already sorted by member within group. Results of affected models change (even with the same seed); the refit examples vignette reflects this — most notably, the friendship example’s model comparison now favors linear-in-means over the best-friend specification.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="removed-clean-breaks-1-0-0">Removed (clean breaks)<a class="anchor" aria-label="anchor" href="#removed-clean-breaks-1-0-0"></a></h3>
+<ul><li>
+<code>fn(w ~ ...)</code> weights spelling; <code>c =</code> normalization flag</li>
+<li>
+<code>hm(type =)</code>, <code>hm(vars =)</code>, <code>hm(name =)</code> (now <code>labels =</code>), <code>hm(showFE =)</code>
+</li>
+<li>
+<code>mm(ar =)</code> / <code>hm(ar =)</code> — moved into <code>re(1, ar = ...)</code>
+</li>
+<li>
+<code>bml(n.iter =, n.burnin =, n.thin =, n.chains =, parallel =, priors =, cox_intervals =)</code>; <code>data</code> as last argument</li>
+<li>
+<code>family = "Gaussian"</code>-style capitalized strings still resolve, but the canonical spellings are lowercase / family functions</li>
+</ul><hr></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.9.0" id="bml-090">bml 0.9.0<a class="anchor" aria-label="anchor" href="#bml-090"></a></h2><p class="text-muted">CRAN release: 2026-02-20</p>
 <div class="section level3">

@@ -19,7 +19,7 @@ stationarity p-values, and autocorrelation at a user-specified lag."></head><bod
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,9 +78,13 @@ matches <code>"b[1]"</code>, <code>"b[2]"</code>, …).</p></dd>
 
 
 <dt id="arg-lag">lag<a class="anchor" aria-label="anchor" href="#arg-lag"></a></dt>
-<dd><p>Integer specifying the lag at which to compute autocorrelation.
-Default: 50. Lower values (e.g., 10) capture short-range dependence; higher
-values assess whether the chain has mixed well over longer intervals.</p></dd>
+<dd><p>Integer specifying the lag at which to compute autocorrelation,
+in units of stored (post-thinning) samples. Default: 50. Lower values
+(e.g., 10) capture short-range dependence; higher values assess whether
+the chain has mixed well over longer intervals. If <code>lag</code> is greater
+than or equal to the number of stored draws per chain (e.g., because
+<code>n.thin &gt; 1</code> reduced the number of stored draws), it is automatically
+lowered with a warning.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -136,8 +140,8 @@ of iterative simulations. <em>Journal of Computational and Graphical Statistics<
 <span class="r-in"><span><span class="co"># Fit model</span></span></span>
 <span class="r-in"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu"><a href="bml.html">bml</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="va">w</span> <span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  family <span class="op">=</span> <span class="st">"Weibull"</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="fu"><a href="bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  monitor <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
@@ -149,7 +153,7 @@ of iterative simulations. <em>Journal of Computational and Graphical Statistics<
 <span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b[1]"</span>, <span class="st">"b[2]"</span>, <span class="st">"shape"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check mm block parameters</span></span></span>
-<span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.mm.1"</span>, <span class="st">"sigma.mm.1"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b.fn.1"</span>, <span class="st">"sigma.mm.1"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Custom autocorrelation lag</span></span></span>
 <span class="r-in"><span><span class="fu">mcmcDiag</span><span class="op">(</span><span class="va">m1</span>, parameters <span class="op">=</span> <span class="st">"b"</span>, lag <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>

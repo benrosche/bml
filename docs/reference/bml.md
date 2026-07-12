@@ -1,8 +1,16 @@
-# Bayesian Multiple-Membership Multilevel Models with Parameterizable Weight Functions Using JAGS
+# Bayesian Multilevel Models for Micro-Macro Analysis (Multiple Membership) Using JAGS
 
-The **bml** package provides a user-friendly interface for fitting
-Bayesian multiple-membership multilevel models with parameterizable
-weight functions via JAGS.
+The **bml** package estimates micro-to-macro regressions: Bayesian
+multiple-membership multilevel models in which the aggregation from
+member-level records to group-level outcomes is an explicit, estimable
+object — weights
+([`w`](https://benrosche.github.io/bml/reference/w.md)), aggregation
+functions ([`fn`](https://benrosche.github.io/bml/reference/fn.md):
+mean, variance, concentration, thresholds, smooth max/min, CES means,
+covariance, or a user-written reduction), member/unit random and fixed
+effects ([`re`](https://benrosche.github.io/bml/reference/re.md),
+[`fe`](https://benrosche.github.io/bml/reference/fe.md)), and
+cross-level or feature-by-feature interactions via named blocks.
 
 JAGS must be installed separately:
 <https://sourceforge.net/projects/mcmc-jags/>.
@@ -12,20 +20,20 @@ JAGS must be installed separately:
 ``` r
 bml(
   formula,
-  family = "Gaussian",
-  priors = NULL,
+  data,
+  family = stats::gaussian(),
+  prior = NULL,
   inits = NULL,
-  n.iter = 1000,
-  n.burnin = 500,
-  n.thin = max(1, floor((n.iter - n.burnin)/1000)),
-  n.chains = 3,
+  iter = 1000,
+  warmup = 500,
+  thin = max(1, floor((iter - warmup)/1000)),
+  chains = 3,
+  cores = 1,
   seed = NULL,
   run = TRUE,
-  parallel = FALSE,
   monitor = TRUE,
   modelfile = FALSE,
-  cox_intervals = NULL,
-  data = NULL
+  ...
 )
 ```
 
@@ -33,343 +41,134 @@ bml(
 
 - formula:
 
-  A symbolic model formula. See 'Formula Components' section for
-  details. The general structure is:
-  `outcome ~ 1 + predictors + mm(...) + hm(...)`. For survival models,
-  use `Surv(time, event)` on the left-hand side.
-
-- family:
-
-  Character string specifying the outcome distribution and link
-  function. Options:
-
-  - `"Gaussian"`: Normal distribution with identity link (continuous
-    outcomes)
-
-  - `"Binomial"`: Binomial distribution with logit link (binary
-    outcomes)
-
-  - `"Weibull"`: Weibull survival model (requires `Surv(time, event)`
-    outcome)
-
-  - `"Cox"`: Cox proportional hazards model (requires
-    `Surv(time, event)` outcome)
-
-- priors:
-
-  Named list or character vector of JAGS prior specifications. Parameter
-  names follow JAGS naming conventions:
-
-  - **Main level:** `b[x]` for main-equation coefficients (e.g.,
-    `"b[1] ~ dnorm(0, 0.01)"` for the intercept)
-
-  - **HM level:** `b.hm.k[x]` for hm block `k` coefficients, `tau.hm.k`
-    for hm block `k` random effect precision
-
-  - **MM level:** `b.mm.k[x]` for mm block `k` coefficients, `b.w.k[x]`
-    for weight function parameters in mm block `k`, `tau.mm.g` for mm
-    random effect precision (indexed by member-group ID group `g`)
-
-  - **Other:** `shape` (Weibull shape parameter), `lambda0[k]` (Cox
-    baseline hazard intervals)
-
-  **Note:** Priors on variance components must be specified on the
-  *precision* scale (`tau = 1/sigma^2`), not the standard deviation,
-  since JAGS parameterizes normal distributions using precision.
-  Example:
-  `list("b.mm.1 ~ dnorm(0, 0.01)", "tau.mm.1 ~ dgamma(2, 0.1)")`.
-  Default priors are weakly informative.
-
-- inits:
-
-  List of initial values for MCMC chains. Applied to all chains. If
-  `NULL`, JAGS generates initial values automatically. Weight function
-  parameters (`b.w.k`) are always initialized at 0 by default to prevent
-  numerical instability (e.g., `ilogit` with extreme inputs).
-  User-supplied inits override these defaults.
-
-- n.iter:
-
-  Total number of MCMC iterations per chain. Default: 1000. Increase for
-  better convergence (e.g., 10000-50000 for production models).
-
-- n.burnin:
-
-  Number of burn-in iterations to discard at the start of each chain.
-  Default: 500. Should be sufficient for chains to reach stationarity.
-
-- n.thin:
-
-  Thinning rate: save every k-th iteration to reduce autocorrelation.
-  Default: `max(1, floor((n.iter - n.burnin) / 1000))` (targets ~1000
-  samples). Increase if posterior samples show high autocorrelation.
-
-- n.chains:
-
-  Number of MCMC chains. Default: 3. Use 3-4 chains to assess
-  convergence via Gelman-Rubin diagnostics.
-
-- seed:
-
-  Integer random seed for reproducibility. If `NULL`, results will vary
-  across runs.
-
-- run:
-
-  Logical; if `TRUE` (default), JAGS is executed and the model is
-  fitted. If `FALSE`, returns the model specification without fitting
-  (useful for inspecting generated JAGS code or data structures).
-
-- parallel:
-
-  Logical; if `TRUE`, run MCMC chains in parallel using multiple cores.
-  Requires parallel backend setup. Default: `FALSE`.
-
-- monitor:
-
-  Logical; if `TRUE`, store full MCMC chains and additional outputs for
-  diagnostic plots. Required for
-  [`monetPlot`](https://benrosche.github.io/bml/reference/monetPlot.md)
-  and
-  [`mcmcDiag`](https://benrosche.github.io/bml/reference/mcmcDiag.md).
-  Default: `TRUE`.
-
-- modelfile:
-
-  Logical or character path:
-
-  - `FALSE` (default): JAGS code generated internally
-
-  - `TRUE`: Save generated JAGS code to `modelstring.txt` in working
-    directory
-
-  - Character path: Read JAGS code from specified file instead of
-    generating
-
-- cox_intervals:
-
-  For Cox models only: controls baseline hazard flexibility and
-  computational efficiency.
-
-  - `NULL` (default): Non-parametric baseline hazard using all unique
-    event times (maximum flexibility, slower for large datasets)
-
-  - Integer k: Piecewise constant baseline hazard with k intervals
-    (faster, suitable for datasets with many unique event times).
-    Recommended: k = 10-20 for most applications.
+  A symbolic model formula; see Details.
 
 - data:
 
-  Data frame in member-level (long) format where each row represents a
-  member-level observation. Must contain all variables referenced in the
-  formula, including identifiers specified in
+  Data frame in member-level (long) format: one row per membership. Must
+  contain all variables referenced in the formula, including the
+  identifiers in
   [`id()`](https://benrosche.github.io/bml/reference/id.md).
+
+- family:
+
+  Model family: a family function
+  ([`gaussian()`](https://rdrr.io/r/stats/family.html),
+  [`bernoulli()`](https://benrosche.github.io/bml/reference/bml-families.md),
+  [`weibull()`](https://benrosche.github.io/bml/reference/bml-families.md),
+  [`cox()`](https://benrosche.github.io/bml/reference/bml-families.md))
+  or a string (`"gaussian"`, `"bernoulli"`, `"weibull"`, `"cox"`). Cox
+  baseline-hazard intervals travel with the family:
+  `cox(intervals = 10)`.
+
+- prior:
+
+  Prior specifications built with
+  [`prior`](https://benrosche.github.io/bml/reference/prior.md) and
+  combined with [`c()`](https://rdrr.io/r/base/c.html); see
+  [`get_prior`](https://benrosche.github.io/bml/reference/get_prior.md)
+  for the settable parameters. Raw JAGS strings (e.g.
+  `"b.fn.1[1] ~ dnorm(0, 0.1)"`) pass through untranslated as an escape
+  hatch.
+
+- inits:
+
+  List of initial values for MCMC chains (applied to all chains). Weight
+  and `fn` shape parameters get stable defaults automatically; user
+  values override.
+
+- iter:
+
+  Total number of MCMC iterations per chain. Default: 1000.
+
+- warmup:
+
+  Number of warmup (burn-in) iterations discarded from the start of each
+  chain. Default: 500.
+
+- thin:
+
+  Thinning rate. Default targets ~1000 retained draws.
+
+- chains:
+
+  Number of MCMC chains. Default: 3.
+
+- cores:
+
+  Number of cores; `cores > 1` runs chains in parallel. Default: 1.
+
+- seed:
+
+  Integer random seed for reproducibility.
+
+- run:
+
+  Logical; if `FALSE`, returns the generated JAGS model string, data,
+  and monitors without fitting (see also
+  [`make_jagscode`](https://benrosche.github.io/bml/reference/make_jagscode.md)).
+
+- monitor:
+
+  Logical; if `TRUE` (default), store full MCMC chains and
+  fitted/predicted/log-likelihood nodes. Required for most
+  post-estimation methods
+  ([`as_draws`](https://benrosche.github.io/bml/reference/as_draws.bml.md),
+  [`loo.bml`](https://benrosche.github.io/bml/reference/loo.bml.md),
+  [`posterior_predict.bml`](https://benrosche.github.io/bml/reference/posterior_predict.md),
+  [`monetPlot`](https://benrosche.github.io/bml/reference/monetPlot.md),
+  [`mcmcDiag`](https://benrosche.github.io/bml/reference/mcmcDiag.md)).
+
+- modelfile:
+
+  Logical or character path: `TRUE` saves the generated JAGS code to
+  `modelstring.txt`; a path reads JAGS code from that file instead of
+  generating it.
+
+- ...:
+
+  Not used; catches removed legacy arguments (`n.iter`, `n.burnin`,
+  `n.thin`, `n.chains`, `parallel`, `priors`, `cox_intervals`) with a
+  migration message.
 
 ## Value
 
-A list of class `"bml"` containing:
-
-- `reg.table`: Data frame of posterior summaries with columns
-  `Parameter`, `mean`, `sd`, `lb`, `ub` (95% credible interval bounds).
-
-- `w`: List of weight matrices (one per
-  [`mm()`](https://benrosche.github.io/bml/reference/mm.md) block). Each
-  matrix has rows = groups and columns = members within each group.
-
-- `re.mm`: List of member-level random effects (one per mmid group with
-  `RE = TRUE`). Vector for standard RE, matrix for autoregressive RE.
-
-- `re.hm`: List of nesting-level random effects (one per
-  [`hm()`](https://benrosche.github.io/bml/reference/hm.md) block with
-  `type = "RE"`).
-
-- `pred`: Vector of predicted values (posterior means) for each group.
-
-- `input`: List of model specifications including `family`, `mm` and
-  `hm` block info, sample sizes, and MCMC settings.
-
-- `jags.out`: Full R2jags output object (if `monitor = TRUE`; `NULL`
-  otherwise). Contains posterior samples, MCMC chains, and convergence
-  diagnostics.
+A list of class `"bml"` with elements `reg.table` (posterior summaries;
+labeled terms), `w` (weight matrices per block), `re.mm`/`re.hm` (random
+effects), `pred` (posterior predictive means), `fitted` (posterior means
+of the linear predictor), `input` (model metadata), and `jags.out` (full
+R2jags output when `monitor = TRUE`).
 
 ## Details
 
-In addition to hierarchical and cross-classified multilevel models, the
-**bml** package allows users to fit Bayesian multiple-membership models.
-Unlike tools such as `brms` or
-[MLwiN](https://www.bristol.ac.uk/cmm/software/mlwin/), **bml** lets
-users specify and estimate models in which membership weights are
-parameterized through flexible formula syntax. This enables a more
-nuanced examination of how effects from member-level units aggregate to
-group level (the micro-macro link).
-
-The package automatically generates JAGS code to fit the model and
-processes the output to facilitate interpretation of model parameters
-and diagnostics.
-
-The package and modeling framework are introduced in: Rosche, B. (2026).
-*A Multilevel Model for Coalition Governments: Uncovering Party-Level
-Dependencies Within and Between Governments*. *Political Analysis*.
-
-For accessible introductions to multiple-membership models, see Fielding
-and Goldstein (2006) and Beretvas (2010). Advanced treatments include
-Goldstein (2011, Ch. 13), Rasbash and Browne (2001, 2008), Browne et al.
-(2001), and Leckie (2013).
-
-## Formula Components
-
-- **Outcome (Y):** The dependent variable. For survival models, use
-  `Surv(time, event)`.
-
-- **Intercept:** Follows standard R formula conventions (like
-  [`lm()`](https://rdrr.io/r/stats/lm.html)):
-
-  - `y ~ x`: Includes intercept by default
-
-  - `y ~ 1 + x`: Explicitly includes intercept (same as default)
-
-  - `y ~ 0 + x` or `y ~ -1 + x`: Excludes intercept
-
-- **Main-level predictors (X.main):** Variables defined at the main
-  (group) level, separated by `+`.
-
-- **HM-level predictors (X.hm):** Variables defined at the nesting
-  level, separated by `+`.
-
-- **Multiple membership object
-  ([`mm()`](https://benrosche.github.io/bml/reference/mm.md)):** Defines
-  how member-level units are associated with group-level constructs
-  using a user-specified weighting function. Multiple
-  [`mm()`](https://benrosche.github.io/bml/reference/mm.md) objects can
-  be specified with different weight functions.
-
-- **Hierarchical membership
-  ([`hm()`](https://benrosche.github.io/bml/reference/hm.md)):**
-  Specifies nesting of main-level units within higher-level entities.
-  Cross-classified structures can be modeled by including multiple
-  [`hm()`](https://benrosche.github.io/bml/reference/hm.md) objects.
-
-**Formula Features:** The main formula and
-[`vars()`](https://benrosche.github.io/bml/reference/vars.md)
-specifications support standard R formula syntax:
-
-- **Interactions:** Use `*` for main effects plus interaction, or `:`
-  for interaction only. Example: `y ~ a * b` expands to
-  `y ~ a + b + a:b`.
-
-- **Transformations:** Use [`I()`](https://rdrr.io/r/base/AsIs.html) for
-  arithmetic operations. Example: `y ~ I(x^2)` or `y ~ I(a + b)`.
-
-These features work in:
-
-- **Main formula:** `y ~ 1 + a * b + I(x^2)`
-
-- **mm() vars:** `vars(a * b)` or `vars(I(x^2))`
-
-- **hm() vars:** `vars(a:b)` or `vars(I(log(x)))`
-
-**Note on weight functions:** The
-[`fn()`](https://benrosche.github.io/bml/reference/fn.md) weight
-function in [`mm()`](https://benrosche.github.io/bml/reference/mm.md)
-does NOT support interactions or
-[`I()`](https://rdrr.io/r/base/AsIs.html) transformations. Users must
-pre-create any needed transformed variables in their data before using
-them in weight functions. For example, instead of `fn(w ~ b1 * x^2)`,
-first create `data$x_sq <- data$x^2` and use `fn(w ~ b1 * x_sq)`.
-
-**Note on intercepts:** Intercept syntax (`1`, `0`, `-1`) only applies
-to the main formula. Numeric literals in
-[`vars()`](https://benrosche.github.io/bml/reference/vars.md) are
-ignored (e.g., `vars(1 + x)` is equivalent to `vars(x)`).
-
-## Multiple Membership Object [`mm()`](https://benrosche.github.io/bml/reference/mm.md)
+The general formula structure is
 
 
-    mm(
-      id   = id(mmid, mainid),
-      vars = vars(X.mm),
-      fn   = fn(w ~ 1/n, c = TRUE),
-      RE   = TRUE,
-      ar   = FALSE
-    )
+    outcome ~ 1 + predictors + mm(...) + hm(...)
 
-**Components:**
+where [`mm`](https://benrosche.github.io/bml/reference/mm.md) defines a
+multiple-membership block (the micro-macro link) and
+[`hm`](https://benrosche.github.io/bml/reference/hm.md) a hierarchical
+nesting level. Multiple
+[`mm()`](https://benrosche.github.io/bml/reference/mm.md) blocks stack
+features (e.g. mean + variance + concentration); multiple
+[`hm()`](https://benrosche.github.io/bml/reference/hm.md) blocks give
+cross-classification. For survival families use `Surv(time, event)` on
+the left-hand side.
 
-- `id(mmid, mainid)`: Specifies identifiers linking each member-level
-  unit (`mmid`) to its corresponding group-level entities (`mainid`).
-
-- `vars(X.mm)`: Specifies member-level covariates aggregated across
-  memberships. Use `+` to include multiple variables. Supports
-  interactions (`*`, `:`) and transformations
-  ([`I()`](https://rdrr.io/r/base/AsIs.html)). Set to `NULL` for RE-only
-  blocks.
-
-- `fn(w ~ ..., c)`: Defines the weight function (micro-macro link). The
-  `c` parameter controls weight normalization: when `c = TRUE`
-  (default), weights are normalized to sum to 1 within each group
-  (\\\tilde{w}\_{ik} = w\_{ik} / \sum\_{k} w\_{ik}\\). Set `c = FALSE`
-  for unnormalized weights (e.g., when aggregating sums). Note: Does not
-  support interactions or [`I()`](https://rdrr.io/r/base/AsIs.html) -
-  pre-create transformed variables.
-
-- `RE`: Logical; if `TRUE`, include random effects for this block.
-  Automatically `TRUE` if `vars = NULL`.
-
-- `ar`: Logical; if `TRUE`, member-level random effects evolve as a
-  random walk across repeated participations in groups. This captures
-  dynamics where a member's unobserved heterogeneity changes over time.
-  Default: `FALSE`.
-
-**Multiple mm() blocks:** You can specify multiple
-[`mm()`](https://benrosche.github.io/bml/reference/mm.md) blocks with
-different weight functions. However, `RE = TRUE` can only be specified
-for one [`mm()`](https://benrosche.github.io/bml/reference/mm.md) block.
+Named [`mm()`](https://benrosche.github.io/bml/reference/mm.md) blocks
+can be referenced in main-formula interactions:
 
 
-    mm(id = id(pid, gid), vars = vars(X.mm.1), fn = fn(w ~ 1/n), RE = FALSE) +
-    mm(id = id(pid, gid), vars = vars(X.mm.2), fn = fn(w ~ pseat == max(pseat)), RE = FALSE) +
-    mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE)
+    Y ~ education + Ax:education +
+      mm(name = Ax, id = id(task, occ), vars = vars(x), w = w(~ importance))
 
-## Hierarchical Membership Object [`hm()`](https://benrosche.github.io/bml/reference/hm.md)
+Both cross-level (feature x macro variable) and block x block (feature x
+feature) interactions are supported; the macro variable must also appear
+as a main effect, and a bare (non-interacted) block reference is an
+error.
 
-
-    hm(id = id(hmid), vars = vars(X.hm), name = hmname, type = "RE", showFE = FALSE)
-
-**Components:**
-
-- `id = id(hmid)`: Variable identifying nesting-level groups.
-
-- `vars = vars(X.hm)`: Nesting-level variables, or `NULL`. Supports
-  interactions (`*`, `:`) and transformations
-  ([`I()`](https://rdrr.io/r/base/AsIs.html)).
-
-- `name = hmname`: Optional labels for nesting-level units.
-
-- `type`: `"RE"` (default) or `"FE"`.
-
-- `showFE`: If `TRUE` and `type = "FE"`, report the fixed effects.
-
-## Supported Families / Links
-
-- Gaussian (continuous): `family = "Gaussian"`
-
-- Binomial (logistic): `family = "Binomial"`
-
-- Weibull survival: `family = "Weibull"`, outcome: `Surv(time, event)`
-
-- Cox survival: `family = "Cox"`, outcome: `Surv(time, event)`
-
-## Priors
-
-Priors can be specified for parameters. With multiple mm() blocks, use
-indexed names:
-
-
-    priors = list(
-      "b.mm.1 ~ dnorm(0, 0.01)",
-      "b.w.1 ~ dnorm(0, 0.1)",
-      "tau.mm.1 ~ dscaled.gamma(25, 1)"
-    )
+The package is introduced in Rosche (2026), *Political Analysis*.
 
 ## References
 
@@ -383,15 +182,21 @@ multiple classification (MMMC) models. *Statistical Modelling*, 1(2),
 
 ## See also
 
-[`summary.bml`](https://benrosche.github.io/bml/reference/summary.bml.md)
-for model summaries,
-[`monetPlot`](https://benrosche.github.io/bml/reference/monetPlot.md)
-for posterior visualization,
-[`mcmcDiag`](https://benrosche.github.io/bml/reference/mcmcDiag.md) for
-convergence diagnostics,
 [`mm`](https://benrosche.github.io/bml/reference/mm.md),
-[`hm`](https://benrosche.github.io/bml/reference/hm.md) for model
-specification helpers
+[`hm`](https://benrosche.github.io/bml/reference/hm.md),
+[`w`](https://benrosche.github.io/bml/reference/w.md),
+[`fn`](https://benrosche.github.io/bml/reference/fn.md),
+[`re`](https://benrosche.github.io/bml/reference/re.md),
+[`fe`](https://benrosche.github.io/bml/reference/fe.md),
+[`prior`](https://benrosche.github.io/bml/reference/prior.md),
+[`get_prior`](https://benrosche.github.io/bml/reference/get_prior.md),
+[`summary.bml`](https://benrosche.github.io/bml/reference/summary.bml.md),
+[`fixef.bml`](https://benrosche.github.io/bml/reference/fixef.bml.md),
+[`ranef.bml`](https://benrosche.github.io/bml/reference/ranef.bml.md),
+[`loo.bml`](https://benrosche.github.io/bml/reference/loo.bml.md),
+[`varDecomp`](https://benrosche.github.io/bml/reference/varDecomp.md),
+[`bmlCompare`](https://benrosche.github.io/bml/reference/bmlCompare.md),
+[`make_jagscode`](https://benrosche.github.io/bml/reference/make_jagscode.md)
 
 ## Author
 
@@ -403,93 +208,44 @@ Benjamin Rosche \<benrosche@nyu.edu\>
 if (FALSE) { # \dontrun{
 data(coalgov)
 
-# Basic multiple-membership model
-# Parties (pid) within governments (gid), nested in countries (cid)
+# Additive aggregation with member random effects, country nesting
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(
-      id   = id(pid, gid),
-      vars = vars(cohesion),
-      fn   = fn(w ~ 1/n, c = TRUE),
-      RE   = TRUE
-    ) +
-    hm(id = id(cid), type = "RE"),
-  family = "Weibull",
-  data   = coalgov
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+    hm(id = id(cid)),
+  data = coalgov,
+  family = weibull()
 )
-
-# View results
 summary(m1)
-monetPlot(m1, "b[2]")  # Plot for majority coefficient
 
-# Multiple mm() blocks with different weight functions
+# Estimated weights (b0, b1 are free parameters by the one-parameter rule)
 m2 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(id = id(pid, gid), vars = vars(cohesion),
-       fn = fn(w ~ cohesion == max(cohesion)), RE = FALSE) +
-    mm(id = id(pid, gid), vars = NULL, fn = fn(w ~ 1/n), RE = TRUE),
-  family = "Weibull",
-  data   = coalgov
+       w = w(~ ilogit(b0 + b1 * pseat), scale = TRUE)),
+  data = coalgov,
+  family = weibull()
 )
 
-# Cox model with piecewise baseline hazard (faster for large datasets)
+# Emergent features: variance + concentration, stacked
 m3 <- bml(
-  Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
-  family = "Cox",
-  cox_intervals = 10,  # Use 10 intervals instead of all unique times
-  data   = coalgov
+  sim.y ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("var")) +
+    mm(id = id(pid, gid), w = w(~ pseat, scale = TRUE), fn = fn("hhi")),
+  data = coalgov,
+  family = gaussian()
 )
 
-# Parameterized weight function
-# ilogit() bounds raw weights between 0 and 1; c = TRUE normalizes to sum to 1
+# Structured priors
 m4 <- bml(
-  Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(
-      id   = id(pid, gid),
-      vars = vars(cohesion),
-      fn   = fn(w ~ ilogit(b0 + b1 * pseat), c = TRUE),
-      RE   = FALSE
-    ),
-  family = "Weibull",
-  data   = coalgov
-)
-
-# Fixed coefficients (offsets)
-m5 <- bml(
-  Surv(dur_wkb, event_wkb) ~ 1 + fix(majority, 1) + # Fix majority coefficient to 1.0
-    mm(
-      id   = id(pid, gid),
-      vars = vars(rile),
-      fn   = fn(w ~ 1/n, c = TRUE),
-      RE   = FALSE
-    ),
-  family = "Weibull",
-  data   = coalgov
-)
-
-# Custom priors
-m6 <- bml(
-  Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
-  family = "Weibull",
-  priors = list(
-    "b[1] ~ dnorm(0, 0.01)",       # Intercept prior
-    "b.mm.1 ~ dnorm(0, 0.1)",      # MM coefficient prior
-    "tau.mm.1 ~ dgamma(2, 0.5)"    # MM precision prior
-  ),
-  data   = coalgov
-)
-
-# Cross-classified model (multiple hm blocks)
-# Governments are cross-classified by country and election year
-m7 <- bml(
-  Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
-    hm(id = id(cid), type = "RE") +
-    hm(id = id(year), type = "RE"),
-  family = "Weibull",
-  data   = coalgov |> mutate(year = format(election, "%Y") |> as.integer())
+  sim.y ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+  data = coalgov,
+  family = gaussian(),
+  prior = c(
+    prior(normal(0, 5), class = "b"),
+    prior(exponential(1), class = "sd")
+  )
 )
 } # }
 ```

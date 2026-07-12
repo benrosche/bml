@@ -27,10 +27,13 @@ mcmcDiag(bml.out, parameters, lag = 50)
 
 - lag:
 
-  Integer specifying the lag at which to compute autocorrelation.
-  Default: 50. Lower values (e.g., 10) capture short-range dependence;
-  higher values assess whether the chain has mixed well over longer
-  intervals.
+  Integer specifying the lag at which to compute autocorrelation, in
+  units of stored (post-thinning) samples. Default: 50. Lower values
+  (e.g., 10) capture short-range dependence; higher values assess
+  whether the chain has mixed well over longer intervals. If `lag` is
+  greater than or equal to the number of stored draws per chain (e.g.,
+  because `n.thin > 1` reduced the number of stored draws), it is
+  automatically lowered with a warning.
 
 ## Value
 
@@ -98,8 +101,8 @@ data(coalgov)
 # Fit model
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE),
-  family = "Weibull",
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+  family = weibull(),
   monitor = TRUE,
   data = coalgov
 )
@@ -111,7 +114,7 @@ mcmcDiag(m1, parameters = "b")  # All b coefficients
 mcmcDiag(m1, parameters = c("b[1]", "b[2]", "shape"))
 
 # Check mm block parameters
-mcmcDiag(m1, parameters = c("b.mm.1", "sigma.mm.1"))
+mcmcDiag(m1, parameters = c("b.fn.1", "sigma.mm.1"))
 
 # Custom autocorrelation lag
 mcmcDiag(m1, parameters = "b", lag = 100)

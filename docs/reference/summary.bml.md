@@ -68,6 +68,8 @@ used.
 ## See also
 
 [`bml`](https://benrosche.github.io/bml/reference/bml.md),
+[`tidy.bml`](https://benrosche.github.io/bml/reference/tidy.bml.md),
+[`coefPlot`](https://benrosche.github.io/bml/reference/coefPlot.md),
 [`monetPlot`](https://benrosche.github.io/bml/reference/monetPlot.md),
 [`mcmcDiag`](https://benrosche.github.io/bml/reference/mcmcDiag.md)
 
@@ -84,9 +86,9 @@ data(coalgov)
 # Fit model
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), fn = fn(w ~ 1/n), RE = TRUE) +
-    hm(id = id(cid), type = "RE"),
-  family = "Weibull",
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+    hm(id = id(cid)),
+  family = weibull(),
   data = coalgov
 )
 

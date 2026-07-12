@@ -1,131 +1,85 @@
 # Define a hierarchical nesting structure
 
-Specifies a hierarchical (nesting) level in the model where group-level
-units are nested within higher-level entities. Unlike
-multiple-membership structures, each group belongs to exactly one
-nesting-level unit. Can model either random effects or fixed effects at
-the nesting level.
+Specifies a hierarchical (nesting) level: each group-level unit belongs
+to exactly one nesting-level unit (e.g., governments within countries).
+`hm()` carries only the effect *structure* — random effects
+(`RE = re(...)`, partial pooling) or fixed effects (`FE = fe(...)`, no
+pooling). Fixed effects of unit-level *covariates* belong in the main
+formula, following the lme4/brms convention:
+
+
+    Y ~ gdp + hm(id = id(cid), RE = re(1 + gdp))   # like y ~ gdp + (1 + gdp | cid)
 
 ## Usage
 
 ``` r
-hm(id, vars = NULL, name = NULL, type = "RE", showFE = FALSE, ar = FALSE)
+hm(id, RE = NULL, FE = NULL, labels = NULL, ...)
 ```
 
 ## Arguments
 
 - id:
 
-  An [`id`](https://benrosche.github.io/bml/reference/id.md) object
-  specifying the nesting-level identifier: `id(hmid)` where `hmid`
-  identifies the higher-level units (e.g., countries, regions).
+  An [`id`](https://benrosche.github.io/bml/reference/id.md) object:
+  `id(hmid)`.
 
-- vars:
+- RE:
 
-  A [`vars`](https://benrosche.github.io/bml/reference/vars.md) object
-  specifying nesting-level covariates, or `NULL` for intercept-only
-  effects. Supports interactions (`*`, `:`) and transformations
-  ([`I()`](https://rdrr.io/r/base/AsIs.html)).
+  Random effects: `TRUE` (shorthand for `re(1)`), an
+  [`re`](https://benrosche.github.io/bml/reference/re.md) object, or
+  `NULL`. Slope variables are main-level columns varying within the
+  nesting units. Default when neither `RE` nor `FE` is given: `re(1)`.
 
-- name:
+- FE:
 
-  Unquoted variable name for nesting-level labels (optional). If
-  provided, these labels will be displayed in model output for fixed
-  effects.
+  Fixed effects: a
+  [`fe`](https://benrosche.github.io/bml/reference/fe.md) object (unit
+  dummies via `fe(1)`; unit-specific slopes via `fe(1 + x)`; report
+  per-unit estimates with `fe(1, showFE = TRUE)`). Mutually exclusive
+  with `RE`.
 
-- type:
+- labels:
 
-  Character; either `"RE"` for random effects (default) or `"FE"` for
-  fixed effects at the nesting level.
+  Unquoted variable name holding display labels for the nesting units
+  (used when reporting per-unit fixed effects).
 
-- showFE:
+- ...:
 
-  Logical; if `TRUE` and `type = "FE"`, fixed effect estimates for each
-  nesting-level unit are included in output. Default: `FALSE`.
-
-- ar:
-
-  Logical; if `TRUE`, random effects evolve autoregressively across
-  participations at the nesting level. Requires sequential participation
-  indicators in the data. Default: `FALSE`.
+  Not used; catches the removed `type =`, `vars =`, `name =`,
+  `showFE =`, and `ar =` arguments (the last moved into the effects
+  grammar: `RE = re(1, ar = TRUE)`) with a migration message.
 
 ## Value
 
-A `bml_hm` object containing the hierarchical specification.
+A `bml_hm` object.
 
 ## Details
 
-**Hierarchical vs. Multiple-Membership:**
-
-Hierarchical structures (`hm`) model strict nesting: each group belongs
-to exactly one higher-level unit. Use
-[`mm`](https://benrosche.github.io/bml/reference/mm.md) when groups can
-have memberships in multiple units.
-
-**Random vs. Fixed Effects:**
-
-- **Random effects** (`type = "RE"`): Nesting-level units are treated as
-  a random sample from a population. Best when you have many units and
-  want to generalize.
-
-- **Fixed effects** (`type = "FE"`): Each unit gets its own parameter.
-  Best when you have few units or want to estimate unit-specific
-  effects.
-
-**Cross-Classification:**
-
-Multiple `hm()` blocks create cross-classified models where groups are
-simultaneously nested within multiple non-nested hierarchies (e.g.,
-schools within both neighborhoods and districts).
+Cross-classified structures are modeled by including multiple `hm()`
+blocks. The old `type = "RE"/"FE"` and `vars =` arguments were removed:
+use `RE = re(...)` / `FE = fe(...)`, and move unit-level covariates into
+the main formula (their coefficients are ordinary main-model
+coefficients).
 
 ## References
 
 Goldstein, H. (2011). *Multilevel Statistical Models* (4th ed.). Wiley.
-
-Rabe-Hesketh, S., & Skrondal, A. (2012). *Multilevel and Longitudinal
-Modeling Using Stata* (3rd ed.). Stata Press.
 
 ## See also
 
 [`bml`](https://benrosche.github.io/bml/reference/bml.md),
 [`mm`](https://benrosche.github.io/bml/reference/mm.md),
 [`id`](https://benrosche.github.io/bml/reference/id.md),
-[`vars`](https://benrosche.github.io/bml/reference/vars.md)
+[`re`](https://benrosche.github.io/bml/reference/re.md),
+[`fe`](https://benrosche.github.io/bml/reference/fe.md)
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-# Random effects with covariates
-hm(
-  id = id(cid),
-  vars = vars(gdp + democracy),
-  name = cname,
-  type = "RE"
-)
-
-# Random intercepts only
-hm(
-  id = id(cid),
-  vars = NULL,
-  type = "RE"
-)
-
-# Fixed effects
-hm(
-  id = id(cid),
-  vars = NULL,
-  name = cname,
-  type = "FE",
-  showFE = TRUE  # Show estimates for each country
-)
-
-# Autoregressive random effects
-hm(
-  id = id(cid),
-  vars = NULL,
-  type = "RE",
-  ar = TRUE  # Effects evolve over time
-)
+hm(id = id(cid))                          # random intercepts (default)
+hm(id = id(cid), RE = re(1 + x))          # random intercept + slope on x
+hm(id = id(cid), FE = fe(1))              # country dummies (no pooling)
+hm(id = id(cid), FE = fe(1, showFE = TRUE), labels = cname)
 } # }
 ```
