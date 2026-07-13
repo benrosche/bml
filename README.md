@@ -114,7 +114,8 @@ bml(
     mm(
       id = id(pid, gid),
       vars = vars(org_structure),
-      w    = w(~ 1 / n, scale = TRUE),
+      w = w(~ 1 / n, scale = TRUE),
+      fn = fn("sum"),
       RE = TRUE
     ),
   family = gaussian(),

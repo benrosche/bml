@@ -47,7 +47,7 @@ nicely). `make_jagsdata()`: a named list.
 ``` r
 if (FALSE) { # \dontrun{
 code <- make_jagscode(
-  y ~ x + mm(id = id(pid, gid), vars = vars(z), w = w(~ 1/n)),
+  y ~ x + mm(id = id(pid, gid), vars = vars(z), w = w(~ 1/n), fn = fn("sum")),
   data = dat, family = gaussian()
 )
 code

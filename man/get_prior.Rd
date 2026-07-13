@@ -26,7 +26,7 @@ Returns the table of all parameters whose priors can be set via
 \examples{
 \dontrun{
 get_prior(
-  y ~ x + mm(id = id(pid, gid), vars = vars(z), w = w(~ 1/n)),
+  y ~ x + mm(id = id(pid, gid), vars = vars(z), w = w(~ 1/n), fn = fn("sum")),
   data = dat, family = gaussian()
 )
 }

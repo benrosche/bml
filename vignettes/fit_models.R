@@ -107,6 +107,7 @@ mod_lim <-
         id   = id(alter, ego),
         vars = bml::vars(smoking_alter),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = gaussian(),
@@ -125,6 +126,7 @@ mod_bf <-
         id   = id(alter, ego),
         vars = bml::vars(smoking_alter),
         w    = w(~ rank == min(rank), scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = gaussian(),
@@ -192,6 +194,7 @@ mod_bml <-
         id   = id(tid_nb, tid),
         vars = bml::vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = gaussian(),
@@ -210,6 +213,7 @@ mod_bml_w <-
         id   = id(tid_nb, tid),
         vars = bml::vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
         w    = w(~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * d_CRIM + b2 * d_AGE))), scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = gaussian(),
@@ -239,6 +243,7 @@ mod_eq <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = weibull(),
@@ -258,6 +263,7 @@ mod_pm_n <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ b1 * prime + (1 - b1) * (1/n), scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = weibull(),
@@ -278,6 +284,7 @@ mod_pm_p <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ b1 * prime + (1 - b1) * pseat, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = weibull(),
@@ -301,6 +308,7 @@ mod_var <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ) +
       mm(
@@ -334,6 +342,7 @@ mod_smax <-
       mm(
         id   = id(pid, gid),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = weibull(),
@@ -357,6 +366,7 @@ mod_xl <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = weibull(),
@@ -379,6 +389,7 @@ mod_het <-
         id   = id(pid, gid),
         vars = vars(finance + finance:prime),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = re(1 + finance)
       ),
     family   = weibull(),

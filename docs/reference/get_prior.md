@@ -43,7 +43,7 @@ JAGS node), and `default`.
 ``` r
 if (FALSE) { # \dontrun{
 get_prior(
-  y ~ x + mm(id = id(pid, gid), vars = vars(z), w = w(~ 1/n)),
+  y ~ x + mm(id = id(pid, gid), vars = vars(z), w = w(~ 1/n), fn = fn("sum")),
   data = dat, family = gaussian()
 )
 } # }

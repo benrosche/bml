@@ -26,7 +26,7 @@
 #' Named \code{mm()} blocks can be referenced in main-formula interactions:
 #' \preformatted{
 #' Y ~ education + Ax:education +
-#'   mm(name = Ax, id = id(task, occ), vars = vars(x), w = w(~ importance))
+#'   mm(name = Ax, id = id(task, occ), vars = vars(x), w = w(~ importance), fn = fn("sum"))
 #' }
 #' Both cross-level (feature x macro variable) and block x block (feature x
 #' feature) interactions are supported; the macro variable must also appear as
@@ -86,7 +86,7 @@
 #' # Additive aggregation with member random effects, country nesting
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
 #'     hm(id = id(cid)),
 #'   data = coalgov,
 #'   family = weibull()
@@ -97,7 +97,8 @@
 #' m2 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
 #'     mm(id = id(pid, gid), vars = vars(cohesion),
-#'        w = w(~ ilogit(b0 + b1 * pseat), scale = TRUE)),
+#'        w = w(~ ilogit(b0 + b1 * pseat), scale = TRUE),
+#'        fn = fn("sum")),
 #'   data = coalgov,
 #'   family = weibull()
 #' )
@@ -114,7 +115,7 @@
 #' # Structured priors
 #' m4 <- bml(
 #'   sim.y ~ 1 + majority +
-#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+#'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE),
 #'   data = coalgov,
 #'   family = gaussian(),
 #'   prior = c(

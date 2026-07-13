@@ -82,23 +82,24 @@ block per member-id group.
 \examples{
 \dontrun{
 # Additive aggregation (weighted mean effect)
-mm(id = id(task, occ), vars = vars(x), w = w(~ importance, scale = TRUE))
+mm(id = id(task, occ), vars = vars(x), w = w(~ importance, scale = TRUE), fn = fn("sum"))
 
 # With member random intercepts
-mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), RE = TRUE)
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), fn = fn("sum"), RE = TRUE)
 
 # Random intercept + slope (residual effect heterogeneity)
-mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), RE = re(1 + x))
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), fn = fn("sum"), RE = re(1 + x))
 
 # Emergent features
 mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), fn = fn("var"))
 mm(id = id(task, occ), w = w(~ importance), fn = fn("hhi"))
-mm(id = id(task, occ), vars = vars(x), fn = fn("threshold", c = est(), kappa = 10))
-mm(id = id(task, occ), vars = vars(x), fn = fn("smax", kappa = est()))
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n),
+   fn = fn("threshold", c = est(), kappa = 10))
+mm(id = id(task, occ), vars = vars(x), w = w(~ 1/n), fn = fn("smax", kappa = est()))
 
 # Named block, referenced in a cross-level interaction
 bml(Y ~ education + Ax:education +
-      mm(name = Ax, id = id(task, occ), vars = vars(x), w = w(~ 1/n)),
+      mm(name = Ax, id = id(task, occ), vars = vars(x), w = w(~ 1/n), fn = fn("sum")),
     data = dat)
 }
 

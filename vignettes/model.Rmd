@@ -271,7 +271,7 @@ Every block has a name (auto-generated, e.g. `A_x`, `V_x`, or set via `name =`).
 
 ```r
 Y ~ education + Ax:education +                        # cross-level: feature x macro variable
-  mm(name = Ax, id = id(k, i), vars = vars(x), w = w(~ 1/n))
+  mm(name = Ax, id = id(k, i), vars = vars(x), w = w(~ 1/n), fn = fn("sum"))
 
 Y ~ Ax:Vx + mm(name = Ax, ...) + mm(name = Vx, ...)   # block x block
 ```
@@ -353,7 +353,7 @@ Since the model is estimated via MCMC, the ICCs inherit full posterior distribut
 ```r
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
     hm(id = id(cid)),
   family = weibull(),
   data = coalgov
@@ -382,8 +382,8 @@ where $b$ indexes MM blocks, each with its own weight function $w_{ik}^{(b)} = f
 **Example:** Model the effect of the cohesion of the party with the largest seat share while the party random effects are specified with equal weights:
 
 ```r
-mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ pseat == max(pseat)), RE = FALSE) +
-mm(id = id(pid, gid), vars = NULL, w = w(~ 1/n), RE = TRUE)
+mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ pseat == max(pseat)), fn = fn("sum"), RE = FALSE) +
+mm(id = id(pid, gid), vars = NULL, w = w(~ 1/n), fn = fn("sum"), RE = TRUE)
 ```
 
 **Important:** For any given `id(pid, gid)` combination, only one `mm()` block may include `RE = TRUE` within the same model.
@@ -423,7 +423,7 @@ where $\Delta_t$ is the time gap between the member's consecutive participations
 **Usage:**
 
 ```r
-mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = re(1, ar = TRUE))
+mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = re(1, ar = TRUE))
 hm(id = id(cid), RE = re(1, ar = year))    # also available at the nesting level
 ```
 
@@ -442,8 +442,8 @@ where superscripts $(g)$ and $(o)$ denote member and non-member effects, respect
 In `bml`, this is specified using two `mm()` blocks with different mmid variables — one for members ($k \in p[i]$) and one for non-members ($k \notin p[i]$):
 
 ```r
-mm(id = id(pid_g, gid), vars = vars(x1, x2), w = w(~ 1/n), RE = TRUE) +
-mm(id = id(pid_o, gid), vars = vars(x1, x2), w = w(~ 1/n), RE = TRUE)
+mm(id = id(pid_g, gid), vars = vars(x1, x2), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
+mm(id = id(pid_o, gid), vars = vars(x1, x2), w = w(~ 1/n), fn = fn("sum"), RE = TRUE)
 ```
 
 **Data format:** Since the two `mm()` blocks use different member ID variables (`pid_g` and `pid_o`), the data should be in a stacked long format where each member gets its own row, with `NA` in the mmid column it does not belong to:

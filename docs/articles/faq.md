@@ -182,7 +182,7 @@ them) go in the main formula:
 
 m <- bml(
   y ~ 1 + x1 + fix(investiture, 0.5) + gdp +
-    mm(id = id(pid, gid), w = w(~ 1/n), RE = TRUE) +
+    mm(id = id(pid, gid), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
     hm(id = id(cid), FE = fe(1)),
   data   = coalgov,
   family = gaussian()
@@ -199,6 +199,7 @@ m <- bml(
       id   = id(pid, gid),
       vars = vars(fix(cohesion, 1) + finance),
       w    = w(~ 1/n, scale = TRUE),
+      fn   = fn("sum"),
       RE   = TRUE
     ),
   data   = coalgov,
@@ -326,7 +327,7 @@ follows brms where the semantics coincide:
 | `iter`, `warmup`, `thin`, `chains`, `cores`, `seed` | same | same meanings |
 | `prior(normal(0, 5), class = "b")` | same | plus bml-specific classes `"w"` (weight parameters) and `"fn"` (aggregation shape parameters) |
 | [`get_prior()`](https://benrosche.github.io/bml/reference/get_prior.md) | [`get_prior()`](https://benrosche.github.io/bml/reference/get_prior.md) | lists every settable prior |
-| `(1 + x \| mm(g1, g2, weights = w, scale = TRUE))` | `mm(id = id(k, i), w = w(~ q, scale = TRUE), RE = re(1 + x))` | see the divergences below |
+| `(1 + x \| mm(g1, g2, weights = w, scale = TRUE))` | `mm(id = id(k, i), w = w(~ q, scale = TRUE), fn = fn("sum"), RE = re(1 + x))` | see the divergences below |
 | `mmc(x1, x2)` | not needed | `bml`’s long format gives every member row its own covariate value |
 | [`fixef()`](https://rdrr.io/pkg/nlme/man/fixed.effects.html), [`ranef()`](https://rdrr.io/pkg/nlme/man/random.effects.html), [`coef()`](https://rdrr.io/r/stats/coef.html), [`fitted()`](https://rdrr.io/r/stats/fitted.values.html), [`predict()`](https://rdrr.io/r/stats/predict.html), [`posterior_predict()`](https://benrosche.github.io/bml/reference/posterior_predict.md), [`log_lik()`](https://benrosche.github.io/bml/reference/log_lik.md), [`loo()`](https://mc-stan.org/loo/reference/loo.html), [`waic()`](https://mc-stan.org/loo/reference/waic.html), [`pp_check()`](https://benrosche.github.io/bml/reference/pp_check.md), [`conditional_effects()`](https://benrosche.github.io/bml/reference/conditional_effects.md), [`as_draws_df()`](https://mc-stan.org/posterior/reference/draws_df.html) | same | `newdata` prediction is not supported yet |
 | `make_stancode()` / `make_standata()` | [`make_jagscode()`](https://benrosche.github.io/bml/reference/make_jagscode.md) / [`make_jagsdata()`](https://benrosche.github.io/bml/reference/make_jagscode.md) |  |

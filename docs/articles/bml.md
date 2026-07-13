@@ -113,6 +113,7 @@ mod2 <- bml(
       id   = id(pid, gid),
       vars = vars(finance),
       w    = w(~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * pseat))), scale = TRUE),
+      fn   = fn("sum"),
       RE   = TRUE
     ),
   data   = coalgov,
@@ -154,7 +155,7 @@ member set*:
 
 mod3 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(finance), w = w(~ 1/n), RE = TRUE) +      # mean:     A_finance
+    mm(id = id(pid, gid), vars = vars(finance), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +      # mean:     A_finance
     mm(id = id(pid, gid), vars = vars(finance), w = w(~ 1/n), fn = fn("var")) + # spread:   V_finance
     mm(id = id(pid, gid), w = w(~ pseat, scale = TRUE), fn = fn("hhi"),         # dominance: C_w
        RE = FALSE),

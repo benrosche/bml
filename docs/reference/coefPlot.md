@@ -84,7 +84,7 @@ data(coalgov)
 
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE),
   family = weibull(),
   data = coalgov
 )

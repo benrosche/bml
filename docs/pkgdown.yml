@@ -1,5 +1,5 @@
 pandoc: 3.8.2.1
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   bml: bml.html
@@ -7,7 +7,7 @@ articles:
   faq: faq.html
   installation: installation.html
   model: model.html
-last_built: 2026-07-12T16:16Z
+last_built: 2026-07-13T11:53Z
 urls:
   reference: https://benrosche.github.io/bml/reference
   article: https://benrosche.github.io/bml/articles

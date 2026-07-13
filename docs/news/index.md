@@ -1,6 +1,6 @@
 # Changelog
 
-## bml 1.0.0
+## bml 0.10.0
 
 This release redesigns the model-specification grammar around the
 micro-macro framework (weights, aggregation functions, effects) and

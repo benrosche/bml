@@ -497,7 +497,7 @@ conditional_effects.bml <- function(x, effects = NULL, resolution = 100, ...) {
 #' @examples
 #' \dontrun{
 #' code <- make_jagscode(
-#'   y ~ x + mm(id = id(pid, gid), vars = vars(z), w = w(~ 1/n)),
+#'   y ~ x + mm(id = id(pid, gid), vars = vars(z), w = w(~ 1/n), fn = fn("sum")),
 #'   data = dat, family = gaussian()
 #' )
 #' code

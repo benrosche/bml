@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -169,7 +169,8 @@ term is the simple average of all nominated friends’ Wave 1 smoking.</p>
 <span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>                                        <span class="co"># multiple-membership term (the peers)</span></span>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">alter</span>, <span class="va">ego</span><span class="op">)</span>,                   <span class="co"># member = alter (friend), group = ego</span></span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">smoking_alter</span><span class="op">)</span>,              <span class="co"># member variable to aggregate</span></span>
-<span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,            <span class="co"># equal weights, renormalised to sum to 1</span></span>
+<span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,           <span class="co"># equal weights, renormalised to sum to 1</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,                        <span class="co"># aggregation function: the weighted mean</span></span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span>                              <span class="co"># member-level random effect</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span>,                         <span class="co"># continuous outcome</span></span>
@@ -193,6 +194,7 @@ friend’s smoking.</p>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">alter</span>, <span class="va">ego</span><span class="op">)</span>,</span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">smoking_alter</span><span class="op">)</span>,</span>
 <span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="va">rank</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">rank</span><span class="op">)</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,  <span class="co"># all weight on the closest friend</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,                             <span class="co"># same aggregation function as Model 1</span></span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -392,7 +394,8 @@ fixed.</p>
 <span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">tid_nb</span>, <span class="va">tid</span><span class="op">)</span>,                  <span class="co"># member = neighbour tract, group = focal tract</span></span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">NOX_nb</span> <span class="op">+</span> <span class="va">CRIM_nb</span> <span class="op">+</span> <span class="va">RM_nb</span> <span class="op">+</span> <span class="va">DIS_nb</span> <span class="op">+</span> <span class="va">AGE_nb</span><span class="op">)</span>,  <span class="co"># neighbour covariates to aggregate</span></span>
-<span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,            <span class="co"># equal weights, normalised to sum to 1</span></span>
+<span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,           <span class="co"># equal weights, normalised to sum to 1</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,                        <span class="co"># aggregation function: the weighted mean</span></span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span>                              <span class="co"># neighbour-level random effect</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -430,6 +433,7 @@ combined measure.</p>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">NOX_nb</span> <span class="op">+</span> <span class="va">CRIM_nb</span> <span class="op">+</span> <span class="va">RM_nb</span> <span class="op">+</span> <span class="va">DIS_nb</span> <span class="op">+</span> <span class="va">AGE_nb</span><span class="op">)</span>,</span>
 <span>        <span class="co"># weight as a function of covariate dissimilarity; nests 1/n when all b's are 0</span></span>
 <span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">b0</span> <span class="op">+</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">d_CRIM</span> <span class="op">+</span> <span class="va">b2</span> <span class="op">*</span> <span class="va">d_AGE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -751,7 +755,8 @@ contribute equally to the outcome.</p>
 <span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,                          <span class="co"># member = party, group = government</span></span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,                         <span class="co"># party variable to aggregate</span></span>
-<span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,                 <span class="co"># equal weights</span></span>
+<span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,                <span class="co"># equal weights</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,                             <span class="co"># aggregation function: the weighted mean</span></span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span>                                   <span class="co"># party-level random effect</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family   <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,                             <span class="co"># survival (duration) outcome</span></span>
@@ -837,6 +842,7 @@ the prime minister’s party.</p>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
 <span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">prime</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,  <span class="co"># blend PM party vs equal weights</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family   <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -875,6 +881,7 @@ proportionality toward the prime minister’s party.</p>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
 <span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="va">b1</span> <span class="op">*</span> <span class="va">prime</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">b1</span><span class="op">)</span> <span class="op">*</span> <span class="va">pseat</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,  <span class="co"># blend PM party vs seat share</span></span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family   <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -1050,8 +1057,8 @@ mixing one extreme party with several counterbalancing ones can have the
 rather than the average level, the mean is silent about the
 mechanism.</p>
 <p><code><a href="../reference/fn.html">fn()</a></code> selects the aggregation function a block applies to
-the weighted member records. <code>fn("sum")</code> (the default
-everywhere above) produces the weighted mean <code>A_finance</code>;
+the weighted member records. <code>fn("sum")</code> (used in every
+example so far) produces the weighted mean <code>A_finance</code>;
 <code>fn("var")</code> produces the weighted variance
 <code>V_finance</code>, a feature of the whole set. Blocks stack, so
 both features can enter one model, each with its own main-model
@@ -1064,6 +1071,7 @@ coefficient:</p>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
 <span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span>                    <span class="co"># mean block keeps the party random effects</span></span>
 <span>      <span class="op">)</span> <span class="op">+</span></span>
 <span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
@@ -1164,6 +1172,7 @@ exposed one?</p>
 <span>      <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span></span>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span>                        <span class="co"># party random effects in their own block</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family   <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -1218,6 +1227,7 @@ macro variable must also appear as a main effect:</p>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span><span class="op">)</span>,</span>
 <span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
 <span>        RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family   <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -1271,6 +1281,7 @@ remains after the explained part.</li>
 <span>        id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>        vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">finance</span> <span class="op">+</span> <span class="va">finance</span><span class="op">:</span><span class="va">prime</span><span class="op">)</span>,  <span class="co"># mean effect + explained heterogeneity</span></span>
 <span>        w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>        fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
 <span>        RE   <span class="op">=</span> <span class="fu"><a href="../reference/re.html">re</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">finance</span><span class="op">)</span>                 <span class="co"># random intercept + residual slope</span></span>
 <span>      <span class="op">)</span>,</span>
 <span>    family   <span class="op">=</span> <span class="fu"><a href="../reference/bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -1316,7 +1327,7 @@ version.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

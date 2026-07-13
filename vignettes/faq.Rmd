@@ -123,7 +123,7 @@ This is equivalent to adding `exposure` as a predictor but constraining its coef
 ```r
 m <- bml(
   y ~ 1 + x1 + fix(investiture, 0.5) + gdp +
-    mm(id = id(pid, gid), w = w(~ 1/n), RE = TRUE) +
+    mm(id = id(pid, gid), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
     hm(id = id(cid), FE = fe(1)),
   data   = coalgov,
   family = gaussian()
@@ -139,6 +139,7 @@ m <- bml(
       id   = id(pid, gid),
       vars = vars(fix(cohesion, 1) + finance),
       w    = w(~ 1/n, scale = TRUE),
+      fn   = fn("sum"),
       RE   = TRUE
     ),
   data   = coalgov,
@@ -221,7 +222,7 @@ This error occurs when JAGS cannot evaluate the weight function for a particular
 | `iter`, `warmup`, `thin`, `chains`, `cores`, `seed` | same | same meanings |
 | `prior(normal(0, 5), class = "b")` | same | plus bml-specific classes `"w"` (weight parameters) and `"fn"` (aggregation shape parameters) |
 | `get_prior()` | `get_prior()` | lists every settable prior |
-| `(1 + x \| mm(g1, g2, weights = w, scale = TRUE))` | `mm(id = id(k, i), w = w(~ q, scale = TRUE), RE = re(1 + x))` | see the divergences below |
+| `(1 + x \| mm(g1, g2, weights = w, scale = TRUE))` | `mm(id = id(k, i), w = w(~ q, scale = TRUE), fn = fn("sum"), RE = re(1 + x))` | see the divergences below |
 | `mmc(x1, x2)` | not needed | `bml`'s long format gives every member row its own covariate value |
 | `fixef()`, `ranef()`, `coef()`, `fitted()`, `predict()`, `posterior_predict()`, `log_lik()`, `loo()`, `waic()`, `pp_check()`, `conditional_effects()`, `as_draws_df()` | same | `newdata` prediction is not supported yet |
 | `make_stancode()` / `make_standata()` | `make_jagscode()` / `make_jagsdata()` | |

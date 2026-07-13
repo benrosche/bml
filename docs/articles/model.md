@@ -419,7 +419,7 @@ interactions:
 ``` r
 
 Y ~ education + Ax:education +                        # cross-level: feature x macro variable
-  mm(name = Ax, id = id(k, i), vars = vars(x), w = w(~ 1/n))
+  mm(name = Ax, id = id(k, i), vars = vars(x), w = w(~ 1/n), fn = fn("sum"))
 
 Y ~ Ax:Vx + mm(name = Ax, ...) + mm(name = Vx, ...)   # block x block
 ```
@@ -534,7 +534,7 @@ propagating uncertainty:
 
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
-    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE) +
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
     hm(id = id(cid)),
   family = weibull(),
   data = coalgov
@@ -575,8 +575,8 @@ equal weights:
 
 ``` r
 
-mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ pseat == max(pseat)), RE = FALSE) +
-mm(id = id(pid, gid), vars = NULL, w = w(~ 1/n), RE = TRUE)
+mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ pseat == max(pseat)), fn = fn("sum"), RE = FALSE) +
+mm(id = id(pid, gid), vars = NULL, w = w(~ 1/n), fn = fn("sum"), RE = TRUE)
 ```
 
 **Important:** For any given `id(pid, gid)` combination, only one
@@ -636,7 +636,7 @@ as its leadership, organization, or electoral fortunes change.
 
 ``` r
 
-mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = re(1, ar = TRUE))
+mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = re(1, ar = TRUE))
 hm(id = id(cid), RE = re(1, ar = year))    # also available at the nesting level
 ```
 
@@ -667,8 +667,8 @@ for non-members (\\k \notin p\[i\]\\):
 
 ``` r
 
-mm(id = id(pid_g, gid), vars = vars(x1, x2), w = w(~ 1/n), RE = TRUE) +
-mm(id = id(pid_o, gid), vars = vars(x1, x2), w = w(~ 1/n), RE = TRUE)
+mm(id = id(pid_g, gid), vars = vars(x1, x2), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
+mm(id = id(pid_o, gid), vars = vars(x1, x2), w = w(~ 1/n), fn = fn("sum"), RE = TRUE)
 ```
 
 **Data format:** Since the two

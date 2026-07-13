@@ -57,7 +57,8 @@ mod_lim <-
       mm(                                        # multiple-membership term (the peers)
         id   = id(alter, ego),                   # member = alter (friend), group = ego
         vars = vars(smoking_alter),              # member variable to aggregate
-        w    = w(~ 1/n, scale = TRUE),            # equal weights, renormalised to sum to 1
+        w    = w(~ 1/n, scale = TRUE),           # equal weights, renormalised to sum to 1
+        fn   = fn("sum"),                        # aggregation function: the weighted mean
         RE   = TRUE                              # member-level random effect
       ),
     family = gaussian(),                         # continuous outcome
@@ -82,6 +83,7 @@ mod_bf <-
         id   = id(alter, ego),
         vars = vars(smoking_alter),
         w    = w(~ rank == min(rank), scale = TRUE),  # all weight on the closest friend
+        fn   = fn("sum"),                             # same aggregation function as Model 1
         RE   = TRUE
       ),
     family = gaussian(),
@@ -236,7 +238,8 @@ mod_bml <-
       mm(
         id   = id(tid_nb, tid),                  # member = neighbour tract, group = focal tract
         vars = vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),  # neighbour covariates to aggregate
-        w    = w(~ 1/n, scale = TRUE),            # equal weights, normalised to sum to 1
+        w    = w(~ 1/n, scale = TRUE),           # equal weights, normalised to sum to 1
+        fn   = fn("sum"),                        # aggregation function: the weighted mean
         RE   = TRUE                              # neighbour-level random effect
       ),
     family = gaussian(),
@@ -275,6 +278,7 @@ mod_bml_w <-
         vars = vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
         # weight as a function of covariate dissimilarity; nests 1/n when all b's are 0
         w    = w(~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * d_CRIM + b2 * d_AGE))), scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family = gaussian(),
@@ -442,7 +446,8 @@ mod_eq <-
       mm(
         id   = id(pid, gid),                          # member = party, group = government
         vars = vars(finance),                         # party variable to aggregate
-        w    = w(~ 1/n, scale = TRUE),                 # equal weights
+        w    = w(~ 1/n, scale = TRUE),                # equal weights
+        fn   = fn("sum"),                             # aggregation function: the weighted mean
         RE   = TRUE                                   # party-level random effect
       ),
     family   = weibull(),                             # survival (duration) outcome
@@ -515,6 +520,7 @@ mod_pm_n <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ b1 * prime + (1 - b1) * (1/n), scale = TRUE),  # blend PM party vs equal weights
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = weibull(),
@@ -556,6 +562,7 @@ mod_pm_p <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ b1 * prime + (1 - b1) * pseat, scale = TRUE),  # blend PM party vs seat share
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = weibull(),
@@ -697,7 +704,7 @@ average level, the mean is silent about the mechanism.
 
 [`fn()`](https://benrosche.github.io/bml/reference/fn.md) selects the
 aggregation function a block applies to the weighted member records.
-`fn("sum")` (the default everywhere above) produces the weighted mean
+`fn("sum")` (used in every example so far) produces the weighted mean
 `A_finance`; `fn("var")` produces the weighted variance `V_finance`, a
 feature of the whole set. Blocks stack, so both features can enter one
 model, each with its own main-model coefficient:
@@ -711,6 +718,7 @@ mod_var <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE                    # mean block keeps the party random effects
       ) +
       mm(
@@ -794,6 +802,7 @@ mod_smax <-
       mm(
         id   = id(pid, gid),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE                        # party random effects in their own block
       ),
     family   = weibull(),
@@ -857,6 +866,7 @@ mod_xl <-
         id   = id(pid, gid),
         vars = vars(finance),
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = TRUE
       ),
     family   = weibull(),
@@ -914,6 +924,7 @@ mod_het <-
         id   = id(pid, gid),
         vars = vars(finance + finance:prime),  # mean effect + explained heterogeneity
         w    = w(~ 1/n, scale = TRUE),
+        fn   = fn("sum"),
         RE   = re(1 + finance)                 # random intercept + residual slope
       ),
     family   = weibull(),

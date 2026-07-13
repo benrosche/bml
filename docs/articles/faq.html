@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -271,7 +271,7 @@ offsets of them) go in the main formula:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bml.html">bml</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x1</span> <span class="op">+</span> <span class="fu"><a href="../reference/fix.html">fix</a></span><span class="op">(</span><span class="va">investiture</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span> <span class="va">gdp</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="../reference/hm.html">hm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">cid</span><span class="op">)</span>, FE <span class="op">=</span> <span class="fu"><a href="../reference/fe.html">fe</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  data   <span class="op">=</span> <span class="va">coalgov</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -284,6 +284,7 @@ offsets of them) go in the main formula:</p>
 <span>      id   <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>,</span>
 <span>      vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="fu"><a href="../reference/fix.html">fix</a></span><span class="op">(</span><span class="va">cohesion</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="va">finance</span><span class="op">)</span>,</span>
 <span>      w    <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>      fn   <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>,</span>
 <span>      RE   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>    <span class="op">)</span>,</span>
 <span>  data   <span class="op">=</span> <span class="va">coalgov</span>,</span>
@@ -439,7 +440,7 @@ coincide:</p>
 </tr>
 <tr class="odd">
 <td><code>(1 + x \| mm(g1, g2, weights = w, scale = TRUE))</code></td>
-<td><code>mm(id = id(k, i), w = w(~ q, scale = TRUE), RE = re(1 + x))</code></td>
+<td><code>mm(id = id(k, i), w = w(~ q, scale = TRUE), fn = fn("sum"), RE = re(1 + x))</code></td>
 <td>see the divergences below</td>
 </tr>
 <tr class="even">
@@ -514,7 +515,7 @@ like <code>fn("var")</code>), and the member effects
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
