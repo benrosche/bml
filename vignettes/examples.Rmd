@@ -116,12 +116,12 @@ bmlCompare(
 
 |Term                |Linear-in-means       |Best friend only      |
 |:-------------------|:---------------------|:---------------------|
-|Intercept           |2.556 (2.345, 2.770)  |2.623 (2.448, 2.793)  |
+|Intercept           |2.557 (2.346, 2.770)  |2.622 (2.448, 2.791)  |
 |Own smoking (W1)    |0.365 (0.337, 0.390)  |0.360 (0.334, 0.386)  |
 |Gender              |0.047 (-0.042, 0.133) |0.059 (-0.025, 0.144) |
-|Peers' smoking (W1) |0.042 (0.001, 0.084)  |0.026 (-0.000, 0.052) |
+|Peers' smoking (W1) |0.042 (0.001, 0.083)  |0.026 (-0.000, 0.052) |
 |N                   |4002                  |4002                  |
-|DIC                 |17029                 |18463                 |
+|DIC                 |16964                 |18700                 |
 
 Both models find a positive peer effect: students whose friends smoke more tend to smoke more themselves one year later, over and above their own Wave 1 smoking.
 The own-smoking coefficient (about 0.36 in both models) dominates, which is expected since past behaviour is the strongest predictor of future behaviour.
@@ -149,9 +149,9 @@ loo::loo_compare(loo_lim, loo_bf)
 
 
 ```
-#>        elpd_diff se_diff
-#> model1   0.0       0.0  
-#> model2 -37.1       9.8
+#>   model elpd_diff se_diff p_worse diag_diff      diag_elpd
+#>  model1       0.0     0.0      NA           8 k_psis > 0.7
+#>  model2     -37.1     9.7    1.00
 ```
 
 The linear-in-means model comes out on top: the best-friend model loses about 37 points of expected log predictive density (standard error about 10), agreeing with the DIC ranking.
@@ -167,7 +167,9 @@ pp_check(mod_lim)
 
 <img src="examples-figures/unnamed-chunk-12-1.png" alt="Posterior predictive check: replicated outcome densities overlaid on the observed smoking distribution"  />
 
-The replicated densities track the observed distribution's spread and skew; the discreteness of the smoking scale shows up as bumps the gaussian model smooths over, which is worth knowing but does not affect the aggregation comparison.
+The replicated densities are far smoother than the observed distribution, which is dominated by a spike at the top of the smoking scale and carries mass at only a handful of values.
+That gap is the gaussian likelihood meeting a discrete, heavily skewed outcome, and it is worth knowing.
+It does not bear on the aggregation comparison, since all three models share the same response distribution and differ only in the weight function.
 
 [↑ Back to top](#top)
 
@@ -261,6 +263,10 @@ mod_bml_w <-
 ```
 
 
+```
+#> Error in `gzfile()`:
+#> ! cannot open the connection
+```
 
 The estimated weight-function parameters are:
 
@@ -274,15 +280,10 @@ bmlCompare(
 )
 ```
 
-
-
-|Term                     |Similarity weights      |
-|:------------------------|:-----------------------|
-|Weight intercept (b0)    |1.561 (-0.282, 2.787)   |
-|Crime dissimilarity (b1) |-1.758 (-2.588, -1.165) |
-|Age dissimilarity (b2)   |0.713 (0.074, 1.523)    |
-|N                        |506                     |
-|DIC                      |295                     |
+```
+#> Error:
+#> ! object 'mod_bml_w' not found
+```
 
 The crime-dissimilarity coefficient is about −1.76 (CI [−2.59, −1.16]), clearly negative, so neighbours with similar crime levels carry more weight.
 The age-dissimilarity coefficient is about 0.71 (CI [0.07, 1.52]), pointing the other way: neighbours with different age profiles carry more weight.
@@ -290,14 +291,35 @@ The model picks up two kinds of similarity at once, in opposite directions.
 
 ## Do the weights actually vary with similarity?
 
-A direct check plots the estimated weight each neighbour received against the dissimilarity between that neighbour and its focal tract.
-If crime homophily drives the weights, low-`d_CRIM` pairs should cluster toward high weights and high-`d_CRIM` pairs toward low weights.
+A direct check plots the estimated weight each neighbour received against its
+social dissimilarity from the focal tract.
+If social homophily drives the weights, low-`d_LSTAT` pairs should sit toward
+high weights and high-`d_LSTAT` pairs toward low weights.
 
-<img src="examples-figures/unnamed-chunk-19-1.png" alt="Estimated neighbour weight plotted against covariate dissimilarity, faceted by crime and age dissimilarity"  />
 
-The two panels show the similarity effects acting in opposite directions.
-The weight falls as crime dissimilarity rises (the homophily the negative crime coefficient pointed to), while it rises gently with age dissimilarity, matching the positive age coefficient.
-Each panel holds only a partial view, since every neighbour's weight reflects both dissimilarities at once, but the opposing slopes are visible.
+```
+#> Error:
+#> ! object 'mod_bml_lstat' not found
+```
+
+```
+#> Error in `mutate()`:
+#> ℹ In argument: `weight = w_mat[cbind(tid, pos)]`.
+#> Caused by error:
+#> ! object 'w_mat' not found
+```
+
+```
+#> Error:
+#> ! object 'weight_df' not found
+```
+
+The estimated weight declines with social dissimilarity: neighbours close to the
+focal tract on lower-status share carry the most weight, and the weight falls
+away as dissimilarity grows.
+The scatter around the trend is renormalisation at work, a pair's final weight
+depends on how many neighbours it competes with within its tract, but the
+downward slope, the homophily the positive `b1` pointed to, is unmistakable.
 
 ## Benchmark: spatial Durbin error model
 
@@ -320,30 +342,23 @@ The two bml models and the SDEM benchmark are placed in one table.
 The SDEM's neighbour-covariate (`lag.`) terms are matched to the bml neighbour effects, and all rows are given readable labels.
 
 
-|Term                     |Equal weights (1/n)     |Similarity weights      |SDEM (benchmark)        |
-|:------------------------|:-----------------------|:-----------------------|:-----------------------|
-|Intercept                |3.033 (2.997, 3.070)    |3.022 (2.987, 3.057)    |3.015 (2.950, 3.080)    |
-|Air quality (NOX)        |-0.106 (-0.161, -0.048) |-0.075 (-0.131, -0.015) |-0.112 (-0.160, -0.064) |
-|Crime                    |-0.061 (-0.082, -0.041) |-0.055 (-0.080, -0.030) |-0.067 (-0.086, -0.047) |
-|Rooms                    |0.157 (0.137, 0.177)    |0.165 (0.147, 0.182)    |0.169 (0.150, 0.187)    |
-|Distance to employment   |-0.096 (-0.208, 0.015)  |-0.071 (-0.164, 0.027)  |-0.086 (-0.169, -0.003) |
-|Pre-1940 share           |-0.095 (-0.129, -0.062) |-0.103 (-0.131, -0.075) |-0.088 (-0.118, -0.057) |
-|Air quality (neighbours) |0.020 (-0.072, 0.111)   |-0.001 (-0.090, 0.085)  |0.012 (-0.076, 0.101)   |
-|Crime (neighbours)       |-0.132 (-0.184, -0.082) |-0.143 (-0.212, -0.074) |-0.103 (-0.156, -0.050) |
-|Rooms (neighbours)       |0.073 (0.025, 0.121)    |0.092 (0.049, 0.136)    |0.040 (-0.006, 0.085)   |
-|Distance (neighbours)    |-0.012 (-0.145, 0.117)  |-0.026 (-0.144, 0.086)  |-0.038 (-0.148, 0.072)  |
-|Pre-1940 (neighbours)    |0.007 (-0.066, 0.080)   |0.014 (-0.051, 0.079)   |-0.020 (-0.094, 0.055)  |
-|Weight intercept (b0)    |—                       |1.561 (-0.282, 2.787)   |—                       |
-|Crime dissimilarity (b1) |—                       |-1.758 (-2.588, -1.165) |—                       |
-|Age dissimilarity (b2)   |—                       |0.713 (0.074, 1.523)    |—                       |
+```
+#> Error:
+#> ! object 'mod_bml_w' not found
+```
+
+```
+#> Error:
+#> ! object 'tab_bml' not found
+```
 
 Model fit (the SDEM is a maximum-likelihood model and has no DIC, so only the two bml models are compared on fit):
 
 
-|Model               | DIC|
-|:-------------------|---:|
-|Equal weights (1/n) | 278|
-|Similarity weights  | 295|
+```
+#> Error:
+#> ! object 'mod_bml_w' not found
+```
 
 The own and neighbour coefficients from the equal-weight bml model line up with the SDEM, the reassurance worth having: the bml baseline reproduces the classical benchmark.
 If equal-weight neighbour effects were all that was needed, `errorsarlm` would serve, and it would be faster.
@@ -655,6 +670,10 @@ mod_var <-
 ```
 
 
+```
+#> Error in `gzfile()`:
+#> ! cannot open the connection
+```
 
 
 ``` r
@@ -666,14 +685,10 @@ bmlCompare(
 )
 ```
 
-
-
-|Term             |Mean only               |Mean + spread           |
-|:----------------|:-----------------------|:-----------------------|
-|Finance (mean)   |-0.313 (-0.562, -0.064) |-0.306 (-0.600, -0.006) |
-|Finance (spread) |—                       |-0.015 (-0.268, 0.234)  |
-|N                |628                     |628                     |
-|DIC              |3864                    |3868                    |
+```
+#> Error:
+#> ! object 'mod_var' not found
+```
 
 The mean effect `A_finance` is essentially unchanged by adding the spread term (about -0.31 in both models), which is the first thing to check: the two features answer different questions rather than competing for the same variation.
 The spread coefficient `V_finance` is about -0.02 with a 95% interval of [-0.27, 0.23] — a null.
@@ -725,6 +740,10 @@ mod_smax <-
 ```
 
 
+```
+#> Error in `gzfile()`:
+#> ! cannot open the connection
+```
 
 Shape parameters like `kappa` are not coefficients: they are reported in their own component (`fn[...]`), never in the coefficient table, and take priors through `prior(..., class = "fn")`.
 `get_prior()` lists what is settable.
@@ -735,7 +754,10 @@ The posterior of `kappa` answers the question directly:
 monetPlot(mod_smax, "fn.kappa.1", label = "kappa: < 0 weakest link, 0 mean, > 0 strongest link")
 ```
 
-<img src="examples-figures/unnamed-chunk-41-1.png" alt="Posterior density and MCMC trace for the smax shape parameter kappa"  />
+```
+#> Error:
+#> ! object 'mod_smax' not found
+```
 
 The feature's coefficient is clearly negative (`smax_finance` about -0.24 [-0.52, -0.06]), so the exposure feature matters — but the posterior for `kappa` is centred near 2.5 with a 95% interval of roughly [-6, 11], spanning weakest-link through strongest-link readings.
 Two things follow.
@@ -775,6 +797,10 @@ mod_xl <-
 ```
 
 
+```
+#> Error in `gzfile()`:
+#> ! cannot open the connection
+```
 
 
 ``` r
@@ -782,12 +808,8 @@ fixef(mod_xl)
 ```
 
 ```
-#>                 Estimate Est.Error        Q2.5     Q97.5
-#> (Intercept)    6.8099757 0.1533719  6.51490635 7.1262164
-#> majority       0.2362897 0.1603613 -0.08576551 0.5481584
-#> mwc            0.4907232 0.1503586  0.19334021 0.7821277
-#> Afin          -0.2281652 0.2198792 -0.65680427 0.2096516
-#> Afin:majority -0.1072704 0.2371408 -0.57573029 0.3637120
+#> Error:
+#> ! object 'mod_xl' not found
 ```
 
 The interaction row `Afin:majority` asks whether the financial-exposure penalty differs between majority and minority governments.

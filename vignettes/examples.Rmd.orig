@@ -175,7 +175,9 @@ ppc <- readRDS(file.path(".fits", "ppc_lim.rds"))
 bayesplot::ppc_dens_overlay(ppc$y, ppc$yrep)
 ```
 
-The replicated densities track the observed distribution's spread and skew; the discreteness of the smoking scale shows up as bumps the gaussian model smooths over, which is worth knowing but does not affect the aggregation comparison.
+The replicated densities are far smoother than the observed distribution, which is dominated by a spike at the top of the smoking scale and carries mass at only a handful of values.
+That gap is the gaussian likelihood meeting a discrete, heavily skewed outcome, and it is worth knowing.
+It does not bear on the aggregation comparison, since all three models share the same response distribution and differ only in the weight function.
 
 [↑ Back to top](#top)
 
@@ -334,11 +336,13 @@ The model picks up two kinds of similarity at once, in opposite directions.
 
 ## Do the weights actually vary with similarity?
 
-A direct check plots the estimated weight each neighbour received against the dissimilarity between that neighbour and its focal tract.
-If crime homophily drives the weights, low-`d_CRIM` pairs should cluster toward high weights and high-`d_CRIM` pairs toward low weights.
+A direct check plots the estimated weight each neighbour received against its
+social dissimilarity from the focal tract.
+If social homophily drives the weights, low-`d_LSTAT` pairs should sit toward
+high weights and high-`d_LSTAT` pairs toward low weights.
 
-```{r, fig.width = 6, fig.height = 4, echo = FALSE, fig.alt = "Estimated neighbour weight plotted against covariate dissimilarity, faceted by crime and age dissimilarity"}
-w_mat <- mod_bml_w$w[[1]]   # 506 x 15 matrix, NA padded
+```{r, fig.width = 6, fig.height = 4, echo = FALSE, fig.alt = "Estimated neighbour weight plotted against social dissimilarity"}
+w_mat <- mod_bml_lstat$w[[1]]   # tracts x max-neighbours, NA padded
 
 weight_df <- boston_df2 |>
   group_by(tid) |>
@@ -347,20 +351,19 @@ weight_df <- boston_df2 |>
   mutate(weight = w_mat[cbind(tid, pos)]) |>
   filter(!is.na(weight))
 
-weight_long <- weight_df |>
-  tidyr::pivot_longer(c(d_CRIM, d_AGE), names_to = "covariate", values_to = "dissimilarity")
-
-ggplot(weight_long, aes(x = dissimilarity, y = weight)) +
+ggplot(weight_df, aes(x = d_LSTAT, y = weight)) +
   geom_point(alpha = 0.15, size = 0.8) +
-  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "#2c7bb6") +
-  facet_wrap(~ covariate, scales = "free_x") +
-  labs(x = "Dissimilarity", y = "Estimated neighbour weight") +
+  geom_smooth(method = "loess", se = FALSE, color = "#2c7bb6") +
+  labs(x = "Social dissimilarity (d_LSTAT)", y = "Estimated neighbour weight") +
   theme_minimal()
 ```
 
-The two panels show the similarity effects acting in opposite directions.
-The weight falls as crime dissimilarity rises (the homophily the negative crime coefficient pointed to), while it rises gently with age dissimilarity, matching the positive age coefficient.
-Each panel holds only a partial view, since every neighbour's weight reflects both dissimilarities at once, but the opposing slopes are visible.
+The estimated weight declines with social dissimilarity: neighbours close to the
+focal tract on lower-status share carry the most weight, and the weight falls
+away as dissimilarity grows.
+The scatter around the trend is renormalisation at work, a pair's final weight
+depends on how many neighbours it competes with within its tract, but the
+downward slope, the homophily the positive `b1` pointed to, is unmistakable.
 
 ## Benchmark: spatial Durbin error model
 

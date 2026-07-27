@@ -20,3 +20,7 @@
 ^bml-brms-alignment-plan\.md$
 ^micro_macro_framework_slides\.qmd$
 ^data/.*\.feather$
+^vignettes/\.fits
+^vignettes/examples\.html$
+^vignettes/\.fits
+^vignettes/examples\.html$
