@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Overview
+## 1. Overview
 
 The `bml` package implements Bayesian **multiple-membership multilevel models (MMMM)** with **parameterizable weight functions**. These models are designed for data structures where:
 
@@ -26,7 +26,11 @@ This structure is common across many empirical settings: political parties parti
 
 The key innovation of the extended MMMM is that it allows researchers to **model rather than impose** the aggregation mechanism through which member-level effects combine to influence group-level outcomes.
 
-## Notation and Data Structure
+## 2. Running Example
+
+Throughout this vignette, model components are illustrated using a single running example: **coalition government survival**. Groups ($i$) are governments, members ($k$) are the political parties forming each government's coalition, and nesting units ($j$) are the countries in which those governments serve. The outcome $y_i^{(g)}$ is how long each government survives before terminating. Group-level covariates $\mathbf{x}_i^{(g)}$ describe the government as a whole (e.g., majority status, ideological heterogeneity, economic conditions); nesting-level covariates $\mathbf{x}_j^{(c)}$ describe the country (e.g., electoral system, investiture requirements); member-level covariates $\mathbf{x}_{ik}^{(p)}$ describe each party (e.g., cohesion); and weight covariates $\mathbf{x}_{ik}^{(w)}$ describe what might make one party's contribution matter more than another's (e.g., holding the prime ministership, seat share). Later sections return to this example to show how each model component would be specified for it.
+
+## 3. Notation and Data Structure
 
 Let:
 
@@ -36,13 +40,13 @@ Let:
 - $p[i]$ denote the set of members belonging to group $i$
 - $n_i = |p[i]|$ denote the number of members in group $i$
 
-**Example (Coalition Governments):** Groups are governments ($i$), members are political parties ($k$), and nesting units are countries ($j$). The function $p[i]$ returns all parties in government $i$, and $n_i$ is coalition size.
+**Example:** Continuing the running example, $p[i]$ returns all parties in government $i$, and $n_i$ is coalition size.
 
 The outcome $y_i^{(g)}$ is measured at the group level, where superscript $(g)$ denotes the level of measurement. In what follows, we present the model for Gaussian (normal) outcomes, though the framework extends to other distributions (see below).
 
-## The Extended Multiple-Membership Multilevel Model
+## 4. The Extended Multiple-Membership Multilevel Model
 
-### Full Model Specification
+### 4.1 Full Model Specification
 
 The extended MMMM decomposes the group-level outcome into three additive components, each corresponding to a level at which explanatory factors operate:
 
@@ -58,7 +62,7 @@ where:
 
 Each component includes both systematic effects (observed covariates) and random effects (unobserved heterogeneity).
 
-### Group-Level Effect
+### 4.2 Group-Level Effect
 
 The group-level effect models the direct influence of group-level covariates and group-specific unobserved factors:
 
@@ -75,7 +79,7 @@ where:
 
 **Example:** For government survival, $\mathbf{x}_i^{(g)}$ might include majority status, ideological heterogeneity, or economic conditions.
 
-### Hierarchical Nesting-Level Effect
+### 4.3 Hierarchical Nesting-Level Effect
 
 When groups are nested within higher-level contexts, the nesting-level effect accounts for hierarchical dependencies:
 
@@ -96,7 +100,7 @@ Including $u_j^{(c)}$ allows groups within the same nesting unit to be more simi
 
 **Note:** Multiple `hm()` blocks can be specified to accommodate cross-classified structures (e.g., groups nested within multiple hierarchical contexts).
 
-### Aggregated Member-Level Effect
+### 4.4 Aggregated Member-Level Effect
 
 The core innovation of the extended MMMM is modeling how member-level effects aggregate to influence group outcomes. Individual member effects are first specified, then aggregated via a weighted sum:
 
@@ -130,9 +134,9 @@ This increases with the degree of member overlap and accounts for dependencies a
 
 **Example:** In coalition governments, $\mathbf{x}_{ik}^{(p)}$ might include party cohesion or organizational structure. The random effect $u_k^{(p)}$ captures party-specific unobserved factors that affect all governments in which party $k$ participates.
 
-## Parameterizable Weight Functions
+## 5. Parameterizable Weight Functions
 
-### Conventional MMMM: Fixed Weights
+### 5.1 Conventional MMMM: Fixed Weights
 
 The **conventional MMMM** requires weights to be specified *a priori*. The most common choice is equal weighting (arithmetic mean):
 
@@ -144,7 +148,7 @@ This assumes all members contribute equally to group outcomes, regardless of the
 
 **Limitations:** Equal weighting can be theoretically implausible. In coalition governments, for instance, larger parties, parties holding the prime ministership, or ideologically central parties may exert disproportionate influence. In spatial analysis, nearby neighbors may matter more than distant ones. Imposing equal weights when they vary in practice introduces **aggregation bias**.
 
-### Extended MMMM: Parameterizing Weights
+### 5.2 Extended MMMM: Parameterizing Weights
 
 The **extended MMMM** allows weights to be modeled as functions of covariates and estimated parameters. For example,
 
@@ -182,7 +186,7 @@ where:
 - If $\beta^{(w)} > 0$: Prime minister's cohesion carries more weight
 - If $\beta^{(w)} < 0$: Coalition partners' cohesion carries more weight
 
-### Testing Alternative Aggregation Mechanisms
+### 5.3 Testing Alternative Aggregation Mechanisms
 
 Weight function regression enables empirical tests of substantive hypotheses about aggregation. Group-level functions such as `min()`, `max()`, `mean()`, and `sum()` can be incorporated directly into weight formulas, and standard mathematical transformations are supported. For example:
 
@@ -233,7 +237,7 @@ w(
 
 This weight function tests whether member attributes $x_1, x_2$ (e.g., size, organization, power) generate disproportionate influence via $\beta_1^{(w)}, \beta_2^{(w)}$.
 
-## Emergent Aggregation Functions
+## 6. Emergent Aggregation Functions
 
 The weights $w_{ik}$ define a within-group *measure* over members; the aggregation function `fn()` chooses which function of that measure (and of the member attributes) enters the group-level equation. `fn("sum")` — the additive weighted mean $A_x = \sum_k w_{ik} x_{ik}$ — is the default and recovers everything above. The *emergent* types read properties of the whole member set:
 
@@ -250,7 +254,7 @@ Each block emits a group-level *feature* whose coefficient is an ordinary main-m
 
 **Who counts vs. how contributions combine.** Parameters that act on *external* member characteristics (importance, size) belong in `w()`; parameters that act on the *effect attribute* (whatever is in `vars()`) belong in `fn()`. Building weights from the attribute being aggregated (`w(~ exp(om * x))` with `vars(x)`) is near-equivalent to `fn("smax")` — the exponentially tilted mean is the derivative of the log-sum-exp — and `bml` warns when a variable appears in both.
 
-### User-written reductions: the expression DSL
+### 6.1 User-written reductions: the expression DSL
 
 Beyond the named types, `fn()` accepts a one-sided formula in a restricted expression DSL. `E(e)` is the expectation $\sum_k w_k e_k$ under the normalized weights; member-level quantities are the `vars()` attributes and the reserved symbol `w`; whitelisted operations (`+ - * / ^`, `exp`, `log`, `ilogit`, `pow`) transpile to JAGS. Any other symbol is a free shape parameter (the same one-parameter rule as `w()`).
 
@@ -265,7 +269,7 @@ fn(~ E(log(x)))                                          # log-mean / geometric 
 
 Identification note: shape parameters reach the outcome only through `coefficient x feature` — if the feature's coefficient is near zero they are unidentified, and a free parameter that *multiplies* an attribute inside a nonlinear `E()` is confounded with the coefficient (a warning fires). Treat inner parameters as cutpoints/sharpness, not slopes.
 
-### Named blocks and interactions
+### 6.2 Named blocks and interactions
 
 Every block has a name (auto-generated, e.g. `A_x`, `V_x`, or set via `name =`). Single-feature blocks can be referenced in main-formula interactions:
 
@@ -278,7 +282,7 @@ Y ~ Ax:Vx + mm(name = Ax, ...) + mm(name = Vx, ...)   # block x block
 
 The macro variable must also appear as a main effect, and must be group-constant (a within-group-varying moderator is a member-paired interaction and belongs in `vars(x:z)`). A bare, non-interacted block reference errors — the block's main effect already enters through the block itself.
 
-## Generalized Outcomes
+## 7. Generalized Outcomes
 
 The model structure extends to non-Gaussian outcomes via generalized linear and survival models:
 
@@ -324,7 +328,7 @@ bml(Surv(time, event) ~ 1 + x1 + mm(...) + hm(...), data = d, family = cox(inter
 
 All outcome types support the full multilevel and multiple-membership structure, including parameterizable weight functions.
 
-## Variance Decomposition and Intraclass Correlation
+## 8. Variance Decomposition and Intraclass Correlation
 
 The multilevel structure partitions total variance into additive components corresponding to each level in the model. For a three-level model with group, nesting, and member levels:
 
@@ -334,7 +338,7 @@ The multilevel structure partitions total variance into additive components corr
 
 Note that the member-level variance component is scaled by the sum of squared weights. With equal weights ($w_{ik} = 1/n_i$), this simplifies to $\sigma_{u^{(p)}}^2 / n_i$, so the effective member-level variance shrinks as group size increases. With unequal weights, members with larger weights contribute more to the variance.
 
-### Intraclass Correlation Coefficients (ICC)
+### 8.1 Intraclass Correlation Coefficients (ICC)
 
 The **intraclass correlation coefficient (ICC)** for a given level is the proportion of total variance attributable to that level. Intuitively, the ICC answers: *"What fraction of the total variation in the outcome is due to differences between units at this level?"*
 
@@ -367,9 +371,9 @@ The `uncertainty` argument controls the reported uncertainty measure: `"sd"` (po
 
 **Family-specific handling:** For Binomial models, which have no residual $\sigma$, the latent logistic residual variance $\pi^2/3 \approx 3.29$ is used. For Cox models, which also lack a residual variance, ICCs are computed among the non-residual components only.
 
-## Extensions
+## 9. Extensions
 
-### Multiple MM Blocks
+### 9.1 Multiple MM Blocks
 
 The `bml` package allows multiple `mm()` blocks with distinct aggregation mechanisms. This is useful when different member-level covariates aggregate through different processes:
 
@@ -388,7 +392,7 @@ mm(id = id(pid, gid), vars = NULL, w = w(~ 1/n), fn = fn("sum"), RE = TRUE)
 
 **Important:** For any given `id(pid, gid)` combination, only one `mm()` block may include `RE = TRUE` within the same model.
 
-### Autoregressive Random Effects
+### 9.2 Autoregressive Random Effects
 
 Member random effects may evolve over time rather than remain constant. The autoregressive walk is part of the effects grammar — it is specified inside `re()`, since it is a property of the random effect:
 
@@ -429,36 +433,36 @@ hm(id = id(cid), RE = re(1, ar = year))    # also available at the nesting level
 
 The walk requires an intercept-only random effect (`re(1, ar = ...)`; it does not combine with random slopes or `cor = TRUE`).
 
-### Opposition Members
+### 9.3 Complementary Membership Groups
 
-When analyzing group outcomes influenced by both members and non-members (e.g., coalition and opposition parties), separate `mm()` blocks can model their distinct contributions:
+Some applications distinguish between two mutually exclusive subsets of potential members whose effects on the group outcome may differ — e.g., a government's coalition parties vs. opposition parties, a student's classroom peers vs. other students in the school, or a firm's alliance partners vs. non-partner competitors. Separate `mm()` blocks can model each subset's distinct contribution:
 
 \begin{equation}
-\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik}^{(g)} \left( \mathbf{\beta}^{(g)} \cdot \mathbf{x}_{ik}^{(g)} + u_k^{(g)} \right) + \sum_{k \notin p[i]} w_{ik}^{(o)} \left( \mathbf{\beta}^{(o)} \cdot \mathbf{x}_{ik}^{(o)} + u_k^{(o)} \right) \tag{18}
+\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik}^{(A)} \left( \mathbf{\beta}^{(A)} \cdot \mathbf{x}_{ik}^{(A)} + u_k^{(A)} \right) + \sum_{k \notin p[i]} w_{ik}^{(B)} \left( \mathbf{\beta}^{(B)} \cdot \mathbf{x}_{ik}^{(B)} + u_k^{(B)} \right) \tag{18}
 \end{equation}
 
-where superscripts $(g)$ and $(o)$ denote member and non-member effects, respectively. This allows both groups to have different structural effects and different aggregation mechanisms.
+where superscripts $(A)$ and $(B)$ denote the two subsets ($k \in p[i]$ and $k \notin p[i]$, respectively). This allows both subsets to have different structural effects and different aggregation mechanisms.
 
-In `bml`, this is specified using two `mm()` blocks with different mmid variables — one for members ($k \in p[i]$) and one for non-members ($k \notin p[i]$):
+In `bml`, this is specified using two `mm()` blocks with different mmid variables — one for subset $A$ and one for subset $B$:
 
 ```r
-mm(id = id(pid_g, gid), vars = vars(x1, x2), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
-mm(id = id(pid_o, gid), vars = vars(x1, x2), w = w(~ 1/n), fn = fn("sum"), RE = TRUE)
+mm(id = id(pid_A, gid), vars = vars(x1, x2), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
+mm(id = id(pid_B, gid), vars = vars(x1, x2), w = w(~ 1/n), fn = fn("sum"), RE = TRUE)
 ```
 
-**Data format:** Since the two `mm()` blocks use different member ID variables (`pid_g` and `pid_o`), the data should be in a stacked long format where each member gets its own row, with `NA` in the mmid column it does not belong to:
+**Data format:** Since the two `mm()` blocks use different member ID variables (`pid_A` and `pid_B`), the data should be in a stacked long format where each member gets its own row, with `NA` in the mmid column it does not belong to:
 
 ```
-gid  pid_g  pid_o  x1    x2    dur_wkb  event_wkb
+gid  pid_A  pid_B  x1    x2    dur_wkb  event_wkb
 1    1      NA     0.5   0.3   365      0
 1    2      NA     0.4   0.2   365      0
 1    NA     3      0.3   0.1   365      0
 1    NA     4      0.7   0.5   365      0
 ```
 
-Government parties have `pid_g` filled and `pid_o = NA`; opposition parties have `pid_o` filled and `pid_g = NA`. Group-level variables (e.g., `dur_wkb`, `event_wkb`) are repeated across all rows within a group, as in the standard long format.
+**Example (Coalition Governments):** Subset $A$ is the coalition parties ($k \in p[i]$) and subset $B$ is the opposition parties ($k \notin p[i]$). Government parties have `pid_A` filled and `pid_B = NA`; opposition parties have `pid_B` filled and `pid_A = NA`. Group-level variables (e.g., `dur_wkb`, `event_wkb`) are repeated across all rows within a group, as in the standard long format.
 
-## Comparison with Conventional MMMM
+## 10. Comparison with Conventional MMMM
 
 The **conventional MMMM** (as implemented in `brms` or `MLwiN`) is a special case:
 
@@ -478,7 +482,7 @@ The **extended MMMM** generalizes this by:
 y_i^{(g)} = \mathbf{\beta}^{(g)} \cdot \mathbf{x}_i^{(g)} + \sum_{k \in p[i]} w_{ik} \left( \mathbf{\beta}^{(p)} \cdot \mathbf{x}_{ik}^{(p)} + u_k^{(p)} \right) + u_i^{(g)}, \quad w_{ik} = f(\mathbf{x}_{ik}^{(w)}, n_i)
 \end{equation}
 
-## Model Assumptions
+## 11. Model Assumptions
 
 The extended MMMM assumes:
 
@@ -490,7 +494,7 @@ The extended MMMM assumes:
 
 4. **Proper model specification:** Misspecifying a weight covariate as a structural covariate (or vice versa) yields null effects for the misspecified variable while correctly identifying properly specified ones, provided there is no omitted variable bias.
 
-## Estimation
+## 12. Estimation
 
 Model parameters are estimated using **Bayesian Markov chain Monte Carlo (MCMC)** via JAGS because:
 
@@ -500,6 +504,6 @@ Model parameters are estimated using **Bayesian Markov chain Monte Carlo (MCMC)*
 
 The `bml` package provides a user-friendly interface to JAGS with automated prior specification, convergence diagnostics, and post-estimation tools.
 
-## Further Information
+## 13. Further Information
 
 A comprehensive presentation of the model is provided in [Rosche (2026)](https://osf.io/preprints/socarxiv/4bafr).

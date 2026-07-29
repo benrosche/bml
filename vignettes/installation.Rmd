@@ -29,7 +29,7 @@ After installing JAGS, restart R so `rjags` can find it.
 
 ## 2. Install `bml` R package
 
-### Option A: Install from CRAN (Recommended)
+### Option A: Install from CRAN
 
 The stable release version is available on CRAN:
 

@@ -71,7 +71,7 @@
     
     
 <div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+<h2 id="overview">1. Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p>The <code>bml</code> package implements Bayesian
 <strong>multiple-membership multilevel models (MMMM)</strong> with
@@ -95,7 +95,26 @@ through which member-level effects combine to influence group-level
 outcomes.</p>
 </div>
 <div class="section level2">
-<h2 id="notation-and-data-structure">Notation and Data Structure<a class="anchor" aria-label="anchor" href="#notation-and-data-structure"></a>
+<h2 id="running-example">2. Running Example<a class="anchor" aria-label="anchor" href="#running-example"></a>
+</h2>
+<p>Throughout this vignette, model components are illustrated using a
+single running example: <strong>coalition government survival</strong>.
+Groups (<span class="math inline">\(i\)</span>) are governments, members
+(<span class="math inline">\(k\)</span>) are the political parties
+forming each government’s coalition, and nesting units (<span class="math inline">\(j\)</span>) are the countries in which those
+governments serve. The outcome <span class="math inline">\(y_i^{(g)}\)</span> is how long each government
+survives before terminating. Group-level covariates <span class="math inline">\(\mathbf{x}_i^{(g)}\)</span> describe the
+government as a whole (e.g., majority status, ideological heterogeneity,
+economic conditions); nesting-level covariates <span class="math inline">\(\mathbf{x}_j^{(c)}\)</span> describe the country
+(e.g., electoral system, investiture requirements); member-level
+covariates <span class="math inline">\(\mathbf{x}_{ik}^{(p)}\)</span>
+describe each party (e.g., cohesion); and weight covariates <span class="math inline">\(\mathbf{x}_{ik}^{(w)}\)</span> describe what might
+make one party’s contribution matter more than another’s (e.g., holding
+the prime ministership, seat share). Later sections return to this
+example to show how each model component would be specified for it.</p>
+</div>
+<div class="section level2">
+<h2 id="notation-and-data-structure">3. Notation and Data Structure<a class="anchor" aria-label="anchor" href="#notation-and-data-structure"></a>
 </h2>
 <p>Let:</p>
 <ul>
@@ -117,22 +136,18 @@ belonging to group <span class="math inline">\(i\)</span>
 of members in group <span class="math inline">\(i\)</span>
 </li>
 </ul>
-<p><strong>Example (Coalition Governments):</strong> Groups are
-governments (<span class="math inline">\(i\)</span>), members are
-political parties (<span class="math inline">\(k\)</span>), and nesting
-units are countries (<span class="math inline">\(j\)</span>). The
-function <span class="math inline">\(p[i]\)</span> returns all parties
-in government <span class="math inline">\(i\)</span>, and <span class="math inline">\(n_i\)</span> is coalition size.</p>
+<p><strong>Example:</strong> Continuing the running example, <span class="math inline">\(p[i]\)</span> returns all parties in government
+<span class="math inline">\(i\)</span>, and <span class="math inline">\(n_i\)</span> is coalition size.</p>
 <p>The outcome <span class="math inline">\(y_i^{(g)}\)</span> is
 measured at the group level, where superscript <span class="math inline">\((g)\)</span> denotes the level of measurement. In
 what follows, we present the model for Gaussian (normal) outcomes,
 though the framework extends to other distributions (see below).</p>
 </div>
 <div class="section level2">
-<h2 id="the-extended-multiple-membership-multilevel-model">The Extended Multiple-Membership Multilevel Model<a class="anchor" aria-label="anchor" href="#the-extended-multiple-membership-multilevel-model"></a>
+<h2 id="the-extended-multiple-membership-multilevel-model">4. The Extended Multiple-Membership Multilevel Model<a class="anchor" aria-label="anchor" href="#the-extended-multiple-membership-multilevel-model"></a>
 </h2>
 <div class="section level3">
-<h3 id="full-model-specification">Full Model Specification<a class="anchor" aria-label="anchor" href="#full-model-specification"></a>
+<h3 id="full-model-specification">4.1 Full Model Specification<a class="anchor" aria-label="anchor" href="#full-model-specification"></a>
 </h3>
 <p>The extended MMMM decomposes the group-level outcome into three
 additive components, each corresponding to a level at which explanatory
@@ -158,7 +173,7 @@ within government <span class="math inline">\(i\)</span>.</li>
 and random effects (unobserved heterogeneity).</p>
 </div>
 <div class="section level3">
-<h3 id="group-level-effect">Group-Level Effect<a class="anchor" aria-label="anchor" href="#group-level-effect"></a>
+<h3 id="group-level-effect">4.2 Group-Level Effect<a class="anchor" aria-label="anchor" href="#group-level-effect"></a>
 </h3>
 <p>The group-level effect models the direct influence of group-level
 covariates and group-specific unobserved factors:</p>
@@ -188,7 +203,7 @@ unobserved heterogeneity at the group level</li>
 status, ideological heterogeneity, or economic conditions.</p>
 </div>
 <div class="section level3">
-<h3 id="hierarchical-nesting-level-effect">Hierarchical Nesting-Level Effect<a class="anchor" aria-label="anchor" href="#hierarchical-nesting-level-effect"></a>
+<h3 id="hierarchical-nesting-level-effect">4.3 Hierarchical Nesting-Level Effect<a class="anchor" aria-label="anchor" href="#hierarchical-nesting-level-effect"></a>
 </h3>
 <p>When groups are nested within higher-level contexts, the
 nesting-level effect accounts for hierarchical dependencies:</p>
@@ -225,7 +240,7 @@ specified to accommodate cross-classified structures (e.g., groups
 nested within multiple hierarchical contexts).</p>
 </div>
 <div class="section level3">
-<h3 id="aggregated-member-level-effect">Aggregated Member-Level Effect<a class="anchor" aria-label="anchor" href="#aggregated-member-level-effect"></a>
+<h3 id="aggregated-member-level-effect">4.4 Aggregated Member-Level Effect<a class="anchor" aria-label="anchor" href="#aggregated-member-level-effect"></a>
 </h3>
 <p>The core innovation of the extended MMMM is modeling how member-level
 effects aggregate to influence group outcomes. Individual member effects
@@ -283,10 +298,10 @@ unobserved factors that affect all governments in which party <span class="math 
 </div>
 </div>
 <div class="section level2">
-<h2 id="parameterizable-weight-functions">Parameterizable Weight Functions<a class="anchor" aria-label="anchor" href="#parameterizable-weight-functions"></a>
+<h2 id="parameterizable-weight-functions">5. Parameterizable Weight Functions<a class="anchor" aria-label="anchor" href="#parameterizable-weight-functions"></a>
 </h2>
 <div class="section level3">
-<h3 id="conventional-mmmm-fixed-weights">Conventional MMMM: Fixed Weights<a class="anchor" aria-label="anchor" href="#conventional-mmmm-fixed-weights"></a>
+<h3 id="conventional-mmmm-fixed-weights">5.1 Conventional MMMM: Fixed Weights<a class="anchor" aria-label="anchor" href="#conventional-mmmm-fixed-weights"></a>
 </h3>
 <p>The <strong>conventional MMMM</strong> requires weights to be
 specified <em>a priori</em>. The most common choice is equal weighting
@@ -304,7 +319,7 @@ neighbors may matter more than distant ones. Imposing equal weights when
 they vary in practice introduces <strong>aggregation bias</strong>.</p>
 </div>
 <div class="section level3">
-<h3 id="extended-mmmm-parameterizing-weights">Extended MMMM: Parameterizing Weights<a class="anchor" aria-label="anchor" href="#extended-mmmm-parameterizing-weights"></a>
+<h3 id="extended-mmmm-parameterizing-weights">5.2 Extended MMMM: Parameterizing Weights<a class="anchor" aria-label="anchor" href="#extended-mmmm-parameterizing-weights"></a>
 </h3>
 <p>The <strong>extended MMMM</strong> allows weights to be modeled as
 functions of covariates and estimated parameters. For example,</p>
@@ -368,7 +383,7 @@ Coalition partners’ cohesion carries more weight</li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="testing-alternative-aggregation-mechanisms">Testing Alternative Aggregation Mechanisms<a class="anchor" aria-label="anchor" href="#testing-alternative-aggregation-mechanisms"></a>
+<h3 id="testing-alternative-aggregation-mechanisms">5.3 Testing Alternative Aggregation Mechanisms<a class="anchor" aria-label="anchor" href="#testing-alternative-aggregation-mechanisms"></a>
 </h3>
 <p>Weight function regression enables empirical tests of substantive
 hypotheses about aggregation. Group-level functions such as
@@ -441,7 +456,7 @@ power) generate disproportionate influence via <span class="math inline">\(\beta
 </div>
 </div>
 <div class="section level2">
-<h2 id="emergent-aggregation-functions">Emergent Aggregation Functions<a class="anchor" aria-label="anchor" href="#emergent-aggregation-functions"></a>
+<h2 id="emergent-aggregation-functions">6. Emergent Aggregation Functions<a class="anchor" aria-label="anchor" href="#emergent-aggregation-functions"></a>
 </h2>
 <p>The weights <span class="math inline">\(w_{ik}\)</span> define a
 within-group <em>measure</em> over members; the aggregation function
@@ -525,7 +540,7 @@ near-equivalent to <code>fn("smax")</code> — the exponentially tilted
 mean is the derivative of the log-sum-exp — and <code>bml</code> warns
 when a variable appears in both.</p>
 <div class="section level3">
-<h3 id="user-written-reductions-the-expression-dsl">User-written reductions: the expression DSL<a class="anchor" aria-label="anchor" href="#user-written-reductions-the-expression-dsl"></a>
+<h3 id="user-written-reductions-the-expression-dsl">6.1 User-written reductions: the expression DSL<a class="anchor" aria-label="anchor" href="#user-written-reductions-the-expression-dsl"></a>
 </h3>
 <p>Beyond the named types, <code><a href="../reference/fn.html">fn()</a></code> accepts a one-sided formula
 in a restricted expression DSL. <code>E(e)</code> is the expectation
@@ -551,7 +566,7 @@ confounded with the coefficient (a warning fires). Treat inner
 parameters as cutpoints/sharpness, not slopes.</p>
 </div>
 <div class="section level3">
-<h3 id="named-blocks-and-interactions">Named blocks and interactions<a class="anchor" aria-label="anchor" href="#named-blocks-and-interactions"></a>
+<h3 id="named-blocks-and-interactions">6.2 Named blocks and interactions<a class="anchor" aria-label="anchor" href="#named-blocks-and-interactions"></a>
 </h3>
 <p>Every block has a name (auto-generated, e.g. <code>A_x</code>,
 <code>V_x</code>, or set via <code>name =</code>). Single-feature blocks
@@ -569,7 +584,7 @@ enters through the block itself.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="generalized-outcomes">Generalized Outcomes<a class="anchor" aria-label="anchor" href="#generalized-outcomes"></a>
+<h2 id="generalized-outcomes">7. Generalized Outcomes<a class="anchor" aria-label="anchor" href="#generalized-outcomes"></a>
 </h2>
 <p>The model structure extends to non-Gaussian outcomes via generalized
 linear and survival models:</p>
@@ -611,7 +626,7 @@ intervals for the piecewise constant baseline hazard:</p>
 structure, including parameterizable weight functions.</p>
 </div>
 <div class="section level2">
-<h2 id="variance-decomposition-and-intraclass-correlation">Variance Decomposition and Intraclass Correlation<a class="anchor" aria-label="anchor" href="#variance-decomposition-and-intraclass-correlation"></a>
+<h2 id="variance-decomposition-and-intraclass-correlation">8. Variance Decomposition and Intraclass Correlation<a class="anchor" aria-label="anchor" href="#variance-decomposition-and-intraclass-correlation"></a>
 </h2>
 <p>The multilevel structure partitions total variance into additive
 components corresponding to each level in the model. For a three-level
@@ -627,7 +642,7 @@ effective member-level variance shrinks as group size increases. With
 unequal weights, members with larger weights contribute more to the
 variance.</p>
 <div class="section level3">
-<h3 id="intraclass-correlation-coefficients-icc">Intraclass Correlation Coefficients (ICC)<a class="anchor" aria-label="anchor" href="#intraclass-correlation-coefficients-icc"></a>
+<h3 id="intraclass-correlation-coefficients-icc">8.1 Intraclass Correlation Coefficients (ICC)<a class="anchor" aria-label="anchor" href="#intraclass-correlation-coefficients-icc"></a>
 </h3>
 <p>The <strong>intraclass correlation coefficient (ICC)</strong> for a
 given level is the proportion of total variance attributable to that
@@ -677,10 +692,10 @@ variance, ICCs are computed among the non-residual components only.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="extensions">Extensions<a class="anchor" aria-label="anchor" href="#extensions"></a>
+<h2 id="extensions">9. Extensions<a class="anchor" aria-label="anchor" href="#extensions"></a>
 </h2>
 <div class="section level3">
-<h3 id="multiple-mm-blocks">Multiple MM Blocks<a class="anchor" aria-label="anchor" href="#multiple-mm-blocks"></a>
+<h3 id="multiple-mm-blocks">9.1 Multiple MM Blocks<a class="anchor" aria-label="anchor" href="#multiple-mm-blocks"></a>
 </h3>
 <p>The <code>bml</code> package allows multiple <code><a href="../reference/mm.html">mm()</a></code> blocks
 with distinct aggregation mechanisms. This is useful when different
@@ -704,7 +719,7 @@ combination, only one <code><a href="../reference/mm.html">mm()</a></code> block
 <code>RE = TRUE</code> within the same model.</p>
 </div>
 <div class="section level3">
-<h3 id="autoregressive-random-effects">Autoregressive Random Effects<a class="anchor" aria-label="anchor" href="#autoregressive-random-effects"></a>
+<h3 id="autoregressive-random-effects">9.2 Autoregressive Random Effects<a class="anchor" aria-label="anchor" href="#autoregressive-random-effects"></a>
 </h3>
 <p>Member random effects may evolve over time rather than remain
 constant. The autoregressive walk is part of the effects grammar — it is
@@ -758,45 +773,49 @@ fortunes change.</p>
 <code>cor = TRUE</code>).</p>
 </div>
 <div class="section level3">
-<h3 id="opposition-members">Opposition Members<a class="anchor" aria-label="anchor" href="#opposition-members"></a>
+<h3 id="complementary-membership-groups">9.3 Complementary Membership Groups<a class="anchor" aria-label="anchor" href="#complementary-membership-groups"></a>
 </h3>
-<p>When analyzing group outcomes influenced by both members and
-non-members (e.g., coalition and opposition parties), separate
-<code><a href="../reference/mm.html">mm()</a></code> blocks can model their distinct contributions:</p>
+<p>Some applications distinguish between two mutually exclusive subsets
+of potential members whose effects on the group outcome may differ —
+e.g., a government’s coalition parties vs. opposition parties, a
+student’s classroom peers vs. other students in the school, or a firm’s
+alliance partners vs. non-partner competitors. Separate
+<code><a href="../reference/mm.html">mm()</a></code> blocks can model each subset’s distinct
+contribution:</p>
 <p><span class="math display">\[\begin{equation}
-\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik}^{(g)} \left(
-\mathbf{\beta}^{(g)} \cdot \mathbf{x}_{ik}^{(g)} + u_k^{(g)} \right) +
-\sum_{k \notin p[i]} w_{ik}^{(o)} \left( \mathbf{\beta}^{(o)} \cdot
-\mathbf{x}_{ik}^{(o)} + u_k^{(o)} \right) \tag{18}
+\theta_i^{(p)} = \sum_{k \in p[i]} w_{ik}^{(A)} \left(
+\mathbf{\beta}^{(A)} \cdot \mathbf{x}_{ik}^{(A)} + u_k^{(A)} \right) +
+\sum_{k \notin p[i]} w_{ik}^{(B)} \left( \mathbf{\beta}^{(B)} \cdot
+\mathbf{x}_{ik}^{(B)} + u_k^{(B)} \right) \tag{18}
 \end{equation}\]</span></p>
-<p>where superscripts <span class="math inline">\((g)\)</span> and <span class="math inline">\((o)\)</span> denote member and non-member effects,
-respectively. This allows both groups to have different structural
-effects and different aggregation mechanisms.</p>
+<p>where superscripts <span class="math inline">\((A)\)</span> and <span class="math inline">\((B)\)</span> denote the two subsets (<span class="math inline">\(k \in p[i]\)</span> and <span class="math inline">\(k \notin p[i]\)</span>, respectively). This allows
+both subsets to have different structural effects and different
+aggregation mechanisms.</p>
 <p>In <code>bml</code>, this is specified using two <code><a href="../reference/mm.html">mm()</a></code>
-blocks with different mmid variables — one for members (<span class="math inline">\(k \in p[i]\)</span>) and one for non-members
-(<span class="math inline">\(k \notin p[i]\)</span>):</p>
+blocks with different mmid variables — one for subset <span class="math inline">\(A\)</span> and one for subset <span class="math inline">\(B\)</span>:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_g</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_o</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_A</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="../reference/mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/id.html">id</a></span><span class="op">(</span><span class="va">pid_B</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="../reference/vars.html">vars</a></span><span class="op">(</span><span class="va">x1</span>, <span class="va">x2</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="../reference/w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="../reference/fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Data format:</strong> Since the two <code><a href="../reference/mm.html">mm()</a></code> blocks
-use different member ID variables (<code>pid_g</code> and
-<code>pid_o</code>), the data should be in a stacked long format where
+use different member ID variables (<code>pid_A</code> and
+<code>pid_B</code>), the data should be in a stacked long format where
 each member gets its own row, with <code>NA</code> in the mmid column it
 does not belong to:</p>
-<pre><code>gid  pid_g  pid_o  x1    x2    dur_wkb  event_wkb
+<pre><code>gid  pid_A  pid_B  x1    x2    dur_wkb  event_wkb
 1    1      NA     0.5   0.3   365      0
 1    2      NA     0.4   0.2   365      0
 1    NA     3      0.3   0.1   365      0
 1    NA     4      0.7   0.5   365      0</code></pre>
-<p>Government parties have <code>pid_g</code> filled and
-<code>pid_o = NA</code>; opposition parties have <code>pid_o</code>
-filled and <code>pid_g = NA</code>. Group-level variables (e.g.,
-<code>dur_wkb</code>, <code>event_wkb</code>) are repeated across all
-rows within a group, as in the standard long format.</p>
+<p><strong>Example (Coalition Governments):</strong> Subset <span class="math inline">\(A\)</span> is the coalition parties (<span class="math inline">\(k \in p[i]\)</span>) and subset <span class="math inline">\(B\)</span> is the opposition parties (<span class="math inline">\(k \notin p[i]\)</span>). Government parties have
+<code>pid_A</code> filled and <code>pid_B = NA</code>; opposition
+parties have <code>pid_B</code> filled and <code>pid_A = NA</code>.
+Group-level variables (e.g., <code>dur_wkb</code>,
+<code>event_wkb</code>) are repeated across all rows within a group, as
+in the standard long format.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="comparison-with-conventional-mmmm">Comparison with Conventional MMMM<a class="anchor" aria-label="anchor" href="#comparison-with-conventional-mmmm"></a>
+<h2 id="comparison-with-conventional-mmmm">10. Comparison with Conventional MMMM<a class="anchor" aria-label="anchor" href="#comparison-with-conventional-mmmm"></a>
 </h2>
 <p>The <strong>conventional MMMM</strong> (as implemented in
 <code>brms</code> or <code>MLwiN</code>) is a special case:</p>
@@ -828,7 +847,7 @@ n_i)
 \end{equation}\]</span></p>
 </div>
 <div class="section level2">
-<h2 id="model-assumptions">Model Assumptions<a class="anchor" aria-label="anchor" href="#model-assumptions"></a>
+<h2 id="model-assumptions">11. Model Assumptions<a class="anchor" aria-label="anchor" href="#model-assumptions"></a>
 </h2>
 <p>The extended MMMM assumes:</p>
 <ol style="list-style-type: decimal">
@@ -852,7 +871,7 @@ bias.</p></li>
 </ol>
 </div>
 <div class="section level2">
-<h2 id="estimation">Estimation<a class="anchor" aria-label="anchor" href="#estimation"></a>
+<h2 id="estimation">12. Estimation<a class="anchor" aria-label="anchor" href="#estimation"></a>
 </h2>
 <p>Model parameters are estimated using <strong>Bayesian Markov chain
 Monte Carlo (MCMC)</strong> via JAGS because:</p>
@@ -870,7 +889,7 @@ JAGS with automated prior specification, convergence diagnostics, and
 post-estimation tools.</p>
 </div>
 <div class="section level2">
-<h2 id="further-information">Further Information<a class="anchor" aria-label="anchor" href="#further-information"></a>
+<h2 id="further-information">13. Further Information<a class="anchor" aria-label="anchor" href="#further-information"></a>
 </h2>
 <p>A comprehensive presentation of the model is provided in <a href="https://osf.io/preprints/socarxiv/4bafr" class="external-link">Rosche (2026)</a>.</p>
 </div>
