@@ -7,7 +7,7 @@
 #' density (HPD) interval.
 #'
 #' @param bml A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.
-#'   Must be fitted with \code{monitor = TRUE} to store MCMC chains.
+#'   Must be fitted with \code{monitor = "parameters"}.
 #'
 #' @param parameter Character string specifying the parameter to plot. Must use the
 #'   internal parameter name (i.e., row names from \code{bml$reg.table}). Examples:
@@ -58,13 +58,13 @@
 #' \dontrun{
 #' data(coalgov)
 #'
-#' # Fit model with monitoring enabled
+#' # Fit model with parameter draws retained
 #' m1 <- bml(
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
 #'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
 #'     hm(id = id(cid)),
 #'   family = weibull(),
-#'   monitor = TRUE,  # Required for monetPlot
+#'   monitor = "parameters",  # Required for monetPlot
 #'   data = coalgov
 #' )
 #'
@@ -91,16 +91,13 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=TRUE) {
 
   # Checks --------------------------------------------------------------------------------------- #
 
-  if (is.null(bml$jags.out) || is.null(bml$jags.out$BUGSoutput) ||
-      is.null(bml$jags.out$BUGSoutput$sims.array)) {
-    stop("JAGS output could not be retrieved. Please ensure that monitor = TRUE when fitting the model.", call. = FALSE)
-  }
+  bml_require_capabilities(bml, "parameters", "monetPlot")
   if(is.null(label)) label = parameter
 
   # Get mcmclist and posterior stats ------------------------------------------------------------- #
 
   # Build ggs-compatible data frame manually to avoid ggmcmc::ggs() version issues
-  sims <- bml$jags.out$BUGSoutput$sims.array
+  sims <- bml_draws_array(bml, "parameters", "monetPlot")
   param_names <- dimnames(sims)[[3]]
   param_idx <- which(param_names == parameter)
   if (length(param_idx) == 0) {
@@ -114,7 +111,7 @@ monetPlot <- function(bml, parameter, label=NULL, r=2, yaxis=TRUE) {
       Iteration = seq_len(n_iter),
       Chain     = factor(ch),
       Parameter = factor(label),
-      value     = sims[, ch, param_idx]
+      value     = as.numeric(sims[, ch, param_idx, drop = TRUE])
     )
   }))
   attr(mcmc.ggs, "nChains")     <- n_chains

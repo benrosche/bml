@@ -1,6 +1,6 @@
 # Extract posterior draws from a bml model
 
-Converts the stored MCMC chains into the posterior package's draws
+Converts the retained MCMC chains into the posterior package's draws
 formats, unlocking the whole posterior/bayesplot toolchain
 (`summarise_draws()`, `rhat()`, `ess_bulk()`, ...). Variables keep their
 internal JAGS node names (`b[1]`, `b.fn.1[1]`, `sigma.mm.1`, ...); the
@@ -27,7 +27,7 @@ as_draws_array(x, ...)
 
 - x:
 
-  A fitted `bml` model (fitted with `monitor = TRUE`).
+  A fitted `bml` model with retained posterior draws.
 
 - ...:
 
@@ -35,4 +35,5 @@ as_draws_array(x, ...)
 
 ## Value
 
-A `draws_array` (or the format of the called variant).
+A `draws_array` (or the format of the called variant) containing the
+capabilities requested when the model was fitted.

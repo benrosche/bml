@@ -40,8 +40,7 @@ tidy(
 
   Width of the equal-tailed credible interval. Default: 0.95, which is
   read directly from the fitted model. Other levels are computed from
-  the posterior draws and therefore require the model to be fitted with
-  `monitor = TRUE`.
+  the posterior draws and therefore require `monitor = "parameters"`.
 
 - component:
 
@@ -95,7 +94,7 @@ m1 <- bml(
 
 tidy(m1)                      # regression coefficients
 tidy(m1, component = "all")   # including weight and variance parameters
-tidy(m1, conf.level = 0.9)    # 90% credible intervals (requires monitor = TRUE)
+tidy(m1, conf.level = 0.9)    # requires monitor = "parameters"
 
 # Multi-model comparison table (see also bmlCompare()):
 models <- list(base = m1, weighted = m2)

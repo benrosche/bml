@@ -17,7 +17,7 @@ ranef(object, ...)
 
 - object:
 
-  A fitted `bml` model (fitted with `monitor = TRUE`).
+  A fitted `bml` model with `monitor = "random_effects"`.
 
 - ...:
 

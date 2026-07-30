@@ -105,7 +105,8 @@ bml(
     mm(
       id = id(pid, gid),
       vars = vars(org_structure),
-      w    = w(~ 1 / n, scale = TRUE),
+      w = w(~ 1 / n, scale = TRUE),
+      fn = fn("sum"),
       RE = TRUE
     ),
   family = gaussian(),
@@ -121,6 +122,27 @@ multiple-membership term
 are set to `w ~ 1 / n` (equal weights across the n parties in a
 coalition), and party-specific random effects are included via
 `RE = TRUE`.
+
+### Posterior storage
+
+By default, [`bml()`](https://benrosche.github.io/bml/reference/bml.md)
+retains the coefficient table and compact convergence diagnostics, but
+not the underlying chains. Request only the posterior content needed
+downstream:
+
+``` r
+
+bml(..., monitor = "parameters")                    # diagnostics and custom intervals
+bml(..., monitor = c("parameters", "log_lik"))      # plus LOO/WAIC
+bml(..., monitor = "predictive")                    # posterior predictive checks
+bml(..., monitor = "full")                          # every supported draw, stored once
+bml(..., monitor = "jags")                          # complete raw R2jags object
+```
+
+Capabilities can also include `"random_effects"`, `"weights"`, and
+`"fitted"`. The default `monitor = "summary"` keeps fitted objects small
+while preserving rank-normalized R-hat, bulk ESS, tail ESS, and Monte
+Carlo standard errors for the reported parameters.
 
 ## Learn more
 

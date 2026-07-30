@@ -16,15 +16,16 @@
 \method{as_draws_array}{bml}(x, ...)
 }
 \arguments{
-\item{x}{A fitted \code{bml} model (fitted with \code{monitor = TRUE}).}
+\item{x}{A fitted \code{bml} model with retained posterior draws.}
 
 \item{...}{Passed on to the \pkg{posterior} converters.}
 }
 \value{
-A \code{draws_array} (or the format of the called variant).
+A \code{draws_array} (or the format of the called variant) containing
+  the capabilities requested when the model was fitted.
 }
 \description{
-Converts the stored MCMC chains into the \pkg{posterior} package's draws
+Converts the retained MCMC chains into the \pkg{posterior} package's draws
 formats, unlocking the whole \pkg{posterior}/\pkg{bayesplot} toolchain
 (\code{summarise_draws()}, \code{rhat()}, \code{ess_bulk()}, ...). Variables
 keep their internal JAGS node names (\code{b[1]}, \code{b.fn.1[1]},

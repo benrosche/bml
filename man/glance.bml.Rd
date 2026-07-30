@@ -19,6 +19,9 @@ A one-row \code{tibble} with columns:
     \item \code{DIC}: Deviance Information Criterion
     \item \code{family}: Outcome family
     \item \code{iter}, \code{chains}: MCMC settings
+    \item \code{storage}, \code{ndraws}: retained posterior information
+    \item \code{max_rhat}, \code{min_ess_bulk}, \code{min_ess_tail},
+      \code{n_flagged}, and \code{convergence}: model-level diagnostics
   }
 }
 \description{

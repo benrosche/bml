@@ -19,7 +19,7 @@ stationarity p-values, and autocorrelation at a user-specified lag."></head><bod
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,8 +67,8 @@ stationarity p-values, and autocorrelation at a user-specified lag.</p>
 
 
 <dl><dt id="arg-bml-out">bml.out<a class="anchor" aria-label="anchor" href="#arg-bml-out"></a></dt>
-<dd><p>A model fit object containing JAGS output, typically as returned
-by <code><a href="https://rdrr.io/pkg/R2jags/man/jags.html" class="external-link">R2jags::jags()</a></code>, with component <code>$jags.out$BUGSoutput</code>.</p></dd>
+<dd><p>A fitted <code>bml</code> model with
+<code>monitor = "parameters"</code>.</p></dd>
 
 
 <dt id="arg-parameters">parameters<a class="anchor" aria-label="anchor" href="#arg-parameters"></a></dt>
@@ -97,7 +97,7 @@ lowered with a warning.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Internally, the function converts the BUGS/JAGS output to a
+    <p>Internally, the function converts the retained parameter draws to a
 <code><a href="https://rdrr.io/pkg/coda/man/mcmc.list.html" class="external-link">coda::mcmc.list</a></code>, then computes per-chain
 diagnostics and averages them across chains for each parameter:</p><ul><li><p><strong>Gelman–Rubin</strong> (\(\hat{R}\)): <code><a href="https://rdrr.io/pkg/coda/man/gelman.diag.html" class="external-link">coda::gelman.diag()</a></code>.
         Values close to 1 indicate convergence; a common heuristic is
@@ -142,7 +142,7 @@ of iterative simulations. <em>Journal of Computational and Graphical Statistics<
 <span class="r-in"><span>  <span class="fu">Surv</span><span class="op">(</span><span class="va">dur_wkb</span>, <span class="va">event_wkb</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">majority</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="mm.html">mm</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="id.html">id</a></span><span class="op">(</span><span class="va">pid</span>, <span class="va">gid</span><span class="op">)</span>, vars <span class="op">=</span> <span class="fu"><a href="vars.html">vars</a></span><span class="op">(</span><span class="va">cohesion</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="w.html">w</a></span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, fn <span class="op">=</span> <span class="fu"><a href="fn.html">fn</a></span><span class="op">(</span><span class="st">"sum"</span><span class="op">)</span>, RE <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="fu"><a href="bml-families.html">weibull</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  monitor <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  monitor <span class="op">=</span> <span class="st">"parameters"</span>,</span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">coalgov</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>

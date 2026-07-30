@@ -6,18 +6,15 @@
 # Internal draw access
 # ------------------------------------------------------------------------------------------------ #
 
-# The full posterior as [iteration, chain, variable], from R2jags
-bml_sims_array <- function(object) {
-  if (is.null(object$jags.out)) {
-    stop("Posterior draws not stored. Fit the model with monitor = TRUE.", call. = FALSE)
-  }
-  object$jags.out$BUGSoutput$sims.array
+# The retained posterior as [iteration, chain, variable].
+bml_sims_array <- function(object, capabilities = NULL, method = "as_draws") {
+  bml_draws_array(object, capabilities = capabilities, method = method)
 }
 
 # Draws for all indexed columns of one variable (e.g. "pred"), as
 # [draws, n_index] with chains stacked
-bml_draws_of <- function(object, varname) {
-  arr <- bml_sims_array(object)
+bml_draws_of <- function(object, varname, capabilities = NULL, method = varname) {
+  arr <- bml_sims_array(object, capabilities = capabilities, method = method)
   vars <- dimnames(arr)[[3]]
   cols <- grep(paste0("^", varname, "(\\[|$)"), vars, value = TRUE)
   if (length(cols) == 0) {
@@ -54,17 +51,18 @@ posterior::as_draws_array
 #' Extract posterior draws from a bml model
 #'
 #' @description
-#' Converts the stored MCMC chains into the \pkg{posterior} package's draws
+#' Converts the retained MCMC chains into the \pkg{posterior} package's draws
 #' formats, unlocking the whole \pkg{posterior}/\pkg{bayesplot} toolchain
 #' (\code{summarise_draws()}, \code{rhat()}, \code{ess_bulk()}, ...). Variables
 #' keep their internal JAGS node names (\code{b[1]}, \code{b.fn.1[1]},
 #' \code{sigma.mm.1}, ...); the mapping to term labels is in
 #' \code{model$reg.table} (rownames = node, \code{Parameter} = label).
 #'
-#' @param x A fitted \code{bml} model (fitted with \code{monitor = TRUE}).
+#' @param x A fitted \code{bml} model with retained posterior draws.
 #' @param ... Passed on to the \pkg{posterior} converters.
 #'
-#' @return A \code{draws_array} (or the format of the called variant).
+#' @return A \code{draws_array} (or the format of the called variant) containing
+#'   the capabilities requested when the model was fitted.
 #' @name as_draws.bml
 #' @export
 as_draws.bml <- function(x, ...) {
@@ -132,12 +130,14 @@ fixef.bml <- function(object, ...) {
 #' per \code{mm()} member-id group (intercepts, and slopes when \code{re(1 + x)}
 #' was used) and unit effects per \code{hm()} block.
 #'
-#' @param object A fitted \code{bml} model (fitted with \code{monitor = TRUE}).
+#' @param object A fitted \code{bml} model with
+#'   \code{monitor = "random_effects"}.
 #' @param ... Unused.
 #'
 #' @return A list with elements \code{mm} and \code{hm}.
 #' @export
 ranef.bml <- function(object, ...) {
+  bml_require_capabilities(object, "random_effects", "ranef")
   list(mm = object$re.mm, hm = object$re.hm)
 }
 
@@ -162,7 +162,7 @@ coef.bml <- function(object, ...) {
 
 #' Posterior expectations of the linear predictor
 #'
-#' @param object A fitted \code{bml} model (fitted with \code{monitor = TRUE}).
+#' @param object A fitted \code{bml} model with \code{monitor = "fitted"}.
 #' @param summary Logical; if \code{TRUE} (default), return a summary matrix
 #'   (one row per observation), else the draws matrix (draws x observations).
 #' @param ... Unused.
@@ -170,9 +170,9 @@ coef.bml <- function(object, ...) {
 #' @return A matrix of posterior summaries of \code{mu}, or a draws matrix.
 #' @export
 fitted.bml <- function(object, summary = TRUE, ...) {
-  draws <- bml_draws_of(object, "mu")
+  draws <- bml_draws_of(object, "mu", "fitted", "fitted")
   if (is.null(draws)) {
-    stop("The linear predictor was not monitored. Fit the model with monitor = TRUE.",
+    stop("The linear predictor was not retained. Refit with monitor = \"fitted\".",
          call. = FALSE)
   }
   if (!summary) return(unname(draws))
@@ -193,7 +193,8 @@ fitted.bml <- function(object, summary = TRUE, ...) {
 #' node). \code{newdata} is not supported yet: multiple-membership prediction
 #' for new units requires the new units' membership map, which is future work.
 #'
-#' @param object A fitted \code{bml} model (fitted with \code{monitor = TRUE}).
+#' @param object A fitted \code{bml} model with
+#'   \code{monitor = "predictive"}.
 #' @param ndraws Optional number of draws to return (subsampled without
 #'   replacement).
 #' @param ... Unused.
@@ -212,9 +213,10 @@ posterior_predict.bml <- function(object, ndraws = NULL, ...) {
     stop("posterior_predict(newdata = ) is not supported yet: multiple-membership ",
          "prediction for new units requires their membership map.", call. = FALSE)
   }
-  draws <- bml_draws_of(object, "pred")
+  draws <- bml_draws_of(object, "pred", "predictive", "posterior_predict")
   if (is.null(draws)) {
-    stop("Posterior predictive draws were not monitored. Fit the model with monitor = TRUE.",
+    stop("Posterior predictive draws were not retained. ",
+         "Refit with monitor = \"predictive\".",
          call. = FALSE)
   }
   draws <- unname(draws)
@@ -231,7 +233,8 @@ posterior_predict.bml <- function(object, ndraws = NULL, ...) {
 #' use \code{\link{posterior_predict.bml}}; for the linear predictor use
 #' \code{\link{fitted.bml}}.
 #'
-#' @param object A fitted \code{bml} model (fitted with \code{monitor = TRUE}).
+#' @param object A fitted \code{bml} model with
+#'   \code{monitor = "predictive"}.
 #' @param summary Logical; if \code{TRUE} (default), return a summary matrix,
 #'   else the draws matrix.
 #' @param ... Unused (\code{newdata} is not supported yet).
@@ -258,8 +261,7 @@ predict.bml <- function(object, summary = TRUE, ...) {
 #' Pointwise log-likelihood of a bml model
 #'
 #' @param object A fitted \code{bml} model. Available for gaussian and
-#'   bernoulli families fitted with \code{monitor = TRUE} (the JAGS model
-#'   monitors a pointwise \code{log_lik} node).
+#'   bernoulli families fitted with \code{monitor = "log_lik"}.
 #' @param ... Unused.
 #'
 #' @return A draws x observations matrix of pointwise log-likelihood values.
@@ -271,10 +273,11 @@ log_lik <- function(object, ...) {
 #' @rdname log_lik
 #' @export
 log_lik.bml <- function(object, ...) {
-  draws <- bml_draws_of(object, "log_lik")
+  draws <- bml_draws_of(object, "log_lik", "log_lik", "log_lik")
   if (is.null(draws)) {
     stop("Pointwise log-likelihood not available. It is monitored for gaussian and ",
-         "bernoulli families when monitor = TRUE (survival families are not supported yet).",
+         "bernoulli families when monitor includes \"log_lik\" ",
+         "(survival families are not supported yet).",
          call. = FALSE)
   }
   unname(draws)
@@ -282,7 +285,7 @@ log_lik.bml <- function(object, ...) {
 
 # log_lik as [iteration, chain, observation] for relative_eff
 bml_loglik_array <- function(object) {
-  arr <- bml_sims_array(object)
+  arr <- bml_sims_array(object, "log_lik", "log_lik")
   vars <- dimnames(arr)[[3]]
   cols <- grep("^log_lik\\[", vars, value = TRUE)
   if (length(cols) == 0) return(NULL)
@@ -302,9 +305,10 @@ loo::waic
 #' Efficient approximate leave-one-out cross-validation for bml models
 #'
 #' @description
-#' PSIS-LOO via the \pkg{loo} package, computed from the monitored pointwise
+#' PSIS-LOO via the \pkg{loo} package, computed from the retained pointwise
 #' log-likelihood. Available for gaussian and bernoulli families fitted with
-#' \code{monitor = TRUE}. Compare models with \code{loo::loo_compare()}.
+#' \code{monitor = "log_lik"}. Compare models with
+#' \code{loo::loo_compare()}.
 #'
 #' @param x A fitted \code{bml} model.
 #' @param ... Passed to \code{loo::loo.matrix()}.
@@ -315,7 +319,7 @@ loo.bml <- function(x, ...) {
   ll_arr <- bml_loglik_array(x)
   if (is.null(ll_arr)) {
     stop("Pointwise log-likelihood not available. loo() is supported for gaussian and ",
-         "bernoulli families fitted with monitor = TRUE.", call. = FALSE)
+         "bernoulli families fitted with monitor = \"log_lik\".", call. = FALSE)
   }
   ll_mat <- matrix(ll_arr, nrow = dim(ll_arr)[1] * dim(ll_arr)[2], ncol = dim(ll_arr)[3])
   r_eff <- loo::relative_eff(exp(ll_arr))
@@ -333,7 +337,7 @@ waic.bml <- function(x, ...) {
   ll_arr <- bml_loglik_array(x)
   if (is.null(ll_arr)) {
     stop("Pointwise log-likelihood not available. waic() is supported for gaussian and ",
-         "bernoulli families fitted with monitor = TRUE.", call. = FALSE)
+         "bernoulli families fitted with monitor = \"log_lik\".", call. = FALSE)
   }
   ll_mat <- matrix(ll_arr, nrow = dim(ll_arr)[1] * dim(ll_arr)[2], ncol = dim(ll_arr)[3])
   loo::waic(ll_mat, ...)
@@ -351,7 +355,7 @@ waic.bml <- function(x, ...) {
 #' \code{\link{posterior_predict.bml}}.
 #'
 #' @param object A fitted \code{bml} model (gaussian or bernoulli, fitted with
-#'   \code{monitor = TRUE}).
+#'   \code{monitor = "predictive"}).
 #' @param type A \pkg{bayesplot} PPC type (without the \code{"ppc_"} prefix),
 #'   e.g. \code{"dens_overlay"} (default for gaussian), \code{"bars"} (default
 #'   for bernoulli), \code{"hist"}, \code{"stat"}.
@@ -375,6 +379,9 @@ pp_check.bml <- function(object, type = NULL, ndraws = 30, ...) {
   if (is.null(y)) {
     stop("pp_check() is available for gaussian and bernoulli families.", call. = FALSE)
   }
+  # createJagsVars stores the outcome as an n x 1 matrix; bayesplot expects a
+  # vector (or one-dimensional array).
+  y <- as.vector(y)
   yrep <- posterior_predict.bml(object, ndraws = ndraws)
   if (is.null(type)) {
     type <- if (object$input$family == "Binomial") "bars" else "dens_overlay"
@@ -395,7 +402,8 @@ pp_check.bml <- function(object, type = NULL, ndraws = 30, ...) {
 #' the other main-formula covariates at their means and the block features,
 #' random effects, and interactions at their sample-average contribution.
 #'
-#' @param x A fitted \code{bml} model (fitted with \code{monitor = TRUE}).
+#' @param x A fitted \code{bml} model with
+#'   \code{monitor = c("parameters", "fitted")}.
 #' @param effects Character vector of main-formula term names. Default: all
 #'   numeric main-formula terms.
 #' @param resolution Grid size. Default: 100.
@@ -411,6 +419,7 @@ conditional_effects <- function(x, ...) {
 #' @rdname conditional_effects
 #' @export
 conditional_effects.bml <- function(x, effects = NULL, resolution = 100, ...) {
+  bml_require_capabilities(x, c("parameters", "fitted"), "conditional_effects")
 
   mainvars <- x$input$mainvars
   terms_avail <- setdiff(mainvars, "X0")
@@ -425,9 +434,10 @@ conditional_effects.bml <- function(x, effects = NULL, resolution = 100, ...) {
   }
 
   # b draws in mainvars order
-  b_draws <- bml_draws_of(x, "b")
+  b_draws <- bml_draws_of(x, "b", "parameters", "conditional_effects")
   if (is.null(b_draws)) {
-    stop("Posterior draws not stored. Fit the model with monitor = TRUE.", call. = FALSE)
+    stop("Coefficient draws were not retained. Refit with ",
+         "monitor = c(\"parameters\", \"fitted\").", call. = FALSE)
   }
   mu_hat <- x$fitted
   if (length(mu_hat) == 0) mu_hat <- NULL
@@ -505,7 +515,7 @@ conditional_effects.bml <- function(x, effects = NULL, resolution = 100, ...) {
 #'
 #' @export
 make_jagscode <- function(formula, data, family = stats::gaussian(), prior = NULL,
-                          monitor = TRUE) {
+                          monitor = "summary") {
   parts <- suppressMessages(
     bml(formula, data = data, family = family, prior = prior, run = FALSE, monitor = monitor)
   )
@@ -515,7 +525,7 @@ make_jagscode <- function(formula, data, family = stats::gaussian(), prior = NUL
 #' @rdname make_jagscode
 #' @export
 make_jagsdata <- function(formula, data, family = stats::gaussian(), prior = NULL,
-                          monitor = TRUE) {
+                          monitor = "summary") {
   parts <- suppressMessages(
     bml(formula, data = data, family = family, prior = prior, run = FALSE, monitor = monitor)
   )

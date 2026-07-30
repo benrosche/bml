@@ -8,7 +8,7 @@ varDecomp(model, uncertainty = "sd", r = 2)
 }
 \arguments{
 \item{model}{A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.
-Must have been fitted with \code{monitor = TRUE} (the default).}
+Must have been fitted with \code{monitor = "parameters"}.}
 
 \item{uncertainty}{Uncertainty measure to report. One of \code{"sd"} (posterior
 standard deviation, the default), \code{"mad"} (median absolute deviation), or

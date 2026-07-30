@@ -10,7 +10,8 @@ conditional_effects(x, ...)
 \method{conditional_effects}{bml}(x, effects = NULL, resolution = 100, ...)
 }
 \arguments{
-\item{x}{A fitted \code{bml} model (fitted with \code{monitor = TRUE}).}
+\item{x}{A fitted \code{bml} model with
+\code{monitor = c("parameters", "fitted")}.}
 
 \item{...}{Unused.}
 

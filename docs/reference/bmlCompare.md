@@ -24,7 +24,7 @@ bmlCompare(
   component = "all",
   terms = NULL,
   labels = NULL,
-  stats = c("N", "DIC"),
+  stats = c("N", "DIC", "Convergence"),
   digits = 3,
   conf.level = 0.95
 )
@@ -63,8 +63,9 @@ bmlCompare(
 - stats:
 
   Goodness-of-fit rows to append, in order. Any of `"N"` (main-level
-  units), `"n.members"` (member-level units), and `"DIC"`. Default:
-  `c("N", "DIC")`. Use `character(0)` for none.
+  units), `"n.members"` (member-level units), `"DIC"`, and
+  `"Convergence"`. Default: `c("N", "DIC", "Convergence")`. Use
+  `character(0)` for none.
 
 - digits:
 
@@ -74,7 +75,7 @@ bmlCompare(
 - conf.level:
 
   Width of the equal-tailed credible interval. Default: 0.95. Other
-  levels require the models to be fitted with `monitor = TRUE` (see
+  levels require the models to use `monitor = "parameters"` (see
   [`tidy.bml`](https://benrosche.github.io/bml/reference/tidy.bml.md)).
 
 ## Value

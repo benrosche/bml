@@ -4,7 +4,8 @@
 
 data("coalgov")
 
-code_of <- function(formula, prior = NULL, family = stats::gaussian(), monitor = TRUE) {
+code_of <- function(formula, prior = NULL, family = stats::gaussian(),
+                    monitor = "summary") {
   out <- suppressWarnings(suppressMessages(
     bml(formula, data = coalgov, family = family, prior = prior,
         run = FALSE, monitor = monitor)
@@ -12,10 +13,11 @@ code_of <- function(formula, prior = NULL, family = stats::gaussian(), monitor =
   out
 }
 
-test_that("sum block: precomputed feature, coefficient outside, log_lik + mu monitored", {
+test_that("full storage defines and monitors every gaussian capability", {
   out <- code_of(
     dur_wkb ~ 1 + majority +
-      mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE)
+      mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
+    monitor = "full"
   )
   expect_match(out$modelstring, "b.fn.1\\[1\\] \\* F.1\\[j\\]")
   expect_match(out$modelstring, "log_lik\\[j\\] <- logdensity.norm")
@@ -158,14 +160,41 @@ test_that("raw JAGS strings replace prior lines (escape hatch)", {
   expect_match(out$modelstring, "b.fn.1\\[1\\] ~ dnorm\\(0, 0.5\\)", fixed = FALSE)
 })
 
-test_that("monitor = FALSE drops pred/mu/log_lik", {
+test_that("summary storage drops high-dimensional posterior nodes", {
   out <- code_of(
     dur_wkb ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE),
-    monitor = FALSE
+    monitor = "summary"
   )
   expect_no_match(out$modelstring, "log_lik")
-  expect_false(any(c("mu", "pred", "log_lik") %in% out$jags.params))
+  expect_no_match(out$modelstring, "pred\\[j\\]")
+  expect_false(any(c("mu", "pred", "log_lik", "re.mm.1") %in% out$jags.params))
+})
+
+test_that("monitor capabilities select exact generated nodes", {
+  f <- dur_wkb ~ 1 + majority +
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = TRUE)
+
+  loglik <- code_of(f, monitor = c("parameters", "log_lik"))
+  expect_true("log_lik" %in% loglik$jags.params)
+  expect_false(any(c("mu", "pred", "re.mm.1") %in% loglik$jags.params))
+  expect_match(loglik$modelstring, "log_lik\\[j\\]")
+  expect_no_match(loglik$modelstring, "pred\\[j\\]")
+
+  partial <- code_of(f, monitor = c("random_effects", "fitted", "predictive"))
+  expect_true(all(c("re.mm.1", "mu", "pred") %in% partial$jags.params))
+  expect_false("log_lik" %in% partial$jags.params)
+})
+
+test_that("invalid monitor specifications fail early", {
+  f <- dur_wkb ~ 1 +
+    mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n))
+  expect_error(code_of(f, monitor = TRUE), "capability-based")
+  expect_error(code_of(f, monitor = "unknown"), "Unknown")
+  expect_error(code_of(f, monitor = c("jags", "parameters")), "exclusive")
+  expect_error(code_of(f, monitor = c("full", "parameters")), "preset")
+  expect_error(code_of(f, family = weibull(), monitor = "log_lik"),
+               "only for gaussian")
 })
 
 test_that("removed legacy bml() arguments give a migration error", {

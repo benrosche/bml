@@ -3,7 +3,7 @@
 # ================================================================================================ #
 
 createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, interactions,
-                           monitor, chains, inits, cox_intervals = NULL) {
+                           monitor_spec, chains, inits, cox_intervals = NULL) {
 
   # Unpack main ------------------------------------------------------------------------------ #
 
@@ -377,7 +377,7 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, interaction
         if (isTRUE(re_spec$cor) && length(re_spec$slopes) == 1) {
           jags.params <- c(jags.params, paste0("rho.mm.", g))
         }
-        if (monitor) {
+        if (monitor_has(monitor_spec, "random_effects")) {
           jags.params <- c(jags.params, paste0("re.mm.", g))
           for (s in seq_along(re_spec$slopes)) {
             jags.params <- c(jags.params, paste0("re.mm.", g, ".s", s))
@@ -399,7 +399,11 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, interaction
         jags.params <- c(jags.params, paste0("b.w.", i))
       }
       # weights can only be monitored when they are model nodes (not pre-computed data)
-      if (monitor && w_in_jags(block)) {
+      # Parameter-only fits retain posterior-mean realized weights for
+      # interpretation and variance decomposition, but discard their draws.
+      if ((monitor_has(monitor_spec, "weights") ||
+           monitor_has(monitor_spec, "parameters")) &&
+          w_in_jags(block)) {
         jags.params <- c(jags.params, paste0("w.", i))
       }
       if (!is.null(block$FE) && block$FE$showFE) {
@@ -423,11 +427,14 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, interaction
   if (n.Xmain > 0) {
     jags.params <- c(jags.params, "b")
   }
-  if (monitor) {
-    jags.params <- c(jags.params, "pred", "mu")
-    if (family %in% c("Gaussian", "Binomial")) {
-      jags.params <- c(jags.params, "log_lik")
-    }
+  if (monitor_has(monitor_spec, "predictive")) {
+    jags.params <- c(jags.params, "pred")
+  }
+  if (monitor_has(monitor_spec, "fitted")) {
+    jags.params <- c(jags.params, "mu")
+  }
+  if (monitor_has(monitor_spec, "log_lik")) {
+    jags.params <- c(jags.params, "log_lik")
   }
 
   # HM-level parameters
@@ -444,7 +451,7 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, interaction
         if (isTRUE(block$RE$cor) && length(block$RE$slopes) == 1) {
           jags.params <- c(jags.params, paste0("rho.hm.", i))
         }
-        if (monitor) {
+        if (monitor_has(monitor_spec, "random_effects")) {
           jags.params <- c(jags.params, paste0("re.hm.", i))
           for (s in seq_along(block$RE$slopes)) {
             jags.params <- c(jags.params, paste0("re.hm.", i, ".s", s))

@@ -42,7 +42,7 @@ coefPlot(
 - conf.level:
 
   Width of the equal-tailed credible interval. Default: 0.95. Other
-  levels require the models to be fitted with `monitor = TRUE` (see
+  levels require the models to use `monitor = "parameters"` (see
   [`tidy.bml`](https://benrosche.github.io/bml/reference/tidy.bml.md)).
 
 - component:

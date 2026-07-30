@@ -7,7 +7,8 @@
 \method{predict}{bml}(object, summary = TRUE, ...)
 }
 \arguments{
-\item{object}{A fitted \code{bml} model (fitted with \code{monitor = TRUE}).}
+\item{object}{A fitted \code{bml} model with
+\code{monitor = "predictive"}.}
 
 \item{summary}{Logical; if \code{TRUE} (default), return a summary matrix,
 else the draws matrix.}

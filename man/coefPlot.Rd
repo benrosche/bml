@@ -25,7 +25,7 @@ bottom). Default: all terms of the selected \code{component}.}
 \item{intercept}{Logical. Include the intercept? Default: \code{TRUE}.}
 
 \item{conf.level}{Width of the equal-tailed credible interval. Default: 0.95.
-Other levels require the models to be fitted with \code{monitor = TRUE}
+Other levels require the models to use \code{monitor = "parameters"}
 (see \code{\link{tidy.bml}}).}
 
 \item{component}{Which parameters to plot; passed to \code{\link{tidy.bml}}.

@@ -18,7 +18,7 @@ posterior_predict(object, ndraws = NULL, ...)
 
 - object:
 
-  A fitted `bml` model (fitted with `monitor = TRUE`).
+  A fitted `bml` model with `monitor = "predictive"`.
 
 - ...:
 

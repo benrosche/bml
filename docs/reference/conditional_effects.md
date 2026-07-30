@@ -19,7 +19,7 @@ conditional_effects(x, effects = NULL, resolution = 100, ...)
 
 - x:
 
-  A fitted `bml` model (fitted with `monitor = TRUE`).
+  A fitted `bml` model with `monitor = c("parameters", "fitted")`.
 
 - ...:
 

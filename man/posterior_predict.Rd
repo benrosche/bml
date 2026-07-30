@@ -10,7 +10,8 @@ posterior_predict(object, ...)
 \method{posterior_predict}{bml}(object, ndraws = NULL, ...)
 }
 \arguments{
-\item{object}{A fitted \code{bml} model (fitted with \code{monitor = TRUE}).}
+\item{object}{A fitted \code{bml} model with
+\code{monitor = "predictive"}.}
 
 \item{...}{Unused.}
 

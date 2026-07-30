@@ -31,7 +31,7 @@ bml(
   cores = 1,
   seed = NULL,
   run = TRUE,
-  monitor = TRUE,
+  monitor = "summary",
   modelfile = FALSE,
   ...
 )
@@ -110,14 +110,13 @@ bml(
 
 - monitor:
 
-  Logical; if `TRUE` (default), store full MCMC chains and
-  fitted/predicted/log-likelihood nodes. Required for most
-  post-estimation methods
-  ([`as_draws`](https://benrosche.github.io/bml/reference/as_draws.bml.md),
-  [`loo.bml`](https://benrosche.github.io/bml/reference/loo.bml.md),
-  [`posterior_predict.bml`](https://benrosche.github.io/bml/reference/posterior_predict.md),
-  [`monetPlot`](https://benrosche.github.io/bml/reference/monetPlot.md),
-  [`mcmcDiag`](https://benrosche.github.io/bml/reference/mcmcDiag.md)).
+  Character vector selecting retained posterior capabilities. The
+  default, `"summary"`, retains posterior summaries and convergence
+  diagnostics but no draws. Add `"parameters"`, `"random_effects"`,
+  `"weights"`, `"fitted"`, `"predictive"`, or `"log_lik"` as needed.
+  `"full"` stores all family-supported draws once in a compact
+  [`posterior::draws_array`](https://mc-stan.org/posterior/reference/draws_array.html);
+  `"jags"` explicitly retains the raw R2jags object.
 
 - modelfile:
 
@@ -136,8 +135,9 @@ bml(
 A list of class `"bml"` with elements `reg.table` (posterior summaries;
 labeled terms), `w` (weight matrices per block), `re.mm`/`re.hm` (random
 effects), `pred` (posterior predictive means), `fitted` (posterior means
-of the linear predictor), `input` (model metadata), and `jags.out` (full
-R2jags output when `monitor = TRUE`).
+of the linear predictor), `input` (model metadata), `diagnostics`,
+`storage`, `draws` (requested compact posterior draws), and `jags.out`
+(non-`NULL` only when `monitor = "jags"`).
 
 ## Details
 

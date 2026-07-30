@@ -8,7 +8,7 @@ monetPlot(bml, parameter, label = NULL, r = 2, yaxis = TRUE)
 }
 \arguments{
 \item{bml}{A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.
-Must be fitted with \code{monitor = TRUE} to store MCMC chains.}
+Must be fitted with \code{monitor = "parameters"}.}
 
 \item{parameter}{Character string specifying the parameter to plot. Must use the
 internal parameter name (i.e., row names from \code{bml$reg.table}). Examples:
@@ -64,13 +64,13 @@ Geweke, etc.).
 \dontrun{
 data(coalgov)
 
-# Fit model with monitoring enabled
+# Fit model with parameter draws retained
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
     hm(id = id(cid)),
   family = weibull(),
-  monitor = TRUE,  # Required for monetPlot
+  monitor = "parameters",  # Required for monetPlot
   data = coalgov
 )
 

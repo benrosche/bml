@@ -16,7 +16,7 @@
 #'   bottom). Default: all terms of the selected \code{component}.
 #' @param intercept Logical. Include the intercept? Default: \code{TRUE}.
 #' @param conf.level Width of the equal-tailed credible interval. Default: 0.95.
-#'   Other levels require the models to be fitted with \code{monitor = TRUE}
+#'   Other levels require the models to use \code{monitor = "parameters"}
 #'   (see \code{\link{tidy.bml}}).
 #' @param component Which parameters to plot; passed to \code{\link{tidy.bml}}.
 #'   Default: \code{"fixed"} (regression coefficients).

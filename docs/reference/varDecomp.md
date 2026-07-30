@@ -18,7 +18,7 @@ varDecomp(model, uncertainty = "sd", r = 2)
 
   A fitted model object of class `"bml"` returned by
   [`bml`](https://benrosche.github.io/bml/reference/bml.md). Must have
-  been fitted with `monitor = TRUE` (the default).
+  been fitted with `monitor = "parameters"`.
 
 - uncertainty:
 

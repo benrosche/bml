@@ -9,7 +9,7 @@ statistics.
 
 ``` r
 # S3 method for class 'bml'
-summary(object, r = 3, ...)
+summary(object, r = 3, diagnostics = TRUE, ...)
 ```
 
 ## Arguments
@@ -23,6 +23,11 @@ summary(object, r = 3, ...)
 
   Number of decimal places for rounding numeric output. Default: 3.
 
+- diagnostics:
+
+  Logical; include per-parameter R-hat and effective sample sizes in the
+  printed table? Default: `TRUE`.
+
 - ...:
 
   Additional arguments (currently unused).
@@ -34,13 +39,14 @@ estimates with the following columns:
 
 - `Parameter`: Labeled parameter names
 
-- `mean`: Posterior mean
+- `Estimate`: Posterior mean
 
-- `sd`: Posterior standard deviation
+- `Est.Error`: Posterior standard deviation
 
-- `lb`: Lower bound of 95% credible interval
+- `Q2.5`/`Q97.5`: 95% credible interval
 
-- `ub`: Upper bound of 95% credible interval
+- `Rhat`, `ESS_bulk`, and `ESS_tail`: convergence diagnostics when
+  `diagnostics = TRUE`
 
 The object includes metadata attributes printed above the table:
 
@@ -59,7 +65,7 @@ The object includes metadata attributes printed above the table:
 The summary method rounds all numeric values for readability while
 preserving the underlying structure and metadata from the fitted model.
 All columns remain accessible via standard data frame indexing (e.g.,
-`$Parameter`, `$mean`).
+`$Parameter`, `$Estimate`).
 
 For Cox models with piecewise baseline hazards (when `cox_intervals` is
 specified), the outcome description includes the number of intervals
@@ -101,12 +107,11 @@ summary(m1, r = 4)
 # Access specific columns
 s <- summary(m1)
 s$Parameter  # Parameter names
-s$mean       # Posterior means
-s$lb         # Lower credible bounds
+s$Estimate   # Posterior means
+s$Q2.5       # Lower credible bounds
 
-# Custom posterior summaries (requires monitor = TRUE)
-# Extract posterior draws as a tidy data frame
-draws <- coda::as.mcmc.list(m1$jags.out$BUGSoutput) |> as.matrix() |> as_tibble()
+# Custom posterior summaries (requires monitor = "parameters")
+draws <- posterior::as_draws_df(m1)
 
 # Select specific parameters and compute custom summaries
 draws |>

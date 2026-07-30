@@ -4,12 +4,15 @@
 \alias{summary.bml}
 \title{Summarize a fitted bml model}
 \usage{
-\method{summary}{bml}(object, r = 3, ...)
+\method{summary}{bml}(object, r = 3, diagnostics = TRUE, ...)
 }
 \arguments{
 \item{object}{A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.}
 
 \item{r}{Number of decimal places for rounding numeric output. Default: 3.}
+
+\item{diagnostics}{Logical; include per-parameter R-hat and effective sample
+sizes in the printed table? Default: \code{TRUE}.}
 
 \item{...}{Additional arguments (currently unused).}
 }
@@ -18,10 +21,11 @@ A data frame of class \code{"bml_summary"} containing rounded parameter
   estimates with the following columns:
   \itemize{
     \item \code{Parameter}: Labeled parameter names
-    \item \code{mean}: Posterior mean
-    \item \code{sd}: Posterior standard deviation
-    \item \code{lb}: Lower bound of 95\% credible interval
-    \item \code{ub}: Upper bound of 95\% credible interval
+    \item \code{Estimate}: Posterior mean
+    \item \code{Est.Error}: Posterior standard deviation
+    \item \code{Q2.5}/\code{Q97.5}: 95\% credible interval
+    \item \code{Rhat}, \code{ESS_bulk}, and \code{ESS_tail}: convergence
+      diagnostics when \code{diagnostics = TRUE}
   }
 
   The object includes metadata attributes printed above the table:
@@ -41,7 +45,8 @@ intervals, along with model information and convergence statistics.
 \details{
 The summary method rounds all numeric values for readability while preserving
 the underlying structure and metadata from the fitted model. All columns remain
-accessible via standard data frame indexing (e.g., \code{$Parameter}, \code{$mean}).
+accessible via standard data frame indexing (e.g., \code{$Parameter},
+\code{$Estimate}).
 
 For Cox models with piecewise baseline hazards (when \code{cox_intervals} is
 specified), the outcome description includes the number of intervals used.
@@ -68,12 +73,11 @@ summary(m1, r = 4)
 # Access specific columns
 s <- summary(m1)
 s$Parameter  # Parameter names
-s$mean       # Posterior means
-s$lb         # Lower credible bounds
+s$Estimate   # Posterior means
+s$Q2.5       # Lower credible bounds
 
-# Custom posterior summaries (requires monitor = TRUE)
-# Extract posterior draws as a tidy data frame
-draws <- coda::as.mcmc.list(m1$jags.out$BUGSoutput) |> as.matrix() |> as_tibble()
+# Custom posterior summaries (requires monitor = "parameters")
+draws <- posterior::as_draws_df(m1)
 
 # Select specific parameters and compute custom summaries
 draws |>

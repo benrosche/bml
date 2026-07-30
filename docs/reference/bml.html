@@ -29,7 +29,7 @@ JAGS must be installed separately: https://sourceforge.net/projects/mcmc-jags/."
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,7 +87,7 @@ interactions via named blocks.</p>
 <span>  cores <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  run <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  monitor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  monitor <span class="op">=</span> <span class="st">"summary"</span>,</span>
 <span>  modelfile <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -160,11 +160,14 @@ data, and monitors without fitting (see also <code><a href="make_jagscode.html">
 
 
 <dt id="arg-monitor">monitor<a class="anchor" aria-label="anchor" href="#arg-monitor"></a></dt>
-<dd><p>Logical; if <code>TRUE</code> (default), store full MCMC chains and
-fitted/predicted/log-likelihood nodes. Required for most post-estimation
-methods (<code><a href="as_draws.bml.html">as_draws</a></code>, <code><a href="loo.bml.html">loo.bml</a></code>,
-<code><a href="posterior_predict.html">posterior_predict.bml</a></code>, <code><a href="monetPlot.html">monetPlot</a></code>,
-<code><a href="mcmcDiag.html">mcmcDiag</a></code>).</p></dd>
+<dd><p>Character vector selecting retained posterior capabilities.
+The default, <code>"summary"</code>, retains posterior summaries and convergence
+diagnostics but no draws. Add <code>"parameters"</code>,
+<code>"random_effects"</code>, <code>"weights"</code>, <code>"fitted"</code>,
+<code>"predictive"</code>, or <code>"log_lik"</code> as needed. <code>"full"</code> stores
+all family-supported draws once in a compact
+<code><a href="https://mc-stan.org/posterior/reference/draws_array.html" class="external-link">posterior::draws_array</a></code>; <code>"jags"</code> explicitly retains the raw
+R2jags object.</p></dd>
 
 
 <dt id="arg-modelfile">modelfile<a class="anchor" aria-label="anchor" href="#arg-modelfile"></a></dt>
@@ -185,8 +188,9 @@ instead of generating it.</p></dd>
   (posterior summaries; labeled terms), <code>w</code> (weight matrices per block),
   <code>re.mm</code>/<code>re.hm</code> (random effects), <code>pred</code> (posterior
   predictive means), <code>fitted</code> (posterior means of the linear predictor),
-  <code>input</code> (model metadata), and <code>jags.out</code> (full R2jags output when
-  <code>monitor = TRUE</code>).</p>
+  <code>input</code> (model metadata), <code>diagnostics</code>, <code>storage</code>,
+  <code>draws</code> (requested compact posterior draws), and <code>jags.out</code>
+  (non-<code>NULL</code> only when <code>monitor = "jags"</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

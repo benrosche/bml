@@ -16,8 +16,7 @@ log_lik(object, ...)
 - object:
 
   A fitted `bml` model. Available for gaussian and bernoulli families
-  fitted with `monitor = TRUE` (the JAGS model monitors a pointwise
-  `log_lik` node).
+  fitted with `monitor = "log_lik"`.
 
 - ...:
 

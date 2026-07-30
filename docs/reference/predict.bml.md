@@ -17,7 +17,7 @@ predict(object, summary = TRUE, ...)
 
 - object:
 
-  A fitted `bml` model (fitted with `monitor = TRUE`).
+  A fitted `bml` model with `monitor = "predictive"`.
 
 - summary:
 

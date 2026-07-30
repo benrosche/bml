@@ -31,8 +31,8 @@ generics::glance
 #'   \code{conf.low}/\code{conf.high}? Default: \code{TRUE}.
 #' @param conf.level Width of the equal-tailed credible interval. Default: 0.95,
 #'   which is read directly from the fitted model. Other levels are computed
-#'   from the posterior draws and therefore require the model to be fitted with
-#'   \code{monitor = TRUE}.
+#'   from the posterior draws and therefore require
+#'   \code{monitor = "parameters"}.
 #' @param component Which parameters to return:
 #'   \itemize{
 #'     \item \code{"all"} (default): all of the below
@@ -62,7 +62,7 @@ generics::glance
 #'
 #' tidy(m1)                      # regression coefficients
 #' tidy(m1, component = "all")   # including weight and variance parameters
-#' tidy(m1, conf.level = 0.9)    # 90% credible intervals (requires monitor = TRUE)
+#' tidy(m1, conf.level = 0.9)    # requires monitor = "parameters"
 #'
 #' # Multi-model comparison table (see also bmlCompare()):
 #' models <- list(base = m1, weighted = m2)
@@ -109,16 +109,17 @@ tidy.bml <- function(x, conf.int = TRUE, conf.level = 0.95,
     std.error = rt$sd,
     conf.low = rt$lb,
     conf.high = rt$ub,
-    component = comp
+    component = comp,
+    rhat = x$diagnostics$rhat[match(jagsnames, x$diagnostics$node)],
+    ess_bulk = x$diagnostics$ess_bulk[match(jagsnames, x$diagnostics$node)],
+    ess_tail = x$diagnostics$ess_tail[match(jagsnames, x$diagnostics$node)],
+    convergence = x$diagnostics$convergence[match(jagsnames, x$diagnostics$node)]
   )
 
   # Recompute credible intervals from posterior draws for non-default levels
   if (conf.int && !isTRUE(all.equal(conf.level, 0.95))) {
-    sims <- x$jags.out$BUGSoutput$sims.matrix
-    if (is.null(sims)) {
-      stop("Credible levels other than 0.95 require posterior draws. ",
-           "Please fit the model with monitor = TRUE.", call. = FALSE)
-    }
+    bml_require_capabilities(x, "parameters", "tidy")
+    sims <- bml_draws_matrix(x, "parameters", "tidy")
     alpha <- (1 - conf.level) / 2
     available <- jagsnames %in% colnames(sims)
     qs <- apply(sims[, jagsnames[available], drop = FALSE], 2,
@@ -155,6 +156,9 @@ tidy.bml <- function(x, conf.int = TRUE, conf.level = 0.95,
 #'     \item \code{DIC}: Deviance Information Criterion
 #'     \item \code{family}: Outcome family
 #'     \item \code{iter}, \code{chains}: MCMC settings
+#'     \item \code{storage}, \code{ndraws}: retained posterior information
+#'     \item \code{max_rhat}, \code{min_ess_bulk}, \code{min_ess_tail},
+#'       \code{n_flagged}, and \code{convergence}: model-level diagnostics
 #'   }
 #'
 #' @examples
@@ -172,12 +176,21 @@ glance.bml <- function(x, ...) {
     stop("No estimates found. Please fit the model with run = TRUE.", call. = FALSE)
   }
 
+  diagnostics <- bml_diagnostic_overview(x)
+
   tibble::tibble(
     nobs = x$input$n.main,
     n.members = x$input$n.mm,
     DIC = as.numeric(attr(x$reg.table, "DIC")),
     family = x$input$family,
     iter = x$input$iter,
-    chains = x$input$chains
+    chains = x$input$chains,
+    storage = x$storage$label,
+    ndraws = x$storage$ndraws,
+    max_rhat = diagnostics$max_rhat,
+    min_ess_bulk = diagnostics$min_ess_bulk,
+    min_ess_tail = diagnostics$min_ess_tail,
+    n_flagged = diagnostics$n_flagged,
+    convergence = diagnostics$convergence
   )
 }

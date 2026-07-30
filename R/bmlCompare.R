@@ -45,12 +45,13 @@ nameModels <- function(models, exprs) {
 #'   the same length as the selected \code{terms} (so supply \code{terms} when
 #'   using \code{labels}). Default \code{NULL}: keep the original term labels.
 #' @param stats Goodness-of-fit rows to append, in order. Any of \code{"N"}
-#'   (main-level units), \code{"n.members"} (member-level units), and
-#'   \code{"DIC"}. Default: \code{c("N", "DIC")}. Use \code{character(0)} for none.
+#'   (main-level units), \code{"n.members"} (member-level units),
+#'   \code{"DIC"}, and \code{"Convergence"}. Default:
+#'   \code{c("N", "DIC", "Convergence")}. Use \code{character(0)} for none.
 #' @param digits Number of decimal places for the estimate and interval bounds.
 #'   Default: 3.
 #' @param conf.level Width of the equal-tailed credible interval. Default: 0.95.
-#'   Other levels require the models to be fitted with \code{monitor = TRUE}
+#'   Other levels require the models to use \code{monitor = "parameters"}
 #'   (see \code{\link{tidy.bml}}).
 #'
 #' @return A \code{data.frame} whose first column \code{Term} holds the term
@@ -90,18 +91,29 @@ nameModels <- function(models, exprs) {
 #' @author Benjamin Rosche \email{benrosche@@nyu.edu}
 #' @export bmlCompare
 bmlCompare <- function(..., component = "all", terms = NULL, labels = NULL,
-                       stats = c("N", "DIC"), digits = 3, conf.level = 0.95) {
+                       stats = c("N", "DIC", "Convergence"),
+                       digits = 3, conf.level = 0.95) {
 
   models <- nameModels(list(...), sapply(substitute(list(...))[-1], deparse))
   model_names <- names(models)
 
-  stats <- match.arg(stats, c("N", "n.members", "DIC"), several.ok = TRUE)
+  stats <- match.arg(
+    stats,
+    c("N", "n.members", "DIC", "Convergence"),
+    several.ok = TRUE
+  )
 
   # Long per-model estimates and fit statistics
   long <- purrr::imap_dfr(models, function(m, name) {
     g <- glance(m)
     tidy(m, conf.level = conf.level, component = component) %>%
-      dplyr::mutate(model = name, N = g$nobs, n.members = g$n.members, DIC = g$DIC)
+      dplyr::mutate(
+        model = name,
+        N = g$nobs,
+        n.members = g$n.members,
+        DIC = g$DIC,
+        Convergence = g$convergence
+      )
   })
 
   # Term selection and ordering
@@ -147,7 +159,8 @@ bmlCompare <- function(..., component = "all", terms = NULL, labels = NULL,
     stat_rows <- lapply(stats, function(s) {
       vals <- vapply(model_names, function(mn) {
         gv <- long[[s]][long$model == mn][1]
-        if (s == "DIC") formatC(gv, format = "f", digits = 0)   # round DIC to integer
+        if (s == "Convergence") as.character(gv)
+        else if (s == "DIC") formatC(gv, format = "f", digits = 0)
         else format(gv, big.mark = "", trim = TRUE)
       }, character(1))
       row <- as.data.frame(c(list(Term = s), as.list(vals)),

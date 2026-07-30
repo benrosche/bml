@@ -14,10 +14,10 @@ skip_if_no_jags <- function() {
 # Minimal fitted gaussian model with an mm block (cached across tests within a run)
 .test_model_cache <- new.env(parent = emptyenv())
 
-create_test_model <- function(monitor = TRUE) {
+create_test_model <- function(monitor = "full") {
   skip_if_no_jags()
 
-  key <- paste0("m_", monitor)
+  key <- paste0("m_", paste(monitor, collapse = "_"))
   if (!is.null(.test_model_cache[[key]])) return(.test_model_cache[[key]])
 
   m <- tryCatch({

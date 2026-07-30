@@ -11,7 +11,7 @@ pp_check(object, ...)
 }
 \arguments{
 \item{object}{A fitted \code{bml} model (gaussian or bernoulli, fitted with
-\code{monitor = TRUE}).}
+\code{monitor = "predictive"}).}
 
 \item{...}{Passed to the bayesplot function.}
 

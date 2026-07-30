@@ -117,6 +117,7 @@ test_that("estimated weights fit with class-w prior; weight matrix returned", {
          w = w(~ ilogit(b0 + b1 * pseat), scale = TRUE), RE = FALSE),
     data = coalgov, family = gaussian(),
     prior = prior(normal(0, 1), class = "w"),
+    monitor = "parameters",
     iter = 1000, warmup = 400, chains = 2, seed = 4
   )))
 
@@ -134,6 +135,7 @@ test_that("random slopes fit (independent and correlated)", {
     dur_wkb ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = re(1 + cohesion)),
     data = coalgov, family = gaussian(),
+    monitor = "random_effects",
     iter = 800, warmup = 300, chains = 2, seed = 5
   )))
   expect_true(any(grepl("sd\\(cohesion\\)", m$reg.table$Parameter)))
@@ -144,6 +146,7 @@ test_that("random slopes fit (independent and correlated)", {
       mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n),
          RE = re(1 + cohesion, cor = TRUE)),
     data = coalgov, family = gaussian(),
+    monitor = "random_effects",
     iter = 800, warmup = 300, chains = 2, seed = 6
   )))
   expect_true(any(grepl("^cor\\(Intercept,cohesion\\)", mc$reg.table$Parameter)))
@@ -177,6 +180,7 @@ test_that("bernoulli family fits and supports waic", {
     event_wkb ~ 1 + majority +
       mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = FALSE),
     data = coalgov, family = bernoulli(),
+    monitor = "log_lik",
     iter = 800, warmup = 300, chains = 2, seed = 8
   )))
   expect_true("majority" %in% rownames(fixef(m)))
@@ -191,6 +195,7 @@ test_that("time-indexed AR random walk fits", {
       mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n),
          RE = re(1, ar = gid)),
     data = coalgov, family = gaussian(),
+    monitor = "random_effects",
     iter = 800, warmup = 300, chains = 2, seed = 12
   )))
   expect_true(any(grepl("^sd\\(Intercept\\)", m$reg.table$Parameter)))

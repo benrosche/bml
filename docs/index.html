@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,6 +112,18 @@
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Parties (<code>pid</code>) can appear in multiple governments (<code>gid</code>), and the party-level covariate <code>org_structure</code> enters the model through the multiple-membership term <code><a href="reference/mm.html">mm()</a></code>. The weights are set to <code>w ~ 1 / n</code> (equal weights across the n parties in a coalition), and party-specific random effects are included via <code>RE = TRUE</code>.</p>
 </div>
+<div class="section level3">
+<h3 id="posterior-storage">Posterior storage<a class="anchor" aria-label="anchor" href="#posterior-storage"></a>
+</h3>
+<p>By default, <code><a href="reference/bml.html">bml()</a></code> retains the coefficient table and compact convergence diagnostics, but not the underlying chains. Request only the posterior content needed downstream:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/bml.html">bml</a></span><span class="op">(</span><span class="va">...</span>, monitor <span class="op">=</span> <span class="st">"parameters"</span><span class="op">)</span>                    <span class="co"># diagnostics and custom intervals</span></span>
+<span><span class="fu"><a href="reference/bml.html">bml</a></span><span class="op">(</span><span class="va">...</span>, monitor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"parameters"</span>, <span class="st">"log_lik"</span><span class="op">)</span><span class="op">)</span>      <span class="co"># plus LOO/WAIC</span></span>
+<span><span class="fu"><a href="reference/bml.html">bml</a></span><span class="op">(</span><span class="va">...</span>, monitor <span class="op">=</span> <span class="st">"predictive"</span><span class="op">)</span>                    <span class="co"># posterior predictive checks</span></span>
+<span><span class="fu"><a href="reference/bml.html">bml</a></span><span class="op">(</span><span class="va">...</span>, monitor <span class="op">=</span> <span class="st">"full"</span><span class="op">)</span>                          <span class="co"># every supported draw, stored once</span></span>
+<span><span class="fu"><a href="reference/bml.html">bml</a></span><span class="op">(</span><span class="va">...</span>, monitor <span class="op">=</span> <span class="st">"jags"</span><span class="op">)</span>                          <span class="co"># complete raw R2jags object</span></span></code></pre></div>
+<p>Capabilities can also include <code>"random_effects"</code>, <code>"weights"</code>, and <code>"fitted"</code>. The default <code>monitor = "summary"</code> keeps fitted objects small while preserving rank-normalized R-hat, bulk ESS, tail ESS, and Monte Carlo standard errors for the reported parameters.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
@@ -122,7 +134,7 @@
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>Install the stable version from CRAN:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"bml"</span><span class="op">)</span></span></code></pre></div>
 <p>See the <a href="https://benrosche.github.io/bml/articles/installation.html">installation vignette</a> for detailed instructions including JAGS setup.</p>
 </div>

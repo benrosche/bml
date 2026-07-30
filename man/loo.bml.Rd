@@ -15,7 +15,8 @@
 A \code{loo} object.
 }
 \description{
-PSIS-LOO via the \pkg{loo} package, computed from the monitored pointwise
+PSIS-LOO via the \pkg{loo} package, computed from the retained pointwise
 log-likelihood. Available for gaussian and bernoulli families fitted with
-\code{monitor = TRUE}. Compare models with \code{loo::loo_compare()}.
+\code{monitor = "log_lik"}. Compare models with
+\code{loo::loo_compare()}.
 }

@@ -11,6 +11,7 @@
 ^doc$
 ^Meta$
 ^\.claude$
+^\.vscode$
 ^create$
 ^ext$
 ^README\.html$

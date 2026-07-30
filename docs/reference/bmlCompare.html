@@ -31,7 +31,7 @@ on bml models."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@ on bml models.</p>
 <span>  component <span class="op">=</span> <span class="st">"all"</span>,</span>
 <span>  terms <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  stats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"N"</span>, <span class="st">"DIC"</span><span class="op">)</span>,</span>
+<span>  stats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"N"</span>, <span class="st">"DIC"</span>, <span class="st">"Convergence"</span><span class="op">)</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  conf.level <span class="op">=</span> <span class="fl">0.95</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -121,8 +121,9 @@ using <code>labels</code>). Default <code>NULL</code>: keep the original term la
 
 <dt id="arg-stats">stats<a class="anchor" aria-label="anchor" href="#arg-stats"></a></dt>
 <dd><p>Goodness-of-fit rows to append, in order. Any of <code>"N"</code>
-(main-level units), <code>"n.members"</code> (member-level units), and
-<code>"DIC"</code>. Default: <code>c("N", "DIC")</code>. Use <code>character(0)</code> for none.</p></dd>
+(main-level units), <code>"n.members"</code> (member-level units),
+<code>"DIC"</code>, and <code>"Convergence"</code>. Default:
+<code>c("N", "DIC", "Convergence")</code>. Use <code>character(0)</code> for none.</p></dd>
 
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
@@ -132,7 +133,7 @@ Default: 3.</p></dd>
 
 <dt id="arg-conf-level">conf.level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
 <dd><p>Width of the equal-tailed credible interval. Default: 0.95.
-Other levels require the models to be fitted with <code>monitor = TRUE</code>
+Other levels require the models to use <code>monitor = "parameters"</code>
 (see <code><a href="tidy.bml.html">tidy.bml</a></code>).</p></dd>
 
 </dl></div>

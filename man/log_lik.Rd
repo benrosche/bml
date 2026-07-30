@@ -11,8 +11,7 @@ log_lik(object, ...)
 }
 \arguments{
 \item{object}{A fitted \code{bml} model. Available for gaussian and
-bernoulli families fitted with \code{monitor = TRUE} (the JAGS model
-monitors a pointwise \code{log_lik} node).}
+bernoulli families fitted with \code{monitor = "log_lik"}.}
 
 \item{...}{Unused.}
 }

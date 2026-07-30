@@ -35,6 +35,11 @@ A one-row `tibble` with columns:
 
 - `iter`, `chains`: MCMC settings
 
+- `storage`, `ndraws`: retained posterior information
+
+- `max_rhat`, `min_ess_bulk`, `min_ess_tail`, `n_flagged`, and
+  `convergence`: model-level diagnostics
+
 ## See also
 
 [`bml`](https://benrosche.github.io/bml/reference/bml.md),

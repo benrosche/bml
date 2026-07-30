@@ -1,3 +1,20 @@
+# bml 0.11.0
+
+## Compact posterior storage
+
+* `monitor` is now capability-based and defaults to `"summary"`, which retains
+  estimates and convergence diagnostics without retaining posterior draws.
+* Draws requested through `"parameters"`, `"random_effects"`, `"weights"`,
+  `"fitted"`, `"predictive"`, or `"log_lik"` are stored once in a compact
+  `posterior::draws_array`. `"full"` selects every family-supported capability.
+* `monitor = "jags"` is the explicit escape hatch for retaining the complete
+  raw R2jags object. Logical `monitor` values are no longer accepted.
+* Summary-only fits retain rank-normalized R-hat, bulk/tail ESS, and Monte Carlo
+  standard errors for every reported parameter. `summary()`, `tidy()`,
+  `glance()`, and `bmlCompare()` expose compact convergence information.
+* Post-estimation methods now report the exact posterior capability needed when
+  a fit did not retain the required draws.
+
 # bml 0.10.0
 
 This release redesigns the model-specification grammar around the micro-macro

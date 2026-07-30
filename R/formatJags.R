@@ -2,7 +2,7 @@
 # Function formatJags
 # ================================================================================================ #
 
-formatJags <- function(jags.out, monitor, Ns, Xs, mm_blocks, main, hm_blocks, interactions,
+formatJags <- function(jags.out, monitor_spec, Ns, Xs, mm_blocks, main, hm_blocks, interactions,
                        family, cox_intervals = NULL) {
 
   # ========================================================================================== #
@@ -12,6 +12,11 @@ formatJags <- function(jags.out, monitor, Ns, Xs, mm_blocks, main, hm_blocks, in
   has_mm <- !is.null(mm_blocks) && length(mm_blocks) > 0
   has_hm <- !is.null(hm_blocks) && length(hm_blocks) > 0
   has_int <- length(interactions %||% list()) > 0
+  extract_re <- monitor_has(monitor_spec, "random_effects")
+  extract_weights <- monitor_has(monitor_spec, "weights") ||
+    monitor_has(monitor_spec, "parameters")
+  extract_pred <- monitor_has(monitor_spec, "predictive")
+  extract_fitted <- monitor_has(monitor_spec, "fitted")
 
   n.main     <- Ns$n.main
   n.hm       <- Ns$n.hm
@@ -81,11 +86,9 @@ formatJags <- function(jags.out, monitor, Ns, Xs, mm_blocks, main, hm_blocks, in
   pred <- c()
   fitted_mu <- c()
 
-  if (monitor) {
+  # MM-level random effects (per mmid group; intercepts + slopes) ------------------------- #
 
-    # MM-level random effects (per mmid group; intercepts + slopes) ----------------------- #
-
-    if (has_mm && !is.null(all_mmid_names)) {
+    if (extract_re && has_mm && !is.null(all_mmid_names)) {
       for (g in seq_along(all_mmid_names)) {
         block_indices <- mmid_to_blocks[[all_mmid_names[g]]]
         re_idx <- block_indices[sapply(block_indices, function(i) !is.null(mm_blocks[[i]]$RE))]
@@ -133,7 +136,7 @@ formatJags <- function(jags.out, monitor, Ns, Xs, mm_blocks, main, hm_blocks, in
 
     # HM-level random effects ---------------------------------------------------------------- #
 
-    if (has_hm) {
+    if (extract_re && has_hm) {
       for (k in seq_along(hm_blocks)) {
         block <- hm_blocks[[k]]
         if (!is.null(block$RE)) {
@@ -183,10 +186,12 @@ formatJags <- function(jags.out, monitor, Ns, Xs, mm_blocks, main, hm_blocks, in
 
         if (isTRUE(Xs$w.is.precomp[[k]])) {
           w_raw <- Xs$w.precomp[[k]]
-        } else {
+        } else if (extract_weights) {
           w_raw <- reg.table %>%
             dplyr::filter(startsWith(name, paste0("w.", k, "["))) %>%
             dplyr::pull(mean)
+        } else {
+          w_raw <- numeric()
         }
 
         if (length(w_raw) > 0) {
@@ -214,17 +219,23 @@ formatJags <- function(jags.out, monitor, Ns, Xs, mm_blocks, main, hm_blocks, in
 
     # Predicted values and fitted mu ----------------------------------------------------------- #
 
-    pred <- reg.table %>%
-      dplyr::filter(stringr::str_detect(name, "^pred\\[")) %>%
-      dplyr::pull(mean)
+    if (extract_pred) {
+      pred <- reg.table %>%
+        dplyr::filter(stringr::str_detect(name, "^pred\\[")) %>%
+        dplyr::pull(mean)
+    }
 
-    fitted_mu <- reg.table %>%
-      dplyr::filter(stringr::str_detect(name, "^mu\\[")) %>%
-      dplyr::pull(mean)
+    if (extract_fitted) {
+      fitted_mu <- reg.table %>%
+        dplyr::filter(stringr::str_detect(name, "^mu\\[")) %>%
+        dplyr::pull(mean)
+    }
 
     reg.table <- reg.table %>%
-      dplyr::filter(!stringr::str_detect(name, "^(pred|mu|log_lik)\\["))
-  }
+      dplyr::filter(!stringr::str_detect(
+        name,
+        "^(pred|mu|log_lik|w\\.\\d+)\\[|^re\\.(mm|hm)\\.\\d+(\\.s\\d+)?\\["
+      ))
 
   # ========================================================================================== #
   # Rename parameters to user-facing labels
@@ -512,23 +523,12 @@ formatJags <- function(jags.out, monitor, Ns, Xs, mm_blocks, main, hm_blocks, in
   # Return
   # ========================================================================================== #
 
-  if (monitor) {
-    return(list(
-      reg.table = reg.table,
-      w         = w,
-      re.mm     = re.mm,
-      re.hm     = re.hm,
-      pred      = pred,
-      fitted    = fitted_mu
-    ))
-  } else {
-    return(list(
-      reg.table = reg.table,
-      w         = list(),
-      re.mm     = list(),
-      re.hm     = list(),
-      pred      = c(),
-      fitted    = c()
-    ))
-  }
+  list(
+    reg.table = reg.table,
+    w         = w,
+    re.mm     = re.mm,
+    re.hm     = re.hm,
+    pred      = pred,
+    fitted    = fitted_mu
+  )
 }

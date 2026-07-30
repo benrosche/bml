@@ -8,7 +8,7 @@
 #' summaries.
 #'
 #' @param model A fitted model object of class \code{"bml"} returned by \code{\link{bml}}.
-#'   Must have been fitted with \code{monitor = TRUE} (the default).
+#'   Must have been fitted with \code{monitor = "parameters"}.
 #' @param uncertainty Uncertainty measure to report. One of \code{"sd"} (posterior
 #'   standard deviation, the default), \code{"mad"} (median absolute deviation), or
 #'   \code{"ci"} (95\% credible interval with lower/upper bounds).
@@ -94,12 +94,10 @@ varDecomp <- function(model, uncertainty = "sd", r = 2) {
   if (!inherits(model, "bml")) {
     stop("'model' must be a fitted bml object.", call. = FALSE)
   }
-  if (is.null(model$jags.out) || is.null(model$jags.out$BUGSoutput$sims.matrix)) {
-    stop("Posterior samples not available. Ensure monitor = TRUE when fitting the model.", call. = FALSE)
-  }
+  bml_require_capabilities(model, "parameters", "varDecomp")
   uncertainty <- match.arg(uncertainty, c("sd", "mad", "ci"))
 
-  sims <- model$jags.out$BUGSoutput$sims.matrix
+  sims <- bml_draws_matrix(model, "parameters", "varDecomp")
   family <- model$input$family
   col_names <- colnames(sims)
 

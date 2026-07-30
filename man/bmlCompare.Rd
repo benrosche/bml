@@ -9,7 +9,7 @@ bmlCompare(
   component = "all",
   terms = NULL,
   labels = NULL,
-  stats = c("N", "DIC"),
+  stats = c("N", "DIC", "Convergence"),
   digits = 3,
   conf.level = 0.95
 )
@@ -35,14 +35,15 @@ the same length as the selected \code{terms} (so supply \code{terms} when
 using \code{labels}). Default \code{NULL}: keep the original term labels.}
 
 \item{stats}{Goodness-of-fit rows to append, in order. Any of \code{"N"}
-(main-level units), \code{"n.members"} (member-level units), and
-\code{"DIC"}. Default: \code{c("N", "DIC")}. Use \code{character(0)} for none.}
+(main-level units), \code{"n.members"} (member-level units),
+\code{"DIC"}, and \code{"Convergence"}. Default:
+\code{c("N", "DIC", "Convergence")}. Use \code{character(0)} for none.}
 
 \item{digits}{Number of decimal places for the estimate and interval bounds.
 Default: 3.}
 
 \item{conf.level}{Width of the equal-tailed credible interval. Default: 0.95.
-Other levels require the models to be fitted with \code{monitor = TRUE}
+Other levels require the models to use \code{monitor = "parameters"}
 (see \code{\link{tidy.bml}}).}
 }
 \value{

@@ -7,8 +7,8 @@
 mcmcDiag(bml.out, parameters, lag = 50)
 }
 \arguments{
-\item{bml.out}{A model fit object containing JAGS output, typically as returned
-by \code{R2jags::jags()}, with component \code{$jags.out$BUGSoutput}.}
+\item{bml.out}{A fitted \code{bml} model with
+\code{monitor = "parameters"}.}
 
 \item{parameters}{Character vector of parameter names (or patterns) to extract.
 These may be exact names or patterns (e.g., a prefix like \code{"b"} that
@@ -36,7 +36,7 @@ include Gelman–Rubin \eqn{\hat{R}}, Geweke z-scores, Heidelberger-Welch
 stationarity p-values, and autocorrelation at a user-specified lag.
 }
 \details{
-Internally, the function converts the BUGS/JAGS output to a
+Internally, the function converts the retained parameter draws to a
 \code{coda::mcmc.list}, then computes per-chain
 diagnostics and averages them across chains for each parameter:
 \itemize{
@@ -64,7 +64,7 @@ m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE),
   family = weibull(),
-  monitor = TRUE,
+  monitor = "parameters",
   data = coalgov
 )
 

@@ -17,7 +17,7 @@ intervals, along with model information and convergence statistics."></head><bod
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,7 @@ intervals, along with model information and convergence statistics.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'bml'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, r <span class="op">=</span> <span class="fl">3</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, r <span class="op">=</span> <span class="fl">3</span>, diagnostics <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,6 +72,11 @@ intervals, along with model information and convergence statistics.</p>
 <dd><p>Number of decimal places for rounding numeric output. Default: 3.</p></dd>
 
 
+<dt id="arg-diagnostics">diagnostics<a class="anchor" aria-label="anchor" href="#arg-diagnostics"></a></dt>
+<dd><p>Logical; include per-parameter R-hat and effective sample
+sizes in the printed table? Default: <code>TRUE</code>.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments (currently unused).</p></dd>
 
@@ -80,10 +85,11 @@ intervals, along with model information and convergence statistics.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame of class <code>"bml_summary"</code> containing rounded parameter
   estimates with the following columns:</p><ul><li><p><code>Parameter</code>: Labeled parameter names</p></li>
-<li><p><code>mean</code>: Posterior mean</p></li>
-<li><p><code>sd</code>: Posterior standard deviation</p></li>
-<li><p><code>lb</code>: Lower bound of 95% credible interval</p></li>
-<li><p><code>ub</code>: Upper bound of 95% credible interval</p></li>
+<li><p><code>Estimate</code>: Posterior mean</p></li>
+<li><p><code>Est.Error</code>: Posterior standard deviation</p></li>
+<li><p><code>Q2.5</code>/<code>Q97.5</code>: 95% credible interval</p></li>
+<li><p><code>Rhat</code>, <code>ESS_bulk</code>, and <code>ESS_tail</code>: convergence
+      diagnostics when <code>diagnostics = TRUE</code></p></li>
 </ul><p>The object includes metadata attributes printed above the table:</p><ul><li><p>Outcome family and link function</p></li>
 <li><p>Estimate type (posterior mean from MCMC)</p></li>
 <li><p>Credible interval specification (95% equal-tailed)</p></li>
@@ -94,7 +100,8 @@ intervals, along with model information and convergence statistics.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The summary method rounds all numeric values for readability while preserving
 the underlying structure and metadata from the fitted model. All columns remain
-accessible via standard data frame indexing (e.g., <code>$Parameter</code>, <code>$mean</code>).</p>
+accessible via standard data frame indexing (e.g., <code>$Parameter</code>,
+<code>$Estimate</code>).</p>
 <p>For Cox models with piecewise baseline hazards (when <code>cox_intervals</code> is
 specified), the outcome description includes the number of intervals used.</p>
     </div>
@@ -131,12 +138,11 @@ specified), the outcome description includes the number of intervals used.</p>
 <span class="r-in"><span><span class="co"># Access specific columns</span></span></span>
 <span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">m1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">Parameter</span>  <span class="co"># Parameter names</span></span></span>
-<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">mean</span>       <span class="co"># Posterior means</span></span></span>
-<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">lb</span>         <span class="co"># Lower credible bounds</span></span></span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">Estimate</span>   <span class="co"># Posterior means</span></span></span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">Q2.5</span>       <span class="co"># Lower credible bounds</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Custom posterior summaries (requires monitor = TRUE)</span></span></span>
-<span class="r-in"><span><span class="co"># Extract posterior draws as a tidy data frame</span></span></span>
-<span class="r-in"><span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu">coda</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/coda/man/mcmc.list.html" class="external-link">as.mcmc.list</a></span><span class="op">(</span><span class="va">m1</span><span class="op">$</span><span class="va">jags.out</span><span class="op">$</span><span class="va">BUGSoutput</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">as_tibble</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Custom posterior summaries (requires monitor = "parameters")</span></span></span>
+<span class="r-in"><span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df</a></span><span class="op">(</span><span class="va">m1</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Select specific parameters and compute custom summaries</span></span></span>
 <span class="r-in"><span><span class="va">draws</span> <span class="op">|&gt;</span></span></span>

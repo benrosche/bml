@@ -7,7 +7,8 @@
 \method{ranef}{bml}(object, ...)
 }
 \arguments{
-\item{object}{A fitted \code{bml} model (fitted with \code{monitor = TRUE}).}
+\item{object}{A fitted \code{bml} model with
+\code{monitor = "random_effects"}.}
 
 \item{...}{Unused.}
 }

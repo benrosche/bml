@@ -15,9 +15,7 @@ mcmcDiag(bml.out, parameters, lag = 50)
 
 - bml.out:
 
-  A model fit object containing JAGS output, typically as returned by
-  [`R2jags::jags()`](https://rdrr.io/pkg/R2jags/man/jags.html), with
-  component `$jags.out$BUGSoutput`.
+  A fitted `bml` model with `monitor = "parameters"`.
 
 - parameters:
 
@@ -44,7 +42,7 @@ include: `"Gelman/Rubin convergence statistic"`, `"Geweke z-score"`,
 
 ## Details
 
-Internally, the function converts the BUGS/JAGS output to a
+Internally, the function converts the retained parameter draws to a
 [`coda::mcmc.list`](https://rdrr.io/pkg/coda/man/mcmc.list.html), then
 computes per-chain diagnostics and averages them across chains for each
 parameter:
@@ -103,7 +101,7 @@ m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE),
   family = weibull(),
-  monitor = TRUE,
+  monitor = "parameters",
   data = coalgov
 )
 

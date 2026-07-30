@@ -14,7 +14,7 @@ make_jagscode(
   data,
   family = stats::gaussian(),
   prior = NULL,
-  monitor = TRUE
+  monitor = "summary"
 )
 
 make_jagsdata(
@@ -22,7 +22,7 @@ make_jagsdata(
   data,
   family = stats::gaussian(),
   prior = NULL,
-  monitor = TRUE
+  monitor = "summary"
 )
 ```
 

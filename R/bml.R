@@ -60,11 +60,14 @@
 #' @param seed Integer random seed for reproducibility.
 #' @param run Logical; if \code{FALSE}, returns the generated JAGS model string,
 #'   data, and monitors without fitting (see also \code{\link{make_jagscode}}).
-#' @param monitor Logical; if \code{TRUE} (default), store full MCMC chains and
-#'   fitted/predicted/log-likelihood nodes. Required for most post-estimation
-#'   methods (\code{\link[=as_draws.bml]{as_draws}}, \code{\link{loo.bml}},
-#'   \code{\link{posterior_predict.bml}}, \code{\link{monetPlot}},
-#'   \code{\link{mcmcDiag}}).
+#' @param monitor Character vector selecting retained posterior capabilities.
+#'   The default, \code{"summary"}, retains posterior summaries and convergence
+#'   diagnostics but no draws. Add \code{"parameters"},
+#'   \code{"random_effects"}, \code{"weights"}, \code{"fitted"},
+#'   \code{"predictive"}, or \code{"log_lik"} as needed. \code{"full"} stores
+#'   all family-supported draws once in a compact
+#'   \code{posterior::draws_array}; \code{"jags"} explicitly retains the raw
+#'   R2jags object.
 #' @param modelfile Logical or character path: \code{TRUE} saves the generated
 #'   JAGS code to \code{modelstring.txt}; a path reads JAGS code from that file
 #'   instead of generating it.
@@ -76,8 +79,9 @@
 #'   (posterior summaries; labeled terms), \code{w} (weight matrices per block),
 #'   \code{re.mm}/\code{re.hm} (random effects), \code{pred} (posterior
 #'   predictive means), \code{fitted} (posterior means of the linear predictor),
-#'   \code{input} (model metadata), and \code{jags.out} (full R2jags output when
-#'   \code{monitor = TRUE}).
+#'   \code{input} (model metadata), \code{diagnostics}, \code{storage},
+#'   \code{draws} (requested compact posterior draws), and \code{jags.out}
+#'   (non-\code{NULL} only when \code{monitor = "jags"}).
 #'
 #' @examples
 #' \dontrun{
@@ -155,7 +159,7 @@ bml <- function(
   cores = 1,
   seed = NULL,
   run = TRUE,
-  monitor = TRUE,
+  monitor = "summary",
   modelfile = FALSE,
   ...
 ) {
@@ -187,6 +191,7 @@ bml <- function(
   fam <- validate_family(family)
   family_str <- fam$family
   cox_intervals <- fam$intervals
+  monitor_spec <- normalize_monitor(monitor, family_str)
 
   # ========================================================================================== #
   # 1. Dissect formula
@@ -315,7 +320,7 @@ bml <- function(
     main,
     hm_blocks,
     interactions,
-    monitor,
+    monitor_spec,
     cox_intervals
   )
 
@@ -345,7 +350,7 @@ bml <- function(
     main,
     hm_blocks,
     interactions,
-    monitor,
+    monitor_spec,
     chains,
     inits,
     cox_intervals
@@ -404,7 +409,7 @@ bml <- function(
 
     formatted <- formatJags(
       jags.out,
-      monitor,
+      monitor_spec,
       Ns,
       Xs,
       mm_blocks,
@@ -453,7 +458,7 @@ bml <- function(
       chains = chains,
       cores = cores,
       seed = seed,
-      monitor = monitor,
+      monitor = monitor_spec$requested,
       modelfile = modelfile,
       run = run,
       lhs = main$lhs,
@@ -475,6 +480,48 @@ bml <- function(
       n.mmblocks = Ns$n.mmblocks
     )
 
+    diagnostics <- bml_parameter_diagnostics(
+      jags.out = jags.out,
+      reg.table = formatted$reg.table,
+      chains = chains
+    )
+
+    retained_variables <- bml_retained_draw_variables(
+      jags.out = jags.out,
+      reg.table = formatted$reg.table,
+      monitor_spec = monitor_spec
+    )
+    draws <- if (isTRUE(monitor_spec$raw_jags)) {
+      NULL
+    } else {
+      bml_select_draws(jags.out, retained_variables)
+    }
+    raw_variables <- dimnames(bml_raw_sims_array(jags.out))[[3]]
+    stored_variables <- if (isTRUE(monitor_spec$raw_jags)) {
+      raw_variables
+    } else if (!is.null(draws)) {
+      posterior::variables(draws)
+    } else {
+      character()
+    }
+    n_draws <- if (isTRUE(monitor_spec$raw_jags)) {
+      prod(dim(bml_raw_sims_array(jags.out))[1:2])
+    } else if (!is.null(draws)) {
+      posterior::ndraws(draws)
+    } else {
+      0L
+    }
+
+    storage <- list(
+      requested = monitor_spec$requested,
+      capabilities = monitor_spec$capabilities,
+      label = bml_storage_label(monitor_spec),
+      backend = if (isTRUE(monitor_spec$raw_jags)) "R2jags" else
+        if (is.null(draws)) "summary" else "posterior::draws_array",
+      variables = stored_variables,
+      ndraws = as.integer(n_draws)
+    )
+
     out <- list(
       reg.table = formatted$reg.table,
       w = formatted$w,
@@ -483,7 +530,10 @@ bml <- function(
       pred = formatted$pred,
       fitted = formatted$fitted,
       input = input,
-      jags.out = if (isTRUE(monitor)) jags.out else NULL
+      diagnostics = diagnostics,
+      storage = storage,
+      draws = draws,
+      jags.out = if (isTRUE(monitor_spec$raw_jags)) jags.out else NULL
     )
 
     class(out) <- "bml"
@@ -494,7 +544,8 @@ bml <- function(
     invisible(list(
       modelstring = modelstring,
       jags.data = jags.data,
-      jags.params = jags.params
+      jags.params = jags.params,
+      storage = monitor_spec
     ))
   }
 }

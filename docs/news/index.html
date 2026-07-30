@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,19 @@
       <small>Source: <a href="https://github.com/benrosche/bml/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.0" id="bml-0110">bml 0.11.0<a class="anchor" aria-label="anchor" href="#bml-0110"></a></h2>
+<div class="section level3">
+<h3 id="compact-posterior-storage-0-11-0">Compact posterior storage<a class="anchor" aria-label="anchor" href="#compact-posterior-storage-0-11-0"></a></h3>
+<ul><li>
+<code>monitor</code> is now capability-based and defaults to <code>"summary"</code>, which retains estimates and convergence diagnostics without retaining posterior draws.</li>
+<li>Draws requested through <code>"parameters"</code>, <code>"random_effects"</code>, <code>"weights"</code>, <code>"fitted"</code>, <code>"predictive"</code>, or <code>"log_lik"</code> are stored once in a compact <code><a href="https://mc-stan.org/posterior/reference/draws_array.html" class="external-link">posterior::draws_array</a></code>. <code>"full"</code> selects every family-supported capability.</li>
+<li>
+<code>monitor = "jags"</code> is the explicit escape hatch for retaining the complete raw R2jags object. Logical <code>monitor</code> values are no longer accepted.</li>
+<li>Summary-only fits retain rank-normalized R-hat, bulk/tail ESS, and Monte Carlo standard errors for every reported parameter. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, and <code><a href="../reference/bmlCompare.html">bmlCompare()</a></code> expose compact convergence information.</li>
+<li>Post-estimation methods now report the exact posterior capability needed when a fit did not retain the required draws.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.10.0" id="bml-0100">bml 0.10.0<a class="anchor" aria-label="anchor" href="#bml-0100"></a></h2>
 <p>This release redesigns the model-specification grammar around the micro-macro framework (weights, aggregation functions, effects) and aligns the package API with brms. <strong>All breaking changes are clean breaks — old spellings error with a migration message; there are no deprecation shims.</strong></p>

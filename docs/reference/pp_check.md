@@ -18,7 +18,7 @@ pp_check(object, type = NULL, ndraws = 30, ...)
 - object:
 
   A fitted `bml` model (gaussian or bernoulli, fitted with
-  `monitor = TRUE`).
+  `monitor = "predictive"`).
 
 - ...:
 

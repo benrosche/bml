@@ -17,7 +17,7 @@ bml(
   cores = 1,
   seed = NULL,
   run = TRUE,
-  monitor = TRUE,
+  monitor = "summary",
   modelfile = FALSE,
   ...
 )
@@ -61,11 +61,14 @@ Default: 1.}
 \item{run}{Logical; if \code{FALSE}, returns the generated JAGS model string,
 data, and monitors without fitting (see also \code{\link{make_jagscode}}).}
 
-\item{monitor}{Logical; if \code{TRUE} (default), store full MCMC chains and
-fitted/predicted/log-likelihood nodes. Required for most post-estimation
-methods (\code{\link[=as_draws.bml]{as_draws}}, \code{\link{loo.bml}},
-\code{\link{posterior_predict.bml}}, \code{\link{monetPlot}},
-\code{\link{mcmcDiag}}).}
+\item{monitor}{Character vector selecting retained posterior capabilities.
+The default, \code{"summary"}, retains posterior summaries and convergence
+diagnostics but no draws. Add \code{"parameters"},
+\code{"random_effects"}, \code{"weights"}, \code{"fitted"},
+\code{"predictive"}, or \code{"log_lik"} as needed. \code{"full"} stores
+all family-supported draws once in a compact
+\code{posterior::draws_array}; \code{"jags"} explicitly retains the raw
+R2jags object.}
 
 \item{modelfile}{Logical or character path: \code{TRUE} saves the generated
 JAGS code to \code{modelstring.txt}; a path reads JAGS code from that file
@@ -80,8 +83,9 @@ A list of class \code{"bml"} with elements \code{reg.table}
   (posterior summaries; labeled terms), \code{w} (weight matrices per block),
   \code{re.mm}/\code{re.hm} (random effects), \code{pred} (posterior
   predictive means), \code{fitted} (posterior means of the linear predictor),
-  \code{input} (model metadata), and \code{jags.out} (full R2jags output when
-  \code{monitor = TRUE}).
+  \code{input} (model metadata), \code{diagnostics}, \code{storage},
+  \code{draws} (requested compact posterior draws), and \code{jags.out}
+  (non-\code{NULL} only when \code{monitor = "jags"}).
 }
 \description{
 The \strong{bml} package estimates micro-to-macro regressions: Bayesian

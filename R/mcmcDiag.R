@@ -5,8 +5,8 @@
 #' include Gelman–Rubin \eqn{\hat{R}}, Geweke z-scores, Heidelberger-Welch
 #' stationarity p-values, and autocorrelation at a user-specified lag.
 #'
-#' @param bml.out A model fit object containing JAGS output, typically as returned
-#'   by \code{R2jags::jags()}, with component \code{$jags.out$BUGSoutput}.
+#' @param bml.out A fitted \code{bml} model with
+#'   \code{monitor = "parameters"}.
 #' @param parameters Character vector of parameter names (or patterns) to extract.
 #'   These may be exact names or patterns (e.g., a prefix like \code{"b"} that
 #'   matches \code{"b[1]"}, \code{"b[2]"}, …).
@@ -19,7 +19,7 @@
 #'   lowered with a warning.
 #'
 #' @details
-#' Internally, the function converts the BUGS/JAGS output to a
+#' Internally, the function converts the retained parameter draws to a
 #' \code{coda::mcmc.list}, then computes per-chain
 #' diagnostics and averages them across chains for each parameter:
 #' \itemize{
@@ -65,7 +65,7 @@
 #'   Surv(dur_wkb, event_wkb) ~ 1 + majority +
 #'     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE),
 #'   family = weibull(),
-#'   monitor = TRUE,
+#'   monitor = "parameters",
 #'   data = coalgov
 #' )
 #'
@@ -93,12 +93,7 @@
 
 mcmcDiag <- function(bml.out, parameters, lag = 50) {
 
-  # Check that JAGS output is available ---------------------------------------------------------- #
-
-  if (is.null(bml.out$jags.out) || is.null(bml.out$jags.out$BUGSoutput) ||
-      is.null(bml.out$jags.out$BUGSoutput$sims.array)) {
-    stop("JAGS output could not be retrieved. Please ensure that monitor = TRUE when fitting the model.", call. = FALSE)
-  }
+  bml_require_capabilities(bml.out, "parameters", "mcmcDiag")
 
   # Extract mcmc.list from bml.out --------------------------------------------------------------- #
 
@@ -106,7 +101,7 @@ mcmcDiag <- function(bml.out, parameters, lag = 50) {
     # Build the mcmc.list directly from sims.array so this works on a reloaded
     # (readRDS) fit too: coda::as.mcmc.list() would need R2jags's
     # as.mcmc.list.bugs S3 method, which is only registered while R2jags is loaded.
-    sa <- bml.out$jags.out$BUGSoutput$sims.array        # [iter, chain, parameter]
+    sa <- bml_draws_array(bml.out, "parameters", "mcmcDiag")
     m <- coda::mcmc.list(lapply(seq_len(dim(sa)[2]), function(ch) {
       x <- sa[, ch, , drop = FALSE]
       dim(x) <- dim(x)[c(1, 3)]

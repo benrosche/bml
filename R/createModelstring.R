@@ -13,7 +13,7 @@
 # ================================================================================================ #
 
 createModelstring <- function(family, prior_spec, mm_blocks, main, hm_blocks, interactions,
-                              monitor, cox_intervals = NULL) {
+                              monitor_spec, cox_intervals = NULL) {
 
   overrides <- prior_spec$overrides %||% list()
   raw_priors <- prior_spec$raw %||% character(0)
@@ -663,22 +663,26 @@ createModelstring <- function(family, prior_spec, mm_blocks, main, hm_blocks, in
   # Likelihood based on family
   if (family == "Gaussian") {
     add("    Y[j] ~ dnorm(mu[j], tau)")
-    if (monitor) {
+    if (monitor_has(monitor_spec, "predictive")) {
       add("    pred[j] ~ dnorm(mu[j], tau)")
+    }
+    if (monitor_has(monitor_spec, "log_lik")) {
       add("    log_lik[j] <- logdensity.norm(Y[j], mu[j], tau)")
     }
   } else if (family == "Binomial") {
     add("    logit(p[j]) <- mu[j]")
     add("    Y[j] ~ dbern(p[j])")
-    if (monitor) {
+    if (monitor_has(monitor_spec, "predictive")) {
       add("    pred[j] ~ dbern(p[j])")
+    }
+    if (monitor_has(monitor_spec, "log_lik")) {
       add("    log_lik[j] <- logdensity.bern(Y[j], p[j])")
     }
   } else if (family == "Weibull") {
     add("    lambda[j] <- exp(-mu[j] * shape)")
     add("    t[j] ~ dweib(shape, lambda[j])")
     add("    censored[j] ~ dinterval(t[j], ct.lb[j])")
-    if (monitor) {
+    if (monitor_has(monitor_spec, "predictive")) {
       add("    pred[j] ~ dweib(shape, lambda[j])")
     }
   } else if (family == "Cox") {

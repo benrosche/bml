@@ -33,7 +33,7 @@ coefficient plots."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,8 +106,8 @@ coefficient plots.</p>
 <dt id="arg-conf-level">conf.level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
 <dd><p>Width of the equal-tailed credible interval. Default: 0.95,
 which is read directly from the fitted model. Other levels are computed
-from the posterior draws and therefore require the model to be fitted with
-<code>monitor = TRUE</code>.</p></dd>
+from the posterior draws and therefore require
+<code>monitor = "parameters"</code>.</p></dd>
 
 
 <dt id="arg-component">component<a class="anchor" aria-label="anchor" href="#arg-component"></a></dt>
@@ -155,7 +155,7 @@ from the posterior draws and therefore require the model to be fitted with
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">m1</span><span class="op">)</span>                      <span class="co"># regression coefficients</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">m1</span>, component <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span>   <span class="co"># including weight and variance parameters</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">m1</span>, conf.level <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span>    <span class="co"># 90% credible intervals (requires monitor = TRUE)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">m1</span>, conf.level <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span>    <span class="co"># requires monitor = "parameters"</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Multi-model comparison table (see also bmlCompare()):</span></span></span>
 <span class="r-in"><span><span class="va">models</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>base <span class="op">=</span> <span class="va">m1</span>, weighted <span class="op">=</span> <span class="va">m2</span><span class="op">)</span></span></span>

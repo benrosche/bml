@@ -17,7 +17,7 @@ monetPlot(bml, parameter, label = NULL, r = 2, yaxis = TRUE)
 
   A fitted model object of class `"bml"` returned by
   [`bml`](https://benrosche.github.io/bml/reference/bml.md). Must be
-  fitted with `monitor = TRUE` to store MCMC chains.
+  fitted with `monitor = "parameters"`.
 
 - parameter:
 
@@ -93,13 +93,13 @@ Benjamin Rosche \<benrosche@nyu.edu\>
 if (FALSE) { # \dontrun{
 data(coalgov)
 
-# Fit model with monitoring enabled
+# Fit model with parameter draws retained
 m1 <- bml(
   Surv(dur_wkb, event_wkb) ~ 1 + majority +
     mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), fn = fn("sum"), RE = TRUE) +
     hm(id = id(cid)),
   family = weibull(),
-  monitor = TRUE,  # Required for monetPlot
+  monitor = "parameters",  # Required for monetPlot
   data = coalgov
 )
 
