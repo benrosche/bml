@@ -15,3 +15,9 @@ inst/doc
 /.quarto/
 /backup/
 data/*.feather
+vignettes/.fits/
+vignettes/examples.html
+.Renviron
+vignettes/.fits/
+vignettes/examples.html
+.Renviron

@@ -34,7 +34,7 @@ knitr::opts_chunk$set(
 
 This vignette presents seven examples that show how the multiple-membership multilevel model (MMMM) can be applied to network, spatial, and aggregation problems.
 The first three cover the additive micro-macro link: peer influence in a friendship network, neighbourhood effects on home values, and how coalition parties shape government survival.
-The last four continue the coalition example to showcase aggregation beyond the weighted mean: distributional features (`fn("var")`), estimating the aggregation function itself (`fn("smax", kappa = est())`), cross-level interactions through named blocks, and heterogeneous member effects (`re(1 + x)`).
+The last four go beyond the weighted mean to showcase distributional features (`fn("var")`), estimating the aggregation function itself (`fn("smax", kappa = est())`), cross-level interactions through named blocks, and heterogeneous member effects (`re(1 + x)`).
 
 # 1. All friends, or just your best friend? (network regression)
 
@@ -62,12 +62,65 @@ The model uses the following variables:
 | `rank`          | weight    | Friendship closeness (1 = best friend, 5 = fifth-closest) |
 | `n`             | weight    | Number of friends nominated by the ego                    |
 
-Two models are fit and compared.
-The economics standard for this kind of network problem is the linear-in-means model: every friend carries equal weight, so what matters is the average across all of them, implying that each friend exerts the same influence.
-The alternative is that influence is concentrated: a single close friend drives most of the effect while looser ties matter little.
-`bml` fits both and compares them directly, changing only one line of the weight function.
+Three models are fit and compared, tracing a spectrum from the most concentrated weighting rule to the most diffuse.
+At one end, influence is concentrated: a single close friend drives the effect while looser ties matter little.
+At the other is the economics standard for this kind of network problem, the linear-in-means model: every friend carries equal weight, so what matters is the average across all of them.
+Between the two sits a graded rule in which closeness matters but no friend is discarded.
+All three are fixed weighting rules, nothing inside `w()` is estimated, so the comparison isolates the shape of the aggregation, changing only one line of the weight function each time.
 
-## Model 1: linear-in-means
+## Model 1: best friend only
+
+Only the closest-ranked friend contributes; all others are dropped.
+`rank == min(rank)` evaluates to `TRUE` for the closest-ranked friend within each ego's friend set (rank 1), placing all weight on that friend.
+With `scale = TRUE` the weight is renormalised to 1 within each ego, so the peer term becomes that single friend's smoking.
+
+```{r, eval = FALSE}
+mod_bf <-
+  bml(
+    smoking_w2 ~ smoking_ego + gender_ego +
+      mm(
+        id   = id(alter, ego),
+        vars = vars(smoking_alter),
+        w    = w(~ rank == min(rank), scale = TRUE),  # all weight on the closest friend
+        fn   = fn("sum"),                             # aggregation function: the weighted mean
+        RE   = TRUE
+      ),
+    family = gaussian(),
+    data   = cils_long
+  )
+```
+
+```{r, echo = FALSE}
+mod_bf <- .load("mod_bf")
+```
+
+## Model 2: graded decay
+
+The best-friend rule is an extreme as it throws away four of the five nominations.
+A softer version keeps every friend but lets closeness matter (`w ~ 1/rank`)
+gives the best friend weight 1, the second-closest 1/2, and so on down to 1/5.
+
+```{r, eval = FALSE}
+mod_decay <-
+  bml(
+    smoking_w2 ~ smoking_ego + gender_ego +
+      mm(
+        id   = id(alter, ego),
+        vars = vars(smoking_alter),
+        w    = w(~ 1/rank, scale = TRUE),   # closeness-graded weights
+        fn   = fn("sum"),
+        RE   = TRUE
+      ),
+    family = gaussian(),
+    data   = cils_long
+  )
+```
+
+```{r, echo = FALSE}
+mod_decay <- .load("mod_decay")
+```
+
+## Model 3: linear-in-means
 
 Every friend receives equal weight, `w ~ 1/n`, so the peer term is the simple average of all nominated friends' Wave 1 smoking.
 
@@ -91,53 +144,33 @@ mod_lim <-
 mod_lim <- .load("mod_lim")
 ```
 
-## Model 2: best friend only
-
-Only the closest-ranked friend contributes; all others are dropped.
-`rank == min(rank)` evaluates to `TRUE` for the closest-ranked friend within each ego's friend set (rank 1), placing all weight on that friend.
-With `scale = TRUE` the weight is renormalised to 1 within each ego, so the peer term becomes that single friend's smoking.
-
-```{r, eval = FALSE}
-mod_bf <-
-  bml(
-    smoking_w2 ~ smoking_ego + gender_ego +
-      mm(
-        id   = id(alter, ego),
-        vars = vars(smoking_alter),
-        w    = w(~ rank == min(rank), scale = TRUE),  # all weight on the closest friend
-        fn   = fn("sum"),                             # same aggregation function as Model 1
-        RE   = TRUE
-      ),
-    family = gaussian(),
-    data   = cils_long
-  )
-```
-
-```{r, echo = FALSE}
-mod_bf <- .load("mod_bf")
-```
-
-## Comparing the two models
+## Comparing the three models
 
 `bmlCompare()` lays out the coefficient estimates and fit statistics of several models side by side, one column per model, with readable labels supplied through `labels`.
 
 ```{r}
 bmlCompare(
-  "Linear-in-means"  = mod_lim,
   "Best friend only" = mod_bf,
+  "Graded decay"     = mod_decay,
+  "Linear-in-means"  = mod_lim,
   terms  = c("(Intercept)", "smoking_ego", "gender_ego", "A_smoking_alter"),
   labels = c("Intercept", "Own smoking (W1)", "Gender", "Peers' smoking (W1)")
 )
 ```
 
-Both models find a positive peer effect: students whose friends smoke more tend to smoke more themselves one year later, over and above their own Wave 1 smoking.
-The own-smoking coefficient (about 0.36 in both models) dominates, which is expected since past behaviour is the strongest predictor of future behaviour.
+All three models find a positive peer effect: students whose friends smoke more tend to smoke more themselves one year later, over and above their own Wave 1 smoking.
+The own-smoking coefficient (about 0.36 across the board) dominates, which is expected since past behaviour is the strongest predictor of future behaviour.
 
-The peer effect is present but modest.
-Under linear-in-means, averaging across all nominated friends gives a coefficient of about 0.04 (CI [0.00, 0.08]), which just clears zero.
-Limiting to the best friend gives about 0.03 (CI [-0.00, 0.05]): a smaller point estimate with a tighter interval that now just touches zero.
+The peer effect itself depends on how the friend set is aggregated.
+Restricting attention to the best friend gives about 0.03 with an interval that touches zero ([-0.00, 0.05]).
+Both of the rules that keep every friend give about 0.04 and clear zero (graded decay [0.00, 0.08], linear-in-means [0.00, 0.08]).
+Discarding the looser ties does not sharpen the estimate; it loses signal.
 
-On fit, the linear-in-means model is clearly preferred (DIC 17,029 vs 18,463, a gap of over 1,400).
+The fit statistics fall monotonically as the weighting becomes more diffuse: DIC drops from 18,700 for the best-friend rule to 17,577 for graded decay and 16,964 for linear-in-means.
+Each relaxation of the concentration assumption buys a substantial improvement, and the largest single gain comes from not throwing the other four friends away.
+
+The member-level standard deviation tells the same story from another angle, rising from 0.40 under best-friend weighting to 0.83 and then 0.93.
+Under the best-friend rule most nominated friends receive zero weight in every group they belong to, so the data carry little information about their individual effects and the estimated spread shrinks toward the prior.
 Peer influence on smoking appears to be spread across the friend set rather than concentrated in the single closest tie.
 
 ## Cross-validation: which aggregation does the data prefer?
@@ -146,31 +179,34 @@ DIC is convenient but crude; PSIS-LOO cross-validation compares the models on th
 For gaussian outcomes `bml` monitors the pointwise log-likelihood in the generated JAGS model, so `loo()` works directly on the fitted objects, and `loo::loo_compare()` ranks them:
 
 ```{r, eval = FALSE}
-loo_lim <- loo(mod_lim)
-loo_bf  <- loo(mod_bf)
-loo::loo_compare(loo_lim, loo_bf)
+loo_bf    <- loo(mod_bf)
+loo_decay <- loo(mod_decay)
+loo_lim   <- loo(mod_lim)
+loo::loo_compare(loo_bf, loo_decay, loo_lim)
 ```
 
 ```{r, echo = FALSE}
-loo_lim <- readRDS(file.path(".fits", "loo_lim.rds"))
-loo_bf  <- readRDS(file.path(".fits", "loo_bf.rds"))
+loo_bf    <- readRDS(file.path(".fits", "loo_bf.rds"))
+loo_decay <- readRDS(file.path(".fits", "loo_decay.rds"))
+loo_lim   <- readRDS(file.path(".fits", "loo_lim.rds"))
 ```
 
 ```{r, echo = FALSE}
-loo::loo_compare(loo_lim, loo_bf)
+loo::loo_compare(loo_bf, loo_decay, loo_lim)
 ```
 
-The linear-in-means model comes out on top: the best-friend model loses about 37 points of expected log predictive density (standard error about 10), agreeing with the DIC ranking.
-Both criteria point the same way — influence is spread over the whole friend set rather than concentrated in the closest tie.
+model1 is best-friend, model2 graded decay, model3 linear-in-means, in the order passed.
+PSIS-LOO ranks them as DIC does: the best-friend model loses about 37 points of expected log predictive density (standard error 10, p_worse 1.00), while graded decay sits only 6 points behind linear-in-means (standard error 5, p_worse 0.89), decisive at the bottom of the ladder, close at the top.
+The Pareto-k flags bias elpd_diff toward whichever model carries more of them (8 for linear-in-means, 3 for graded decay), so that narrow margin is best read as an upper bound.
+Both criteria point the same way: influence is spread over the friend set rather than concentrated in the closest tie.
 
-A posterior predictive check makes sure the preferred model reproduces the shape of the outcome at all.
 `pp_check()` overlays replicated outcome distributions on the observed one:
 
 ```{r, eval = FALSE}
 pp_check(mod_lim)
 ```
 
-```{r, echo = FALSE, fig.width = 6, fig.height = 3.5, fig.alt = "Posterior predictive check: replicated outcome densities overlaid on the observed smoking distribution"}
+```{r ppc-lim, echo = FALSE, fig.width = 6, fig.height = 3.5, fig.alt = "Posterior predictive check: replicated outcome densities overlaid on the observed smoking distribution"}
 ppc <- readRDS(file.path(".fits", "ppc_lim.rds"))
 bayesplot::ppc_dens_overlay(ppc$y, ppc$yrep)
 ```
@@ -202,7 +238,7 @@ library(bml)
 
 boston <-
   read_sf(system.file("shapes/boston_tracts.gpkg", package = "spData")) |>
-  select(CMEDV, NOX, CRIM, RM, DIS, AGE, geom) |>
+  select(CMEDV, NOX, CRIM, RM, DIS, AGE, LSTAT, geom) |>
   st_transform(crs = 5070) |>
   mutate(
     tid     = row_number(),
@@ -229,13 +265,9 @@ boston_df <-
       select(-CMEDV, -lnCMEDV, -geom) |>
       rename_with(~ paste0(.x, "_nb")),
     by = c("tid_nb" = "tid_nb")
-  )
-
-boston_df2 <- boston_df |>
-  mutate(
-    d_CRIM = as.numeric(scale(log1p(abs(CRIM - CRIM_nb)))),   # log first: crime is right-skewed
-    d_AGE  = as.numeric(scale(abs(AGE - AGE_nb)))
-  )
+  ) |>
+  # aggregation variable only: LSTAT enters no formula, just the weight function
+  mutate(d_LSTAT = as.numeric(scale(abs(LSTAT - LSTAT_nb))))
 ```
 
 The data are the 1970 Boston Standard Metropolitan Statistical Area census tracts shipped with `spData`.
@@ -272,6 +304,7 @@ mod_bml <-
         RE   = TRUE                              # neighbour-level random effect
       ),
     family = gaussian(),
+    iter = 5000, warmup = 500, chains = 3, seed = 1,
     data   = boston_df
   )
 ```
@@ -280,87 +313,96 @@ mod_bml <-
 mod_bml <- .load("mod_bml")
 ```
 
-## Parameterised weights: similarity across covariates
+## Parameterised weights: social similarity
 
-Equal weighting assumes every neighbour matters the same regardless of how similar it is to the focal tract.
-A natural alternative is that tracts are more strongly influenced by neighbours that resemble them, a spatial homophily effect.
-Rather than collapse similarity into a single number, the weight is allowed to depend on the dissimilarity in each covariate separately, using the functional form from Rosche (2026):
+Equal weighting assumes every adjacent tract matters the same, regardless of how
+much it resembles the focal tract.
+A natural alternative is that spillovers run more strongly between tracts that
+are alike socially, social distance layered on top of physical adjacency.
+One parameter is enough to test it:
 
 $$
-w_{ij} = \frac{1}{1 + (n_i - 1)\exp\!\bigl(-(b_0 + b_1 \cdot d^{\text{CRIM}}_{ij} + b_2 \cdot d^{\text{AGE}}_{ij})\bigr)}
+w_{ij} \propto \exp\!\bigl(-b_1 \cdot d^{\text{LSTAT}}_{ij}\bigr)
 $$
 
-Each `d` is the standardised absolute difference between a focal tract and its neighbour on that covariate.
-When all the `b`'s are zero this collapses to `1/n_i`, the equal-weight baseline.
-A negative coefficient means neighbours that are similar on that covariate (low `d`) receive more weight; a positive coefficient means dissimilar neighbours dominate.
-Letting the two dissimilarities enter on their own lets the model decide which kind of similarity drives the aggregation, instead of imposing a single combined measure.
+where $d^{\text{LSTAT}}_{ij}$ is the standardised absolute difference between
+tract $i$ and neighbour $j$ in the share of lower-status population.
+At $b_1 = 0$ the weights collapse to $1/n_i$ and the equal-weight baseline is
+recovered exactly, so the baseline is nested inside this model.
+Positive $b_1$ means socially similar neighbours carry more weight.
+`LSTAT` appears nowhere else in the model — not among the own-tract covariates,
+not in `vars()`, so it acts purely as an aggregation variable.
 
 ```{r, eval = FALSE}
-mod_bml_w <-
+mod_bml_lstat <-
   bml(
     lnCMEDV ~ NOX + CRIM + RM + DIS + AGE +
       mm(
         id   = id(tid_nb, tid),
         vars = vars(NOX_nb + CRIM_nb + RM_nb + DIS_nb + AGE_nb),
-        # weight as a function of covariate dissimilarity; nests 1/n when all b's are 0
-        w    = w(~ 1 / (1 + (n - 1) * exp(-(b0 + b1 * d_CRIM + b2 * d_AGE))), scale = TRUE),
+        # weight falls with social dissimilarity; nests 1/n at b1 = 0
+        w    = w(~ exp(-b1 * d_LSTAT), scale = TRUE),
         fn   = fn("sum"),
         RE   = TRUE
       ),
     family = gaussian(),
-    prior  = prior(normal(0, 1), class = "w"),   # weakly informative; prevents exp() overflow
-    data   = boston_df2
+    prior  = prior(normal(0, 1), class = "w"),   # weakly informative; keeps exp() stable
+    iter = 5000, warmup = 500, chains = 3, seed = 1,
+    data   = boston_df
   )
 ```
 
 ```{r, echo = FALSE}
-mod_bml_w <- .load("mod_bml_w")
+mod_bml_lstat <- .load("mod_bml_lstat")
 ```
-
-The estimated weight-function parameters are:
 
 ```{r}
 bmlCompare(
-  "Similarity weights" = mod_bml_w,
+  "Social similarity" = mod_bml_lstat,
   component = "weights",
-  terms  = c("w[b0] (mm.1)", "w[b1] (mm.1)", "w[b2] (mm.1)"),
-  labels = c("Weight intercept (b0)", "Crime dissimilarity (b1)", "Age dissimilarity (b2)")
+  terms  = c("w[d_LSTAT] (mm.1)"),
+  labels = c("Social dissimilarity (b1)")
 )
 ```
 
-The crime-dissimilarity coefficient is about −1.76 (CI [−2.59, −1.16]), clearly negative, so neighbours with similar crime levels carry more weight.
-The age-dissimilarity coefficient is about 0.71 (CI [0.07, 1.52]), pointing the other way: neighbours with different age profiles carry more weight.
-The model picks up two kinds of similarity at once, in opposite directions.
+The estimate is about 0.59 with a 95% interval of [0.40, 0.80], comfortably
+away from zero.
+Because `d_LSTAT` is standardised, a one-standard-deviation increase in social
+dissimilarity multiplies a neighbour's unnormalised weight by
+$\exp(-0.59) \approx 0.55$, roughly halving its influence.
+Adjacency alone does not determine who counts: among neighbours that all share
+a border, the socially similar ones dominate the aggregate.
 
 ## Do the weights actually vary with similarity?
 
-A direct check plots the estimated weight each neighbour received against the dissimilarity between that neighbour and its focal tract.
-If crime homophily drives the weights, low-`d_CRIM` pairs should cluster toward high weights and high-`d_CRIM` pairs toward low weights.
+A direct check plots the estimated weight each neighbour received against its
+social dissimilarity from the focal tract.
+If social homophily drives the weights, low-`d_LSTAT` pairs should sit toward
+high weights and high-`d_LSTAT` pairs toward low weights.
 
-```{r, fig.width = 6, fig.height = 4, echo = FALSE, fig.alt = "Estimated neighbour weight plotted against covariate dissimilarity, faceted by crime and age dissimilarity"}
-w_mat <- mod_bml_w$w[[1]]   # 506 x 15 matrix, NA padded
+```{r weight-dissim, fig.width = 6, fig.height = 4, echo = FALSE, fig.alt = "Estimated neighbour weight plotted against social dissimilarity"}
+w_mat <- mod_bml_lstat$w[[1]]   # tracts x max-neighbours, NA padded
 
-weight_df <- boston_df2 |>
+weight_df <- boston_df |>
   group_by(tid) |>
   mutate(pos = row_number()) |>
   ungroup() |>
   mutate(weight = w_mat[cbind(tid, pos)]) |>
   filter(!is.na(weight))
 
-weight_long <- weight_df |>
-  tidyr::pivot_longer(c(d_CRIM, d_AGE), names_to = "covariate", values_to = "dissimilarity")
-
-ggplot(weight_long, aes(x = dissimilarity, y = weight)) +
+ggplot(weight_df, aes(x = d_LSTAT, y = weight)) +
   geom_point(alpha = 0.15, size = 0.8) +
-  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "#2c7bb6") +
-  facet_wrap(~ covariate, scales = "free_x") +
-  labs(x = "Dissimilarity", y = "Estimated neighbour weight") +
+  geom_smooth(method = "loess", se = FALSE, color = "#2c7bb6") +
+  labs(x = "Social dissimilarity (d_LSTAT)", y = "Estimated neighbour weight") +
   theme_minimal()
 ```
 
-The two panels show the similarity effects acting in opposite directions.
-The weight falls as crime dissimilarity rises (the homophily the negative crime coefficient pointed to), while it rises gently with age dissimilarity, matching the positive age coefficient.
-Each panel holds only a partial view, since every neighbour's weight reflects both dissimilarities at once, but the opposing slopes are visible.
+The estimated weight declines with social dissimilarity: neighbours close to the
+focal tract on lower-status share carry the most weight, and the weight falls
+away as dissimilarity grows.
+The scatter around the trend is renormalisation at work, a pair's final weight
+depends on how many neighbours it competes with within its tract, but the
+downward slope, the homophily the positive `b1` pointed to, is unmistakable.
 
 ## Benchmark: spatial Durbin error model
 
@@ -395,8 +437,8 @@ relabel <- function(t) {
 
 # Two bml models: fixed effects + weight parameters
 tab_bml <- bind_rows(
-  tidy(mod_bml,   component = "all") |> mutate(model = "Equal weights (1/n)"),
-  tidy(mod_bml_w, component = "all") |> mutate(model = "Similarity weights")
+  tidy(mod_bml,       component = "all") |> mutate(model = "Equal weights (1/n)"),
+  tidy(mod_bml_lstat, component = "all") |> mutate(model = "Social similarity")
 ) |>
   filter(component %in% c("fixed", "weights")) |>
   transmute(model, term = relabel(term), estimate, conf.low, conf.high)
@@ -419,7 +461,7 @@ tab_sdem <- tibble::tibble(
 
 term_levels <- c("Intercept", "NOX", "CRIM", "RM", "DIS", "AGE",
                  "NOX (nb)", "CRIM (nb)", "RM (nb)", "DIS (nb)", "AGE (nb)",
-                 "w[b0]", "w[b1]", "w[b2]")
+                 "w[d_LSTAT]")
 
 label_map <- c(
   "Intercept"    = "Intercept",
@@ -433,9 +475,7 @@ label_map <- c(
   "RM (nb)"      = "Rooms (neighbours)",
   "DIS (nb)"     = "Distance (neighbours)",
   "AGE (nb)"     = "Pre-1940 (neighbours)",
-  "w[b0]"        = "Weight intercept (b0)",
-  "w[b1]"        = "Crime dissimilarity (b1)",
-  "w[b2]"        = "Age dissimilarity (b2)"
+  "w[d_LSTAT]"   = "Social dissimilarity (b1)"
 )
 
 bind_rows(tab_bml, tab_sdem) |>
@@ -453,16 +493,22 @@ Model fit (the SDEM is a maximum-likelihood model and has no DIC, so only the tw
 
 ```{r, echo = FALSE}
 tibble::tibble(
-  Model = c("Equal weights (1/n)", "Similarity weights"),
-  DIC   = c(glance(mod_bml)$DIC, glance(mod_bml_w)$DIC)
+  Model = c("Equal weights (1/n)", "Social similarity"),
+  DIC   = c(glance(mod_bml)$DIC, glance(mod_bml_lstat)$DIC)
 ) |>
   knitr::kable(digits = 0)
 ```
 
-The own and neighbour coefficients from the equal-weight bml model line up with the SDEM, the reassurance worth having: the bml baseline reproduces the classical benchmark.
-If equal-weight neighbour effects were all that was needed, `errorsarlm` would serve, and it would be faster.
-What the parameterised weight function adds is the aggregation itself as something to estimate, which the SDEM cannot do.
-On fit, the equal-weight model keeps the lower DIC (278 vs 295): the similarity structure in the weights is real — both dissimilarity coefficients sit away from zero — but the added flexibility does not pay for itself in overall fit here. The SDEM, a maximum-likelihood model, has no DIC, so it serves only as a coefficient yardstick.
+The equal-weight bml model lines up closely with the SDEM, air quality at -0.105 against -0.112, crime at -0.061 against -0.067, rooms at 0.157 against 0.169. If equal-weight neighbour effects were all that was needed, errorsarlm would serve, and it would be faster.
+
+Estimating the aggregation changes the picture.
+Letting weights fall with social dissimilarity lowers the DIC from 292 to 229, and the residual standard deviation from 0.128 to 0.114 which is an improvement in fit, not merely a reshuffling of the complexity penalty.
+The member-level standard deviation is essentially unchanged (0.386 to 0.369), so the multiple-membership structure is still doing its work; what has changed is which neighbours it reads.
+
+The coefficients shift accordingly: the own-tract air-quality effect halves, from -0.105 to -0.059, while the neighbour rooms effect rises from 0.07 to 0.12.
+This is the point of estimating the weights rather than imposing them.
+Under equal weighting, part of what looks like an own-tract air-quality effect is really the influence of socially similar neighbours, misattributed because the aggregate averaged over every adjacent tract alike.
+The departure from the SDEM here is expected: the benchmark can only ever apply the fixed weights it is given, whereas the weight function is exactly what this model estimates.
 
 [↑ Back to top](#top)
 
@@ -670,7 +716,8 @@ monetPlot(mod_pm_n, "b.w.1", label = "b1: 1 = all weight on PM party, 0 = equal 
 ```
 
 The posterior density is a single hump centred at about 0.23, just right of the zero line, with most of its mass to the right but a clear slice left of zero, so zero stays inside the 95% interval.
-In the trace panel the three chains overlap and cover the same range with no separation — the visual counterpart to the clean diagnostics above.
+The figures printed along the bottom axis are the 5th, 50th and 95th percentiles, so they sit inside the 95% interval reported above.
+In the trace panel the three chains overlap and cover the same range with no separation, the visual counterpart to the clean diagnostics above.
 
 ## brms-style accessors
 
@@ -690,60 +737,136 @@ posterior::summarise_draws(posterior::subset_draws(draws, variable = "b.w.1"))
 
 # 4. Does the average matter, or the spread? (emergent features)
 
-The three examples so far all aggregated member attributes with a weighted *mean*: the additive micro-macro link.
-But a coalition whose parties are uniformly moderate on some trait and a coalition mixing one extreme party with several counterbalancing ones can have the *same* mean.
-If what breaks governments is internal contrast rather than the average level, the mean is silent about the mechanism.
+The first three examples asked how friends, neighbours, and coalition partners combine.
+This example and the two that follow ask the same of work: an occupation is not a single job but a bundle of activities, and the same activity turns up in many occupations at once.
+The question is whether an occupation's fortunes follow the average of what its activities expose it to, or the shape of that bundle.
+
+## The data
+
+The data pair O*NET's occupation–activity structure with activity-level AI exposure scores and BLS wage series.
+Each row is one activity's place in one occupation: 17,537 occupation–activity pairs spanning 894 occupations and 2,080 activities.
+An occupation draws on about 20 activities, and an activity is used by about 8 occupations, up to 91 for the most general ones.
+
+| Variable         | Level      | Meaning                                               |
+|------------------|------------|-------------------------------------------------------|
+| `occupation_id`  | id         | Occupation identifier (the group)                     |
+| `member_id`      | id         | Work activity identifier (the member)                 |
+| `wage_level`     | outcome    | Log median annual wage                                |
+| `wage_growth`    | outcome    | Log change in median annual wage                      |
+| `employment_growth` | outcome | Log change in occupational employment                 |
+| `baseline_wage`  | occupation | Median annual wage at the start of the growth window  |
+| `education`      | occupation | Typical education needed for entry, ordinal 0–6       |
+| `job_zone`       | occupation | O*NET Job Zone, 1–5, a preparation-level band         |
+| `ai_exposure`    | activity   | The activity's exposure to AI (standardised)          |
+| `importance_raw` | activity   | The activity's O*NET importance within the occupation |
+
+Unlike the coalition models, the weights here are observed rather than imposed.
+`w(~ importance_raw, scale = TRUE)` lets each activity count in proportion to how important O*NET records it as being for that occupation, renormalised to sum to one within each occupation.
+Because activities are shared across as many as 91 occupations, the activity random effects couple occupations that an occupation-level regression would treat as independent.
+
+## Mean and spread
+
+Two occupations can share an average exposure and be built very differently.
+One spreads moderate exposure evenly across every activity it draws on; the other combines a few heavily exposed activities with several that are barely exposed at all.
+If what matters is that contrast rather than the average level, the mean is silent about it.
 
 `fn()` selects the aggregation function a block applies to the weighted member records.
-`fn("sum")` (used in every example so far) produces the weighted mean `A_finance`; `fn("var")` produces the weighted variance `V_finance`, a feature of the whole set.
-Blocks stack, so both features can enter one model, each with its own main-model coefficient:
+`fn("sum")` (used in every example so far) produces the weighted mean `A_ai_exposure`; `fn("var")` produces the weighted variance `V_ai_exposure`, a feature of the whole set.
+Blocks stack, so both features can enter one model, each with its own main-model coefficient.
+Occupation-level controls, required education and O*NET Job Zone are held throughout.
+
+The baseline is the mean on its own:
 
 ```{r, eval = FALSE}
-mod_var <-
+mod_mean <-
   bml(
-    Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +
+    wage_level ~ 1 + education + job_zone +
       mm(
-        id   = id(pid, gid),
-        vars = vars(finance),
-        w    = w(~ 1/n, scale = TRUE),
+        id   = id(member_id, occupation_id),
+        vars = vars(ai_exposure),
+        w    = w(~ importance_raw, scale = TRUE),
         fn   = fn("sum"),
-        RE   = TRUE                    # mean block keeps the party random effects
-      ) +
-      mm(
-        id   = id(pid, gid),
-        vars = vars(finance),
-        w    = w(~ 1/n, scale = TRUE),
-        fn   = fn("var")               # spread block: V_finance
+        RE   = TRUE
       ),
-    family   = weibull(),
-    iter   = 5000,
+    family = gaussian(),
+    iter   = 2000,
     warmup = 500,
     chains = 3,
-    seed     = 1,
-    data     = coalgov
+    seed   = 1,
+    data   = onet
   )
 ```
 
 ```{r, echo = FALSE}
-mod_var <- .load("mod_var")
+mod_mean <- .load("mod_mean")
+```
+
+Adding a second block, identical but for `fn("var")`, gives the spread its own coefficient:
+
+```{r, eval = FALSE}
+mod_spread <-
+  bml(
+    wage_level ~ 1 + education + job_zone +
+      mm(
+        id   = id(member_id, occupation_id),
+        vars = vars(ai_exposure),
+        w    = w(~ importance_raw, scale = TRUE),
+        fn   = fn("sum"),
+        RE   = TRUE                    # mean block keeps the activity random effects
+      ) +
+      mm(
+        id   = id(member_id, occupation_id),
+        vars = vars(ai_exposure),
+        w    = w(~ importance_raw, scale = TRUE),
+        fn   = fn("var")               # spread block: V_ai_exposure
+      ),
+    family = gaussian(),
+    iter   = 2000,
+    warmup = 500,
+    chains = 3,
+    seed   = 1,
+    data   = onet
+  )
+```
+
+```{r, echo = FALSE}
+mod_spread <- .load("mod_spread")
 ```
 
 ```{r}
 bmlCompare(
-  "Mean only"     = mod_eq,
-  "Mean + spread" = mod_var,
-  terms  = c("A_finance", "V_finance"),
-  labels = c("Finance (mean)", "Finance (spread)")
+  "Mean only"     = mod_mean,
+  "Mean + spread" = mod_spread,
+  terms  = c("A_ai_exposure", "V_ai_exposure"),
+  labels = c("Exposure (mean)", "Exposure (spread)")
 )
 ```
 
-The mean effect `A_finance` is essentially unchanged by adding the spread term (about -0.31 in both models), which is the first thing to check: the two features answer different questions rather than competing for the same variation.
-The spread coefficient `V_finance` is about -0.02 with a 95% interval of [-0.27, 0.23] — a null.
-For these data, what matters about a coalition's financial exposure is its level, not its internal contrast, and the DIC agrees (3864 for the mean-only model vs 3868 with the spread term).
-A null on the spread is itself informative: it is the empirical license behind the mean-only models of Example 3, checked rather than assumed.
+```{r, eval = FALSE}
+loo_mean   <- loo(mod_mean)
+loo_spread <- loo(mod_spread)
+loo::loo_compare(loo_mean, loo_spread)
+```
+
+```{r, echo = FALSE}
+loo_mean   <- readRDS(file.path(".fits", "loo_mean.rds"))
+loo_spread <- readRDS(file.path(".fits", "loo_spread.rds"))
+```
+
+```{r, echo = FALSE}
+loo::loo_compare(loo_mean, loo_spread)
+```
+
+The mean effect `A_ai_exposure` is barely moved by adding the spread term (0.064 against 0.070), which is the first thing to check: the two features answer different questions rather than competing for the same variation.
+The spread coefficient `V_ai_exposure` is -0.096 with a 95% interval of [-0.165, -0.027], comfortably clear of zero.
+The fit statistics are less decisive than the coefficient itself.
+DIC falls sharply, from 2633 to 2316, but the cross-validation comparison separates the two models by only 2.2 points of expected log predictive density against a standard error of 3.3, and flags the gap as too small to read.
+Roughly a third of the observations exceed the Pareto-k threshold in that comparison, so loo is straining here; the coefficient carries this result rather than the model ranking.
+The residual standard deviation holds at 0.134 and the activity-level standard deviation barely moves (0.844 to 0.837), so the spread term is not absorbing variation the mean block was already carrying.
+Two occupations with the same average exposure are not equivalent: the one whose activities are unevenly exposed pays less.
 
 Both aggregation functions read the *same* weighted member records; only the reduction differs.
-That is the sense in which the variance term is emergent: it is a property of the set that no single party's contribution can carry.
+That is the sense in which the variance term is emergent: it is a property of the set that no single activity's contribution can carry.
 
 [↑ Back to top](#top)
 
@@ -758,56 +881,91 @@ $$
 $$
 
 which runs from the *minimum* of the member attributes (as $\kappa \to -\infty$) through the weighted *mean* (at $\kappa \to 0$) to the *maximum* (as $\kappa \to +\infty$).
-With `kappa = est()` the data choose the point on that path: is government survival driven by the coalition's average financial exposure, by its least exposed party (weakest link), or by its most exposed one?
+With `kappa = est()` the data choose the point on that path: does an occupation's wage follow the average exposure of its activities, its most exposed activity, or its least exposed one?
 
 ```{r, eval = FALSE}
 mod_smax <-
   bml(
-    Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc +
+    wage_level ~ 1 + education +
       mm(
-        id   = id(pid, gid),
-        vars = vars(finance),
-        w    = w(~ 1/n, scale = TRUE),
+        id   = id(member_id, occupation_id),
+        vars = vars(ai_exposure),
+        w    = w(~ importance_raw, scale = TRUE),
         fn   = fn("smax", kappa = est())   # kappa < 0: min-like, kappa > 0: max-like
       ) +
       mm(
-        id   = id(pid, gid),
-        w    = w(~ 1/n, scale = TRUE),
+        id   = id(member_id, occupation_id),
+        w    = w(~ importance_raw, scale = TRUE),
         fn   = fn("sum"),
-        RE   = TRUE                        # party random effects in their own block
+        RE   = TRUE                        # activity random effects in their own block
       ),
-    family   = weibull(),
-    iter   = 5000,
+    family = gaussian(),
+    prior  = prior(normal(0, 1), class = "fn"),
+    iter   = 2000,
     warmup = 500,
     chains = 3,
-    seed     = 1,
-    data     = coalgov
+    seed   = 1,
+    data   = onet
   )
 ```
 
 ```{r, echo = FALSE}
-mod_smax <- .load("mod_smax")
+mod_mean_edu <- .load("mod_mean_edu")
+mod_smax     <- .load("mod_smax_onet")
 ```
 
 Shape parameters like `kappa` are not coefficients: they are reported in their own component (`fn[...]`), never in the coefficient table, and take priors through `prior(..., class = "fn")`.
 `get_prior()` lists what is settable.
-The posterior of `kappa` answers the question directly:
+The baseline column below is a mean-only fit carrying the same control as the smooth-max model, education alone.
 
-```{r, fig.alt = "Posterior density and MCMC trace for the smax shape parameter kappa"}
-monetPlot(mod_smax, "fn.kappa.1", label = "kappa: < 0 weakest link, 0 mean, > 0 strongest link")
+```{r}
+bmlCompare(
+  "Mean"       = mod_mean_edu,
+  "Smooth max" = mod_smax,
+  terms  = c("A_ai_exposure", "smax_ai_exposure"),
+  labels = c("Exposure (mean)", "Exposure (smooth max)")
+)
 ```
 
-The feature's coefficient is clearly negative (`smax_finance` about -0.24 [-0.52, -0.06]), so the exposure feature matters — but the posterior for `kappa` is centred near 2.5 with a 95% interval of roughly [-6, 11], spanning weakest-link through strongest-link readings.
-Two things follow.
-First, the caveat that belongs with this estimand: `kappa` reaches the outcome only through the feature, so it is identified only insofar as differently-shaped aggregates fit differently — and with small coalitions (most have two to four parties), the min, mean, and max of finance are highly correlated, so the likelihood is nearly flat in `kappa`.
-Second, a diffuse posterior here is not a failure of the sampler; it is the honest statement that these data cannot pin down the aggregation function, which is exactly what making `f` an estimand is for.
+```{r, eval = FALSE}
+loo_mean_edu  <- loo(mod_mean_edu)
+loo_smax      <- loo(mod_smax)
+loo::loo_compare(loo_mean_edu, loo_smax)
+```
+
+```{r, echo = FALSE}
+loo_mean_edu <- readRDS(file.path(".fits", "loo_mean_edu.rds"))
+loo_smax     <- readRDS(file.path(".fits", "loo_smax_onet.rds"))
+```
+
+```{r, echo = FALSE}
+loo::loo_compare(loo_mean_edu, loo_smax)
+```
+
+The posterior of `kappa` answers the question directly:
+
+```{r monet-kappa, fig.alt = "Posterior density and MCMC trace for the smax shape parameter kappa"}
+monetPlot(mod_smax, "fn.kappa.1", label = "kappa: < 0 least exposed activity, 0 mean, > 0 most exposed")
+```
+
+The feature's coefficient is 0.126 [0.067, 0.184], and `kappa` is -1.57 with a 95% interval of [-2.73, -0.40].
+Because `smax` collapses to the weighted mean at $\kappa = 0$, an interval clear of zero is a direct test rejecting the mean as the aggregation rule for these data, and 99.8% of the posterior mass sits below zero.
+The negative sign places the aggregate toward the minimum: what tracks an occupation's wage is closer to its *least* exposed activity than to its average one.
+Cross-validation agrees.
+The smooth max beats the weighted mean by 8.9 points of expected log predictive density against a standard error of 3.2, better than two standard errors, and DIC moves the same way, from 2643 to 2528.
+Here too about a third of the observations exceed the Pareto-k threshold, so the exact margin should be read loosely; the direction is not in doubt.
+
+`kappa` reaches the outcome only through the feature, so it is identified only insofar as differently-shaped aggregates fit differently.
+That is a real constraint: where members are few, the minimum, mean, and maximum of an attribute are nearly the same number and the likelihood is close to flat.
+Occupations here draw on about 20 activities each, which is what gives the likelihood enough curvature to locate the shape.
 
 [↑ Back to top](#top)
 
 # 6. Does context change the aggregate's effect? (cross-level interaction)
 
-Coalition majority status is a government-level (macro) attribute.
-Because it is constant across the parties of a government, interacting it with the aggregated finance profile collapses to a product of two group-level quantities: a cross-level interaction.
+The education an occupation typically requires is an occupation-level (macro) attribute.
+Because it is constant across the activities that make up the occupation, interacting it with the aggregated exposure profile collapses to a product of two group-level quantities: a cross-level interaction.
+A natural hypothesis is that required education buffers exposure, that AI exposure weighs less heavily on employment where more schooling is needed.
 
 In `bml` this is written by giving the block a `name` and referencing that name in the main formula.
 The macro variable must also appear as a main effect:
@@ -815,35 +973,48 @@ The macro variable must also appear as a main effect:
 ```{r, eval = FALSE}
 mod_xl <-
   bml(
-    Surv(dur_wkb, event_wkb) ~ 1 + majority + mwc + Afin:majority +
+    employment_growth ~ 1 + education + baseline_wage + Aexp:education +
       mm(
-        name = Afin,                      # named block: referencable feature
-        id   = id(pid, gid),
-        vars = vars(finance),
-        w    = w(~ 1/n, scale = TRUE),
+        name = Aexp,                      # named block: referencable feature
+        id   = id(member_id, occupation_id),
+        vars = vars(ai_exposure),
+        w    = w(~ importance_raw, scale = TRUE),
         fn   = fn("sum"),
         RE   = TRUE
       ),
-    family   = weibull(),
+    family = gaussian(),
     iter   = 5000,
     warmup = 500,
     chains = 3,
-    seed     = 1,
-    data     = coalgov
+    seed   = 1,
+    data   = onet_wg
   )
 ```
 
 ```{r, echo = FALSE}
-mod_xl <- .load("mod_xl")
+mod_xl <- .load("mod_xl_onet")
 ```
 
 ```{r}
-fixef(mod_xl)
+fixef(mod_xl)[c("Aexp", "Aexp:education"), ]
 ```
 
-The interaction row `Afin:majority` asks whether the financial-exposure penalty differs between majority and minority governments.
-The estimate is about -0.11 [-0.58, 0.36]: no evidence that majority status moderates the exposure penalty.
-The name refers to the block's *fixed* feature only — the interaction multiplies `majority` with the aggregate `A_finance`, not with the party random effects, which continue to enter additively.
+The `Aexp:education` interaction is -0.009 with a 95% interval of [-0.025, 0.007].
+The point estimate sits in the buffering direction, so occupations needing more schooling do show a slightly weaker exposure effect, but the interval covers zero and the estimate holds at that value across three seeds.
+Required education does not measurably change how an occupation's exposure profile bears on its employment growth.
+
+A single moderator is thin evidence for a null, so the same specification was refit with Job Zone in place of education, O*NET's 1 to 5 banding of how much preparation an occupation needs.
+That interaction comes back at 0.001 with a 95% interval of [-0.024, 0.024], centred on zero rather than merely overlapping it.
+The two are close cousins as measures of required preparation, so their agreement is a weaker check than two independent moderators would be, but it is the check these data allow.
+
+Within these data, occupation-level context does not moderate the aggregate exposure effect.
+The effect of an occupation's exposure profile is much the same whether the occupation demands a little schooling or a lot.
+An ordinary occupation-level regression reaches the same conclusion, and here the multiple-membership model and the naive regression agree, which is worth noting precisely because they need not.
+Example 2 showed the two diverging once the aggregation was estimated rather than imposed.
+
+The example still illustrates the mechanics that matter.
+The `name` refers to the block's *fixed* feature only: the interaction multiplies the macro variable with the aggregate `A_ai_exposure`, not with the activity random effects, which continue to enter additively.
+A well-specified cross-level interaction that returns a null is itself informative — it says the aggregate's effect is stable across this dimension of context, rather than leaving the question unasked.
 
 [↑ Back to top](#top)
 
