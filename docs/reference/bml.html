@@ -29,7 +29,7 @@ JAGS must be installed separately: https://sourceforge.net/projects/mcmc-jags/."
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,6 +85,7 @@ interactions via named blocks.</p>
 <span>  thin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="op">(</span><span class="va">iter</span> <span class="op">-</span> <span class="va">warmup</span><span class="op">)</span><span class="op">/</span><span class="fl">1000</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  chains <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  n.adapt <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  run <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  monitor <span class="op">=</span> <span class="st">"summary"</span>,</span>
@@ -124,8 +125,9 @@ untranslated as an escape hatch.</p></dd>
 
 <dt id="arg-inits">inits<a class="anchor" aria-label="anchor" href="#arg-inits"></a></dt>
 <dd><p>List of initial values for MCMC chains (applied to all chains).
-Weight and <code>fn</code> shape parameters get stable defaults automatically;
-user values override.</p></dd>
+Weight and <code>fn</code> shape parameters are started from dispersed values
+drawn separately for each chain, as R-hat assumes; user values override and
+are applied as given.</p></dd>
 
 
 <dt id="arg-iter">iter<a class="anchor" aria-label="anchor" href="#arg-iter"></a></dt>
@@ -148,6 +150,13 @@ of each chain. Default: 500.</p></dd>
 <dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>
 <dd><p>Number of cores; <code>cores &gt; 1</code> runs chains in parallel.
 Default: 1.</p></dd>
+
+
+<dt id="arg-n-adapt">n.adapt<a class="anchor" aria-label="anchor" href="#arg-n-adapt"></a></dt>
+<dd><p>Number of JAGS adaptation iterations used to tune the samplers
+before warmup. Tuning is frozen once adaptation ends, so models with
+non-conjugate nodes (estimated <code><a href="w.html">w()</a></code> or <code><a href="fn.html">fn()</a></code> parameters) benefit
+from a longer adaptation phase. Default: 1000.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

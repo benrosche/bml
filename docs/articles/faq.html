@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -341,11 +341,14 @@ downstream — even if the weight function itself is mathematically
 well-defined, the resulting weights may produce overflow in the
 likelihood (e.g., <code>exp(-mu * shape)</code> in the Weibull
 model).</p>
-<p><strong>Built-in safeguard:</strong> <code>bml</code> initializes all
-weight parameters at 0 by default. This ensures numerically stable
-starting values (e.g., <code>ilogit(0) = 0.5</code>). However, if the
-error persists or occurs during sampling (not just initialization),
-consider the following steps.</p>
+<p><strong>Built-in safeguard:</strong> <code>bml</code> starts weight
+parameters near 0, where nonlinear links are numerically well behaved
+(e.g., <code>ilogit(0) = 0.5</code>). Since 0.12.0 each chain draws its
+own dispersed starting value around that centre rather than all chains
+sharing one, because R-hat assumes overdispersed starting points; the
+spread is taken from the parameter’s prior, so a narrower prior also
+gives tighter starting values. If the error persists, or occurs during
+sampling rather than initialization, consider the following steps.</p>
 <p><strong>How to fix it:</strong></p>
 <ol style="list-style-type: decimal">
 <li>

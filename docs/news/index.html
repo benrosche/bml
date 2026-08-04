@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,34 @@
       <small>Source: <a href="https://github.com/benrosche/bml/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.12.0" id="bml-0120">bml 0.12.0<a class="anchor" aria-label="anchor" href="#bml-0120"></a></h2>
+<p>Sampling-geometry release. Multiple-membership models with weakly informed members mixed badly under the previous defaults: standard deviations routinely returned bulk ESS in the single digits and R-hat above 2 even on long runs. The causes were the model parameterization, the default scale priors, and the starting values — not the sampler settings. <strong>Refit any model whose convergence mattered; estimates from earlier versions are unaffected in expectation but were often not converged.</strong></p>
+<div class="section level3">
+<h3 id="non-centred-random-effects-0-12-0">Non-centred random effects<a class="anchor" aria-label="anchor" href="#non-centred-random-effects-0-12-0"></a></h3>
+<ul><li>Independent <code><a href="../reference/mm.html">mm()</a></code> and <code><a href="../reference/hm.html">hm()</a></code> random intercepts and slopes are now sampled in non-centred form (<code>u = sigma * z</code>, <code>z ~ N(0, 1)</code>) instead of the centred <code>u ~ N(0, sigma^2)</code>. The two imply the same posterior; the non-centred form removes the funnel between an effect and its own standard deviation, which is what stalled <code>sigma</code> sampling. Correlated (<code>cor = TRUE</code>) and AR blocks are unchanged in this release.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="response-scaled-default-sd-priors-0-12-0">Response-scaled default sd priors<a class="anchor" aria-label="anchor" href="#response-scaled-default-sd-priors-0-12-0"></a></h3>
+<ul><li>The default prior on every standard deviation is now a half-normal scaled to the response, replacing <code>dscaled.gamma(25, 1)</code> — a half-Cauchy(0, 25) whose mass sat orders of magnitude above any realistic sd and whose tails fed the funnel above.</li>
+<li>For an <code><a href="../reference/mm.html">mm()</a></code> block the scale additionally undoes <strong>membership attenuation</strong>. A member effect reaches the outcome only through the weighted sum <code>sum_k w_ik u_k</code>, whose standard deviation is <code>sigma * sqrt(sum_k w_ik^2)</code> — the square root of the Herfindahl index of the weights, or one over the square root of the effective number of members. A member-level sd therefore lives on a scale about <code>sqrt(effN)</code> above its footprint on the outcome, and scaling it to <code>sd(y)</code> alone would shrink it by that factor.</li>
+<li>Explicit <code>prior(..., class = "sd")</code> specifications are unaffected.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="dispersed-starting-values-0-12-0">Dispersed starting values<a class="anchor" aria-label="anchor" href="#dispersed-starting-values-0-12-0"></a></h3>
+<ul><li>Estimated <code><a href="../reference/w.html">w()</a></code> and <code><a href="../reference/fn.html">fn()</a></code> parameters now start each chain from its own dispersed draw, taken on the scale of the parameter’s prior and held inside its support. Previously every chain started from one shared value, which makes R-hat anti-conservative — it assumes overdispersed starting points.</li>
+<li>Starting values for <code>fn("smax", kappa = est())</code> and <code>fn("gmean", p = est())</code> are kept away from zero, where those functions are singular. <code>kappa</code> now starts on both sides of zero rather than always at <code>+1</code>, so a min-like and a max-like posterior are explored symmetrically.</li>
+<li>User-supplied <code>inits</code> are applied exactly as given and are never jittered.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="adaptation-is-exposed-and-honoured-in-parallel-0-12-0">Adaptation is exposed and honoured in parallel<a class="anchor" aria-label="anchor" href="#adaptation-is-exposed-and-honoured-in-parallel-0-12-0"></a></h3>
+<ul><li>New <code>n.adapt</code> argument (default 1000, was R2jags’s 100). JAGS freezes sampler tuning when adaptation ends, so models with non-conjugate nodes benefit from a longer adaptation phase.</li>
+<li>
+<code>cores &gt; 1</code> no longer routes through <code><a href="https://rdrr.io/pkg/R2jags/man/jags.html" class="external-link">R2jags::jags.parallel</a></code>, which silently ignores <code>n.adapt</code> and cannot give each chain its own starting values. Chains now run through a small <code>parLapply</code> runner and are recombined identically.</li>
+<li>
+<code>run = FALSE</code> additionally returns <code>jags.inits</code> for inspection.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.0" id="bml-0110">bml 0.11.0<a class="anchor" aria-label="anchor" href="#bml-0110"></a></h2>
 <div class="section level3">
