@@ -86,7 +86,8 @@ test_that("re slopes: independent by default, correlated 2x2 on opt-in", {
     dur_wkb ~ 1 +
       mm(id = id(pid, gid), vars = vars(cohesion), w = w(~ 1/n), RE = re(1 + cohesion))
   )
-  expect_match(out_i$modelstring, "re.mm.1.s1\\[i\\] ~ dnorm\\(0, tau.mm.1.s1\\)")
+  expect_match(out_i$modelstring, "z.mm.1.s1\\[i\\] ~ dnorm\\(0, 1\\)")
+  expect_match(out_i$modelstring, "re.mm.1.s1\\[i\\] <- sigma.mm.1.s1 \\* z.mm.1.s1\\[i\\]")
   expect_no_match(out_i$modelstring, "rho.mm.1")
 
   out_c <- code_of(
