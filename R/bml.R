@@ -48,8 +48,9 @@
 #'   Raw JAGS strings (e.g. \code{"b.fn.1[1] ~ dnorm(0, 0.1)"}) pass through
 #'   untranslated as an escape hatch.
 #' @param inits List of initial values for MCMC chains (applied to all chains).
-#'   Weight and \code{fn} shape parameters get stable defaults automatically;
-#'   user values override.
+#'   Weight and \code{fn} shape parameters are started from dispersed values
+#'   drawn separately for each chain, as R-hat assumes; user values override and
+#'   are applied as given.
 #' @param iter Total number of MCMC iterations per chain. Default: 1000.
 #' @param warmup Number of warmup (burn-in) iterations discarded from the start
 #'   of each chain. Default: 500.
@@ -57,6 +58,10 @@
 #' @param chains Number of MCMC chains. Default: 3.
 #' @param cores Number of cores; \code{cores > 1} runs chains in parallel.
 #'   Default: 1.
+#' @param n.adapt Number of JAGS adaptation iterations used to tune the samplers
+#'   before warmup. Tuning is frozen once adaptation ends, so models with
+#'   non-conjugate nodes (estimated \code{w()} or \code{fn()} parameters) benefit
+#'   from a longer adaptation phase. Default: 1000.
 #' @param seed Integer random seed for reproducibility.
 #' @param run Logical; if \code{FALSE}, returns the generated JAGS model string,
 #'   data, and monitors without fitting (see also \code{\link{make_jagscode}}).
@@ -157,6 +162,7 @@ bml <- function(
   thin = max(1, floor((iter - warmup) / 1000)),
   chains = 3,
   cores = 1,
+  n.adapt = 1000,
   seed = NULL,
   run = TRUE,
   monitor = "summary",
@@ -373,24 +379,76 @@ bml <- function(
     }
 
     if (cores > 1) {
+      # R2jags::jags.parallel is deliberately not used: it forwards no n.adapt, so adaptation
+      # would silently stay at R2jags's default of 100 iterations however n.adapt is set here.
+      # Each worker runs one chain and calls the inits function itself, so every chain also
+      # gets its own dispersed starting values. The chain outputs are recombined exactly the
+      # way jags.parallel does it.
       parallelfile <- tempfile(fileext = ".jags")
       on.exit(unlink(parallelfile), add = TRUE)
       writeLines(modelstring, parallelfile)
-      jags.out <- do.call(
-        R2jags::jags.parallel,
-        list(
-          data = jags.data,
-          inits = jags.inits[1],
-          n.chains = chains,
-          parameters.to.save = jags.params,
+
+      cluster <- parallel::makeCluster(min(cores, chains), methods = FALSE)
+      on.exit(parallel::stopCluster(cluster), add = TRUE)
+
+      chain_fits <- parallel::parLapply(
+        cl = cluster,
+        X = seed + seq_len(chains),
+        fun = function(chain_seed, jags.data, jags.inits, jags.params, model.file,
+                       iter, warmup, thin, n.adapt) {
+          set.seed(chain_seed)
+          R2jags::jags(
+            data = jags.data,
+            inits = jags.inits,
+            parameters.to.save = jags.params,
+            model.file = model.file,
+            n.chains = 1,
+            n.iter = iter,
+            n.burnin = warmup,
+            n.thin = thin,
+            n.adapt = n.adapt,
+            jags.seed = chain_seed,
+            progress.bar = "none"
+          )
+        },
+        jags.data = jags.data,
+        jags.inits = jags.inits,
+        jags.params = jags.params,
+        model.file = parallelfile,
+        iter = iter,
+        warmup = warmup,
+        thin = thin,
+        n.adapt = n.adapt
+      )
+
+      template <- chain_fits[[1]]$BUGSoutput$sims.array
+      sims.array <- array(
+        NA_real_,
+        dim = c(dim(template)[1], chains, dim(template)[3]),
+        dimnames = list(NULL, NULL, dimnames(template)[[3]])
+      )
+      for (ch in seq_len(chains)) {
+        sims.array[, ch, ] <- chain_fits[[ch]]$BUGSoutput$sims.array[, 1, ]
+      }
+
+      as.bugs.array2 <- utils::getFromNamespace("as.bugs.array2", "R2jags")
+      jags.out <- list(
+        model = lapply(chain_fits, function(chain_fit) chain_fit$model),
+        BUGSoutput = as.bugs.array2(
+          sims.array,
+          model.file = parallelfile,
+          program = "jags",
+          DIC = TRUE,
           n.iter = iter,
           n.burnin = warmup,
-          n.thin = thin,
-          n.cluster = min(cores, chains),
-          jags.seed = seed,
-          model.file = parallelfile
-        )
+          n.thin = thin
+        ),
+        parameters.to.save = jags.params,
+        model.file = parallelfile,
+        n.iter = iter,
+        DIC = TRUE
       )
+      class(jags.out) <- c("rjags.parallel", "rjags")
     } else {
       set.seed(seed)
       jags.out <- R2jags::jags(
@@ -401,6 +459,7 @@ bml <- function(
         n.iter = iter,
         n.burnin = warmup,
         n.thin = thin,
+        n.adapt = n.adapt,
         model.file = textConnection(modelstring)
       )
     }
@@ -545,6 +604,7 @@ bml <- function(
       modelstring = modelstring,
       jags.data = jags.data,
       jags.params = jags.params,
+      jags.inits = jags.inits,
       storage = monitor_spec
     ))
   }

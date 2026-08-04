@@ -399,18 +399,27 @@ fn_est_params <- function(fnobj, dsl_params = character(0), x_range = NULL) {
     )
   }
 
+  # Parameters that sit at a singularity when they hit zero, so dispersed starting values
+  # must be kept away from it: smax is (1/kappa) log(...) and gmean is (...)^(1/p).
+  excludes_zero <- function(name) {
+    (identical(fnobj$type, "smax") && identical(name, "kappa")) ||
+      (identical(fnobj$type, "gmean") && identical(name, "p"))
+  }
+
   # named-type est() markers
   for (pn in names(fnobj$params %||% list())) {
     if (is_est(fnobj$params[[pn]])) {
       out[[pn]] <- list(default = default_for(pn, fnobj$params[[pn]]),
                         init = init_for(pn, fnobj$params[[pn]]),
+                        exclude_zero = excludes_zero(pn),
                         est = fnobj$params[[pn]])
     }
   }
 
   # DSL free symbols are parameters by the one-parameter rule
   for (pn in dsl_params) {
-    out[[pn]] <- list(default = default_for(pn, NULL), init = init_for(pn, NULL), est = NULL)
+    out[[pn]] <- list(default = default_for(pn, NULL), init = init_for(pn, NULL),
+                      exclude_zero = FALSE, est = NULL)
   }
 
   out

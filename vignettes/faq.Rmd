@@ -179,7 +179,7 @@ This error occurs when JAGS cannot evaluate the weight function for a particular
 
 **Why it happens:** Weight function parameters (`b0`, `b1`, ...) are given vague priors by default (`dnorm(0, 0.0001)` in JAGS precision, which corresponds to SD = 100). When JAGS initializes the MCMC chains, it may draw extreme starting values (e.g., `b0 = 80`). For weight functions involving nonlinear transformations like `ilogit()` or `exp()`, extreme parameter values can cause numerical issues downstream — even if the weight function itself is mathematically well-defined, the resulting weights may produce overflow in the likelihood (e.g., `exp(-mu * shape)` in the Weibull model).
 
-**Built-in safeguard:** `bml` initializes all weight parameters at 0 by default. This ensures numerically stable starting values (e.g., `ilogit(0) = 0.5`). However, if the error persists or occurs during sampling (not just initialization), consider the following steps.
+**Built-in safeguard:** `bml` starts weight parameters near 0, where nonlinear links are numerically well behaved (e.g., `ilogit(0) = 0.5`). Since 0.12.0 each chain draws its own dispersed starting value around that centre rather than all chains sharing one, because R-hat assumes overdispersed starting points; the spread is taken from the parameter's prior, so a narrower prior also gives tighter starting values. If the error persists, or occurs during sampling rather than initialization, consider the following steps.
 
 **How to fix it:**
 

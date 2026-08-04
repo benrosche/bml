@@ -1,3 +1,59 @@
+# bml 0.12.0
+
+Sampling-geometry release. Multiple-membership models with weakly informed
+members mixed badly under the previous defaults: standard deviations routinely
+returned bulk ESS in the single digits and R-hat above 2 even on long runs. The
+causes were the model parameterization, the default scale priors, and the
+starting values — not the sampler settings. **Refit any model whose convergence
+mattered; estimates from earlier versions are unaffected in expectation but were
+often not converged.**
+
+## Non-centred random effects
+
+* Independent `mm()` and `hm()` random intercepts and slopes are now sampled in
+  non-centred form (`u = sigma * z`, `z ~ N(0, 1)`) instead of the centred
+  `u ~ N(0, sigma^2)`. The two imply the same posterior; the non-centred form
+  removes the funnel between an effect and its own standard deviation, which is
+  what stalled `sigma` sampling. Correlated (`cor = TRUE`) and AR blocks are
+  unchanged in this release.
+
+## Response-scaled default sd priors
+
+* The default prior on every standard deviation is now a half-normal scaled to
+  the response, replacing `dscaled.gamma(25, 1)` — a half-Cauchy(0, 25) whose
+  mass sat orders of magnitude above any realistic sd and whose tails fed the
+  funnel above.
+* For an `mm()` block the scale additionally undoes **membership attenuation**.
+  A member effect reaches the outcome only through the weighted sum
+  `sum_k w_ik u_k`, whose standard deviation is `sigma * sqrt(sum_k w_ik^2)` —
+  the square root of the Herfindahl index of the weights, or one over the square
+  root of the effective number of members. A member-level sd therefore lives on a
+  scale about `sqrt(effN)` above its footprint on the outcome, and scaling it to
+  `sd(y)` alone would shrink it by that factor.
+* Explicit `prior(..., class = "sd")` specifications are unaffected.
+
+## Dispersed starting values
+
+* Estimated `w()` and `fn()` parameters now start each chain from its own
+  dispersed draw, taken on the scale of the parameter's prior and held inside
+  its support. Previously every chain started from one shared value, which makes
+  R-hat anti-conservative — it assumes overdispersed starting points.
+* Starting values for `fn("smax", kappa = est())` and `fn("gmean", p = est())`
+  are kept away from zero, where those functions are singular. `kappa` now
+  starts on both sides of zero rather than always at `+1`, so a min-like and a
+  max-like posterior are explored symmetrically.
+* User-supplied `inits` are applied exactly as given and are never jittered.
+
+## Adaptation is exposed and honoured in parallel
+
+* New `n.adapt` argument (default 1000, was R2jags's 100). JAGS freezes sampler
+  tuning when adaptation ends, so models with non-conjugate nodes benefit from a
+  longer adaptation phase.
+* `cores > 1` no longer routes through `R2jags::jags.parallel`, which silently
+  ignores `n.adapt` and cannot give each chain its own starting values. Chains
+  now run through a small `parLapply` runner and are recombined identically.
+* `run = FALSE` additionally returns `jags.inits` for inspection.
+
 # bml 0.11.0
 
 ## Compact posterior storage

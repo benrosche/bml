@@ -12,11 +12,67 @@
 #
 # ================================================================================================ #
 
+# Scale of the response, used to give the default sd priors a sensible magnitude instead of a
+# fixed one. Only defined for families whose response is on the linear-predictor scale.
+response_scale <- function(family, main) {
+  if (!identical(family, "Gaussian")) return(1)
+  y <- suppressWarnings(as.numeric(main$dat[[main$lhs[1]]]))
+  s <- stats::sd(y, na.rm = TRUE)
+  if (!is.finite(s) || s <= 0) 1 else s
+}
+
+# Membership attenuation for one mm group: a member effect u_k reaches the outcome only through
+# the weighted sum sum_k w_ik u_k, whose SD is sigma * sqrt(sum_k w_ik^2). So sigma lives on a
+# scale about sqrt(effective number of members) larger than its footprint on y, and a prior
+# scaled to sd(y) alone would be tight on sigma by exactly that factor. Weights that are
+# estimated rather than fixed are not known here, so those fall back to equal weights; the two
+# give very similar attenuation in practice.
+mm_attenuation <- function(block) {
+
+  wdat <- block$wdat
+  if (is.null(wdat) || !nrow(wdat)) return(1)
+
+  weight_vars <- block$w$vars %||% character(0)
+  estimated <- length(block$w$params %||% character(0)) > 0
+
+  weights <- NULL
+  if (!estimated && length(weight_vars) == 1 && weight_vars %in% names(wdat)) {
+    candidate <- suppressWarnings(as.numeric(wdat[[weight_vars]]))
+    if (all(is.finite(candidate)) && all(candidate >= 0) && sum(candidate) > 0) {
+      weights <- candidate
+    }
+  }
+  if (is.null(weights)) weights <- rep(1, nrow(wdat))
+
+  per_group <- stats::aggregate(
+    list(a = weights),
+    by = list(mainid = wdat$mainid),
+    FUN = function(w) if (sum(w) > 0) sqrt(sum((w / sum(w))^2)) else NA_real_
+  )$a
+
+  a <- mean(per_group, na.rm = TRUE)
+  if (!is.finite(a) || a <= 0) 1 else a
+}
+
 createModelstring <- function(family, prior_spec, mm_blocks, main, hm_blocks, interactions,
                               monitor_spec, cox_intervals = NULL) {
 
   overrides <- prior_spec$overrides %||% list()
   raw_priors <- prior_spec$raw %||% character(0)
+
+  # Default sd-prior scales: weakly informative on the scale the parameter actually occupies.
+  y_scale <- response_scale(family, main)
+  sd_scales <- list()
+  if (!is.null(mm_blocks) && length(mm_blocks) > 0) {
+    for (g in seq_along(attr(mm_blocks, "all_mmid_names"))) {
+      block_index <- attr(mm_blocks, "mmid_to_blocks")[[
+        attr(mm_blocks, "all_mmid_names")[g]
+      ]][1]
+      attenuation <- mm_attenuation(mm_blocks[[block_index]])
+      sd_scales[[paste0("sigma.mm.", g)]] <- 2.5 * y_scale / attenuation
+    }
+  }
+  default_sd_scale <- 2.5 * y_scale
 
   # ========================================================================================== #
   # Prior helpers
@@ -27,28 +83,29 @@ createModelstring <- function(family, prior_spec, mm_blocks, main, hm_blocks, in
     overrides[[node]] %||% default
   }
 
-  # Emit an sd-type prior: default is precision-scale dscaled.gamma; an override is a
-  # distribution on the SD itself, with the precision derived.
+  # Default sd prior: half-normal scaled to the parameter's own plausible magnitude. The former
+  # default, half-Cauchy(25) via dscaled.gamma(25, 1), puts most of its mass orders of magnitude
+  # above any realistic sd and its tails feed the funnel that stalls sd sampling.
+  sd_default <- function(sigma_node) {
+    # Slope sds (sigma.mm.g.sS) inherit their group's attenuation.
+    group_node <- sub("^(sigma\\.mm\\.[0-9]+).*$", "\\1", sigma_node)
+    scale <- sd_scales[[group_node]] %||% default_sd_scale
+    paste0(
+      "dnorm(0, ",
+      format(1 / scale^2, digits = 8, scientific = FALSE),
+      ")T(0,)"
+    )
+  }
+
+  # Emit an sd-type prior: a distribution on the SD itself, with the precision derived.
   sd_prior_lines <- function(sigma_node, tau_node) {
-    ov <- overrides[[sigma_node]]
-    if (is.null(ov)) {
-      c(paste0("  ", tau_node, " ~ dscaled.gamma(25, 1)"),
-        paste0("  ", sigma_node, " <- 1/sqrt(", tau_node, ")"))
-    } else {
-      c(paste0("  ", sigma_node, " ~ ", ov),
-        paste0("  ", tau_node, " <- pow(", sigma_node, ", -2)"))
-    }
+    c(paste0("  ", sigma_node, " ~ ", overrides[[sigma_node]] %||% sd_default(sigma_node)),
+      paste0("  ", tau_node, " <- pow(", sigma_node, ", -2)"))
   }
 
   # Direct-sigma prior (for the correlated-RE separation strategy): SD sampled directly.
   sd_direct_line <- function(sigma_node) {
-    ov <- overrides[[sigma_node]]
-    if (is.null(ov)) {
-      # half-Cauchy(25): same marginal as dscaled.gamma(25, 1)
-      paste0("  ", sigma_node, " ~ dt(0, ", format(1 / 25^2), ", 1)T(0,)")
-    } else {
-      paste0("  ", sigma_node, " ~ ", ov)
-    }
+    paste0("  ", sigma_node, " ~ ", overrides[[sigma_node]] %||% sd_default(sigma_node))
   }
 
   # Correlation prior: rho = 2*z - 1, z ~ dbeta(eta, eta); lkj(eta) maps onto eta.
@@ -404,16 +461,23 @@ createModelstring <- function(family, prior_spec, mm_blocks, main, hm_blocks, in
         add(cor_prior_lines(paste0("rho.mm.", g)))
 
       } else {
-        # Independent intercept and/or slopes
+        # Independent intercept and/or slopes, non-centred: sampling standardised effects and
+        # rescaling them decouples each effect from its own standard deviation. The centred
+        # form re.mm ~ dnorm(0, tau.mm) makes the width of the re.mm posterior depend on
+        # sigma.mm, a funnel that stalls sigma.mm whenever the members are weakly informed.
+        # The two forms imply the same posterior.
         if (re_spec$intercept) {
           add("  for (i in 1:n.umm.", g, ") {")
-          add("    re.mm.", g, "[i] ~ dnorm(0, tau.mm.", g, ")")
+          add("    z.mm.", g, "[i] ~ dnorm(0, 1)")
+          add("    re.mm.", g, "[i] <- sigma.mm.", g, " * z.mm.", g, "[i]")
           add("  }")
           add(sd_prior_lines(paste0("sigma.mm.", g), paste0("tau.mm.", g)))
         }
         for (s in seq_len(n_slopes)) {
           add("  for (i in 1:n.umm.", g, ") {")
-          add("    re.mm.", g, ".s", s, "[i] ~ dnorm(0, tau.mm.", g, ".s", s, ")")
+          add("    z.mm.", g, ".s", s, "[i] ~ dnorm(0, 1)")
+          add("    re.mm.", g, ".s", s, "[i] <- sigma.mm.", g, ".s", s,
+              " * z.mm.", g, ".s", s, "[i]")
           add("  }")
           add(sd_prior_lines(paste0("sigma.mm.", g, ".s", s), paste0("tau.mm.", g, ".s", s)))
         }
@@ -472,15 +536,19 @@ createModelstring <- function(family, prior_spec, mm_blocks, main, hm_blocks, in
           add(cor_prior_lines(paste0("rho.hm.", k)))
 
         } else {
+          # Non-centred for the same reason as the independent MM effects above.
           if (re_spec$intercept) {
             add("  for (c in 1:n.hm) {")
-            add("    re.hm.", k, "[c] ~ dnorm(0, tau.hm.", k, ")")
+            add("    z.hm.", k, "[c] ~ dnorm(0, 1)")
+            add("    re.hm.", k, "[c] <- sigma.hm.", k, " * z.hm.", k, "[c]")
             add("  }")
             add(sd_prior_lines(paste0("sigma.hm.", k), paste0("tau.hm.", k)))
           }
           for (s in seq_len(n_slopes)) {
             add("  for (c in 1:n.hm) {")
-            add("    re.hm.", k, ".s", s, "[c] ~ dnorm(0, tau.hm.", k, ".s", s, ")")
+            add("    z.hm.", k, ".s", s, "[c] ~ dnorm(0, 1)")
+            add("    re.hm.", k, ".s", s, "[c] <- sigma.hm.", k, ".s", s,
+                " * z.hm.", k, ".s", s, "[c]")
             add("  }")
             add(sd_prior_lines(paste0("sigma.hm.", k, ".s", s), paste0("tau.hm.", k, ".s", s)))
           }

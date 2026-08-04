@@ -15,6 +15,7 @@ bml(
   thin = max(1, floor((iter - warmup)/1000)),
   chains = 3,
   cores = 1,
+  n.adapt = 1000,
   seed = NULL,
   run = TRUE,
   monitor = "summary",
@@ -41,8 +42,9 @@ Raw JAGS strings (e.g. \code{"b.fn.1[1] ~ dnorm(0, 0.1)"}) pass through
 untranslated as an escape hatch.}
 
 \item{inits}{List of initial values for MCMC chains (applied to all chains).
-Weight and \code{fn} shape parameters get stable defaults automatically;
-user values override.}
+Weight and \code{fn} shape parameters are started from dispersed values
+drawn separately for each chain, as R-hat assumes; user values override and
+are applied as given.}
 
 \item{iter}{Total number of MCMC iterations per chain. Default: 1000.}
 
@@ -55,6 +57,11 @@ of each chain. Default: 500.}
 
 \item{cores}{Number of cores; \code{cores > 1} runs chains in parallel.
 Default: 1.}
+
+\item{n.adapt}{Number of JAGS adaptation iterations used to tune the samplers
+before warmup. Tuning is frozen once adaptation ends, so models with
+non-conjugate nodes (estimated \code{w()} or \code{fn()} parameters) benefit
+from a longer adaptation phase. Default: 1000.}
 
 \item{seed}{Integer random seed for reproducibility.}
 

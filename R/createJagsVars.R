@@ -1,4 +1,73 @@
 # ================================================================================================ #
+# Initial-value dispersion
+# ================================================================================================ #
+
+# Spread and support for jittering one parameter's starting value. The spread is read off the
+# parameter's own prior wherever that is parsable, so the starting points are dispersed on the
+# scale the posterior can plausibly occupy rather than by an arbitrary constant.
+init_jitter_spec <- function(centre, est_param) {
+
+  lower <- -Inf
+  upper <- Inf
+  scale <- NA_real_
+  exclude_zero <- FALSE
+
+  if (!is.null(est_param)) {
+
+    if (!is.null(est_param$est$lower)) lower <- est_param$est$lower
+    if (!is.null(est_param$est$upper)) upper <- est_param$est$upper
+    exclude_zero <- isTRUE(est_param$exclude_zero)
+
+    dist  <- est_param$default %||% ""
+    unif  <- regmatches(dist, regexec("^dunif\\(\\s*([^,]+),\\s*([^)]+)\\)$", dist))[[1]]
+    norm  <- regmatches(dist, regexec("^dnorm\\(\\s*([^,]+),\\s*([^)]+)\\)$", dist))[[1]]
+    gamma <- regmatches(dist, regexec("^dgamma\\(\\s*([^,]+),\\s*([^)]+)\\)$", dist))[[1]]
+
+    if (length(unif) == 3) {
+      lower <- max(lower, as.numeric(unif[2]))
+      upper <- min(upper, as.numeric(unif[3]))
+      scale <- (upper - lower) / 4
+    } else if (length(norm) == 3) {
+      precision <- as.numeric(norm[3])
+      if (is.finite(precision) && precision > 0) scale <- 1 / sqrt(precision)
+    } else if (length(gamma) == 3) {
+      shape <- as.numeric(gamma[2])
+      rate  <- as.numeric(gamma[3])
+      lower <- max(lower, 0)
+      if (is.finite(shape) && is.finite(rate) && rate > 0) scale <- sqrt(shape) / rate
+    }
+  }
+
+  if (!is.finite(scale) || scale <= 0) scale <- max(0.5, 0.5 * max(abs(centre)))
+
+  list(centre = centre, scale = scale, lower = lower, upper = upper,
+       exclude_zero = exclude_zero)
+}
+
+# One chain's starting point: the default value plus noise, held inside the parameter's support.
+draw_jittered_init <- function(spec) {
+
+  value <- spec$centre + stats::rnorm(length(spec$centre), 0, spec$scale)
+
+  margin <- if (is.finite(spec$lower) && is.finite(spec$upper)) {
+    0.01 * (spec$upper - spec$lower)
+  } else {
+    0.01 * spec$scale
+  }
+  if (is.finite(spec$lower)) value <- pmax(value, spec$lower + margin)
+  if (is.finite(spec$upper)) value <- pmin(value, spec$upper - margin)
+
+  # Keep the sign the draw landed on, but off the singularity itself.
+  if (isTRUE(spec$exclude_zero)) {
+    floor_value <- max(margin, 0.1 * spec$scale)
+    sign_value <- ifelse(value < 0, -1, 1)
+    value <- sign_value * pmax(abs(value), floor_value)
+  }
+
+  value
+}
+
+# ================================================================================================ #
 # Function createJagsVars
 # ================================================================================================ #
 
@@ -581,20 +650,45 @@ createJagsVars <- function(data, family, mm_blocks, main, hm_blocks, interaction
   # Finalize inits
   # ========================================================================================== #
 
+  # Deterministic inits set above (censoring bookkeeping, baseline hazards) must not be
+  # perturbed. The estimated weight and fn shape parameters are dispersed across chains
+  # instead: Gelman-Rubin R-hat assumes overdispersed starting points, so starting every
+  # chain at the same value makes R-hat anti-conservative.
+  jitter_spec <- list()
+
   if (has_mm) {
     for (i in seq_along(mm_blocks)) {
       block <- mm_blocks[[i]]
       if (length(block$w$params) > 0) {
-        jags.inits[[paste0("b.w.", i)]] <- rep(0, length(block$w$params))
+        node <- paste0("b.w.", i)
+        centre <- rep(0, length(block$w$params))
+        jags.inits[[node]] <- centre
+        jitter_spec[[node]] <- init_jitter_spec(centre, NULL)
       }
       for (pn in names(block$fn$est_params)) {
-        jags.inits[[paste0("fn.", pn, ".", i)]] <- block$fn$est_params[[pn]]$init
+        node <- paste0("fn.", pn, ".", i)
+        est_param <- block$fn$est_params[[pn]]
+        jags.inits[[node]] <- est_param$init
+        jitter_spec[[node]] <- init_jitter_spec(est_param$init, est_param)
       }
     }
   }
 
+  # User-supplied inits are explicit choices and stay exactly as given.
+  jitter_spec[names(inits)] <- NULL
   jags.inits <- c(jags.inits, inits)
-  jags.inits <- lapply(1:chains, function(x) jags.inits)
+
+  # R2jags calls a no-argument inits function once per chain, so each chain draws its own
+  # starting point. A `chain` argument would not work here: jags.parallel runs every worker
+  # with n.chains = 1 and would therefore request chain 1 for all of them.
+  init_base <- jags.inits
+  jags.inits <- function() {
+    values <- init_base
+    for (node in names(jitter_spec)) {
+      values[[node]] <- draw_jittered_init(jitter_spec[[node]])
+    }
+    values
+  }
 
   # ========================================================================================== #
   # Build the data list for JAGS
